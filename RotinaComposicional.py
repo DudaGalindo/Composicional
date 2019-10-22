@@ -45,12 +45,12 @@ class IMPEC:
                 # Não tenho certeza se seria exatamente isso, acredito que só irei confirmar implementando
                 while estabilitity == 0:
                     phase new = flash_calculation
-                    estabilitity = phaseEstabilityTest(propC)
                     propC = IMPEC.properties()
+                    estabilitity = phaseEstabilityTest(propC)
 
             p_old = p
 
             deltaT = IMPEC.times(t,tf,CFL,h,v) #duvida quanto ao valor de v
             t = t + deltaT
-            
+
         return P,t

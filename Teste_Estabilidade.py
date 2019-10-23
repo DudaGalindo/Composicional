@@ -1,9 +1,12 @@
 import numpy as np
 import math
 from math import pi
+import thermo
+
 class fugacity:
     def lnphi(x,a,b,A,Nc,T,P,R,ph): #ph stands for phase (1-liquid, 2-vapor)
         lnphi = np.zeros(Nc)
+        lnphi_termo = np.zeros(Nc)
         Am = 0
         Bm = 0
         for i in range(0,Nc):
@@ -52,8 +55,13 @@ class fugacity:
 
             Zv = P*Vv/(R*T)
             Zl = P*Vl/(R*T)
-            lnphi = thermo.eos_mix.PRMIX.fugacity_coefficients(Z,zs) #PARA COMPARAR COM A FUNÇÃO DO THERMO
+
             for i in range(0,Nc):
+                if ph ==1:
+                    Z = Zl
+                else: Z = Zv
+                lnphi_thermo[i] = thermo.eos_mix.PRMIX.fugacity_coefficients(Z,zs=x) #PARA COMPARAR COM A FUNÇÃO DO THERMO
+
                 xA = 0
                 for j in range(0,Nc):
                     xA = xA + x[j]*A[i,j]
@@ -66,7 +74,8 @@ class fugacity:
                         lnphi[i] = b[i]/Bm*(Zv-1) - np.log(Zv - Bm*P/(R*T)) -\
                         Am/(2*2**(1/2)*Bm*R*T)*(2*xA/Am -\
                         b[i]/Bm)*np.log((Zv+(1+2**(1/2))*Bm*P/(R*T))/(Zv+(1-2**(1/2))*Bm*P/(R*T)))
-        return lnphi
+        return lnphi,lnphi_thermo
+
 
 
 
@@ -114,8 +123,10 @@ y = Y/sum(Y)
 
 #while max(abs(Y_old/Y - 1))>1e-9: #convergência - Y_old/Y termo a termo
 #    Y_old = Y
-lnphiz = fugacity.lnphi(z,a,b,A,Nc,T,P,R,1); #ver quais os métodos utilizados para tanto
-lnphix = fugacity.lnphi(y,a,b,A,Nc,T,P,R,2);
+lnphiz,lnphiz_thermo = fugacity.lnphi(z,a,b,A,Nc,T,P,R,1); #ver quais os métodos utilizados para tanto
+lnphix,lnphix_thermo = fugacity.lnphi(y,a,b,A,Nc,T,P,R,2);
+print(lnphix,lnphix_thermo)
+print(lnphiz,lnphiz_thermo)
 for i in range(len(Y)):
     Y[i] = math.exp(-lnphix[i] + math.log(z[i]) + lnphiz[i])
 y = Y/sum(Y)

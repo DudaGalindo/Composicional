@@ -33,7 +33,6 @@ class IMPEC:
             phase_velocities = IMPEC.Darcy(n_phases,p,pc,D,phase_density)
 
             for i in range(0,n): #contador para cada bloco da malha
-
                 for k in range(0,k): #contador para cada componente
                     Nc[k] = IMPEC.composition(propComponente[k],phase_velocities,num_phases,deltaT) #depende das propriedades do componente no passo de tempo anterior
 
@@ -52,5 +51,6 @@ class IMPEC:
 
             deltaT = IMPEC.times(t,tf,CFL,h,v) #duvida quanto ao valor de v
             t = t + deltaT
-
+            #checar t<tfinal
         return P,t
+## Checagem do balanço de massa

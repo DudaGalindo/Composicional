@@ -5,7 +5,7 @@ import thermo
 import matplotlib.pyplot as plt
 
 ## Encontrar os pontos estacionarios. Estes correspondem aos pontos nos quais a derivada de g com respeito a Y é 0
-
+## Todas as equações foram confirmadas pelo livro do Dandekar e a biblioteca do thermo
 
 class fugacity:
     def coefficientsPR(w,Bin,R,Tc,Pc,T,P,Nc):
@@ -16,16 +16,16 @@ class fugacity:
 
 
         for i in range(0,Nc):
-            k = 0.37464 + 1.54226*w[i] -0.26992*w[i]**2; #kappa - PR eos
-            alpha = (1+k*(1-(T/Tc[i])**(1/2)))**2; #coef - PR eos
-            aalpha_i[i] = 0.45724*(R*Tc[i])**2*alpha/Pc[i]; #coef - PR eos
-            b[i] = 0.07780*R*Tc[i]/Pc[i]; #coef - PR eos
-            K[i] = math.exp(5.37*(1+w[i])*(1-1/(T/Tc[i])))/(P/Pc[i]); #
+            k = 0.37464 + 1.54226*w[i] -0.26992*w[i]**2;
+            alpha = (1+k*(1-(T/Tc[i])**(1/2)))**2;
+            aalpha_i[i] = 0.45724*(R*Tc[i])**2*alpha/Pc[i];
+            b[i] = 0.07780*R*Tc[i]/Pc[i];
+            K[i] = math.exp(5.37*(1+w[i])*(1-1/(T/Tc[i])))/(P/Pc[i]); # Wilson equation (K - equilimbrium ratio)
 
         for i in range(0,Nc):
             for j in range(0,Nc):
                 aalpha_ij[i,j] = (aalpha_i[i]*aalpha_i[j])**(1/2) *(1.
-                - Bin[i,j]); # aalphaij
+                                  - Bin[i,j]); # aalphaij
         return K,b,aalpha_ij
 
 
@@ -76,21 +76,19 @@ class fugacity:
     def lnphi(x,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b):
         lnphi = np.zeros(Nc)
         lnphi_termo = np.zeros(Nc)
-
         aalpha = 0; bm = 0;
-        bm = sum(x*b)
 
+        bm = sum(x*b)
+        B = bm*P/(R*T)
         for i in range(0,Nc):
             for j in range(0,Nc):
                 aalpha = aalpha + x[i]*x[j]*aalpha_ij[i,j]
-
-        B = bm*P/(R*T)
         A = aalpha*P/(R*T)**2
 
         eos = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=x,kijs=Bin,T=T,P=P)
         if eos.phase == 'l': V = eos.V_l
         else: V = eos.V_g
-
+        
         Z = P*V/(R*T)
 
         for i in range(0,Nc):
@@ -109,6 +107,7 @@ class fugacity:
 class StabilityTest:
     def Stability(w,Bin,R,Tc,Pc,T,P,Nc,z):
         K,b,aalpha_ij = fugacity.coefficientsPR(w,Bin,R,Tc,Pc,T,P,Nc)
+
     #****************************Initial guess******************************#
     ## Both approaches bellow should be used in case the phase is in the critical region
 
@@ -119,14 +118,16 @@ class StabilityTest:
         ## Used alone when the phase investigated is clearly liquid like (ph == 1)
         if eos.phase == 'l' or eos.phase == 'l/g':
             Y = z/K
-            Y_old = 0.9*Y #just to pass the first while below
+            Y_old = 0.9*Y
             y = Y/sum(Y)
-            while max(abs(Y/Y_old - 1))>1e-9: #convergência - Y_old/Y termo a termo
-                Y_old = Y
 
+            while max(abs(Y/Y_old - 1))>1e-10: #convergência - critério do Schmall - vi no livro do Dandekar que tinha outro que segundo ele era melhor
+                Y_old = Y
                 lnphiy = fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b)
+
                 for i in range(len(Y)):
                     Y[i] = math.exp( math.log(z[i]) + lnphiz[i] - lnphiy[i] )
+
                 y = Y/sum(Y);
 
             if sum(Y) <= 1: print('estavel')#estavel2 = 1
@@ -152,7 +153,8 @@ class StabilityTest:
         if estavel1==1 and estavel2==1: return 'estavel'
         else: return 'instavel'''
 
-    def TPD(Nc,T,P,R,Tc,Pc,Bin,w,z):
+    def TPD(Nc,T,P,R,Tc,Pc,Bin,w,z): #atualmente só funciona para 2D
+        x = np.zeros()
         K,b,aalpha_ij = fugacity.coefficientsPR(w,Bin,R,Tc,Pc,T,P,Nc)
         #**********************Tangent Plane distance plot*********************#
         t = np.linspace(0.01,0.99,0.9/0.002) #vetor auxiliar
@@ -160,15 +162,17 @@ class StabilityTest:
         for i in range(0,len(t)):
             aux = 0;
             lnphiz = fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b) #original phase
+
             x = np.array([1-t[i],t[i]]) #new phase composition (1-t e t) - apenas válido para Nc=2 acredito eu.
+
             '''O modo que x varia implica no formato de TPD. No presente exemplo,
             a fração molar do segundo componente de x varia direto com t, que é a
             variável de plotagem. Logo, a distancia dos planos tangentes será
-            zeros em z[1]. O contrário ocorreria'''
+            zeros em z[Nc-1]. O contrário ocorreria'''
             lnphix = fugacity.lnphi(x,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b); #new phase (vapor- ph=2)
             for j in range(0,Nc):
                 fix = math.exp(lnphix[j])*x[j]*P
-                fiz = math.exp(lnphiz[j])*z[j]*P;
+                fiz = math.exp(lnphiz[j])*z[j]*P
                 aux = aux + x[j]*R*T*(math.log(fix/fiz))
             TPD[i] = aux
 

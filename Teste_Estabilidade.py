@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 ## Todas as equações foram confirmadas pelo livro do Dandekar e a biblioteca do thermo
 
 class fugacity:
-    def coefficientsPR(w,Bin,R,Tc,Pc,T,P,Nc):
+    def coefficientsPR(w,Bin,R,Tc,Pc,T,P,Nc,C7):
         a = np.zeros(Nc)
         b = np.zeros(Nc)
         K = np.zeros(Nc)
@@ -16,7 +16,9 @@ class fugacity:
 
 
         for i in range(0,Nc):
-            k = 0.37464 + 1.54226*w[i] -0.26992*w[i]**2;
+            if C7 == 'y':# For heavier components:
+                k = 0.379642+1.48503*w[i]-0.1644*w[i]**2+0.016667*w[i]**3
+            else: k = 0.3746 + 1.54226*w[i] -0.26992*w[i]**2;
             alpha = (1+k*(1-(T/Tc[i])**(1/2)))**2;
             aalpha_i[i] = 0.45724*(R*Tc[i])**2*alpha/Pc[i];
             b[i] = 0.07780*R*Tc[i]/Pc[i];
@@ -30,7 +32,7 @@ class fugacity:
 
 
 
-    '''def V_PR(bm,R,T,P,A,aalpha,ph):
+    def V_PR(bm,R,T,P,A,aalpha,ph):
         ## Acredito que aqui ele tenha usado a EOS de PR da equação cúbica pra resolver, identificando se vai ter uma,duas ou tres raízes.
         # Não sei de onde ele tirou essa forma de escrever, mas pretendo testar com afunção do thermo que já retorna Vl e Vv
 
@@ -62,7 +64,7 @@ class fugacity:
             b1 = (-a2/2 + (a2**2/4 + a1**3/27)**(1/2))**(1/3)
             b2 = np.sign(( -a2/2 - (a2**2/4 + a1**3/27)**(1/2)))*abs(-a2/2 - (a2**2/4 + a1**3/27)**(1/2))**(1/3)
 
-            if ph==1:
+            if ph=='l':
                Vl = b1 + b2 - p/3
                Vv = 1e-20
             else:
@@ -70,10 +72,10 @@ class fugacity:
                 Vl = 1e-20
             roots=1
 
-        return Vl,Vv'''
+        return Vl,Vv
 
 
-    def lnphi(x,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b):
+    def lnphi(x,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,ph):
         lnphi = np.zeros(Nc)
         lnphi_termo = np.zeros(Nc)
         aalpha = 0; bm = 0;
@@ -85,10 +87,15 @@ class fugacity:
                 aalpha = aalpha + x[i]*x[j]*aalpha_ij[i,j]
         A = aalpha*P/(R*T)**2
 
-        eos = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=x,kijs=Bin,T=T,P=P)
+        '''eos = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=x,kijs=Bin,T=T,P=P)
         if eos.phase == 'l': V = eos.V_l
-        else: V = eos.V_g
-        
+        else: V = eos.V_g'''
+
+        Vl,Vv = fugacity.V_PR(bm,R,T,P,A,aalpha,ph)
+        if ph == 'l':
+            V = Vl
+        else: V = Vv
+
         Z = P*V/(R*T)
 
         for i in range(0,Nc):
@@ -105,25 +112,26 @@ class fugacity:
 
 
 class StabilityTest:
-    def Stability(w,Bin,R,Tc,Pc,T,P,Nc,z):
-        K,b,aalpha_ij = fugacity.coefficientsPR(w,Bin,R,Tc,Pc,T,P,Nc)
+    def Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z,ph):
+        K,b,aalpha_ij = fugacity.coefficientsPR(w,Bin,R,Tc,Pc,T,P,Nc,C7)
 
     #****************************Initial guess******************************#
     ## Both approaches bellow should be used in case the phase is in the critical region
 
         #identifying the initial phase 'z' mole fraction
-        eos = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=z,kijs=Bin,T=T,P=P)
+        '''eos = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=z,kijs=Bin,T=T,P=P)'''
 
-        lnphiz = fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b)
+
         ## Used alone when the phase investigated is clearly liquid like (ph == 1)
-        if eos.phase == 'l' or eos.phase == 'l/g':
+        if ph == 'l' or ph == 'l/g':
             Y = z/K
             Y_old = 0.9*Y
             y = Y/sum(Y)
 
             while max(abs(Y/Y_old - 1))>1e-10: #convergência - critério do Schmall - vi no livro do Dandekar que tinha outro que segundo ele era melhor
                 Y_old = Y
-                lnphiy = fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b)
+                lnphiz = fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'l')
+                lnphiy = fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'g')
 
                 for i in range(len(Y)):
                     Y[i] = math.exp( math.log(z[i]) + lnphiz[i] - lnphiy[i] )
@@ -134,14 +142,15 @@ class StabilityTest:
             else: print('instavel') #estavel2 = 0
 
     ## Used alone when the phase investigated is clearly vapour like (ph == 2)
-        if eos.phase == 'g' or eos.phase == 'l/g':
+        if ph == 'g' or ph == 'l/g':
             Y = K*z
             Y_old = 0.9*Y
             y = np.divide(Y,sum(Y)) #ta dando erro
 
             while max(abs(Y/Y_old - 1))>1e-9:
                 Y_old = Y
-                lnphiy = fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b);
+                lnphiz = fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'g')
+                lnphiy = fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'l')
                 for i in range(len(Y)):
                     Y[i] = math.exp( math.log(z[i]) + lnphiz[i] - lnphiy[i] )
                 y = np.divide(Y,sum(Y))
@@ -153,9 +162,9 @@ class StabilityTest:
         if estavel1==1 and estavel2==1: return 'estavel'
         else: return 'instavel'''
 
-    def TPD(Nc,T,P,R,Tc,Pc,Bin,w,z): #atualmente só funciona para 2D
-        x = np.zeros()
-        K,b,aalpha_ij = fugacity.coefficientsPR(w,Bin,R,Tc,Pc,T,P,Nc)
+    def TPD(Nc,C7,T,P,R,Tc,Pc,Bin,w,z): #atualmente só funciona para 2D
+        x = np.zeros(Nc)
+        K,b,aalpha_ij = fugacity.coefficientsPR(w,Bin,R,Tc,Pc,T,P,Nc,C7)
         #**********************Tangent Plane distance plot*********************#
         t = np.linspace(0.01,0.99,0.9/0.002) #vetor auxiliar
         TPD = np.zeros(len(t)) ##F

@@ -81,6 +81,7 @@ class fugacity:
         aalpha = 0; bm = 0;
 
         bm = sum(x*b)
+
         B = bm*P/(R*T)
         for i in range(0,Nc):
             for j in range(0,Nc):
@@ -123,40 +124,40 @@ class StabilityTest:
 
 
         ## Used alone when the phase investigated is clearly liquid like (ph == 1)
-        if ph == 'l' or ph == 'l/g':
-            Y = z/K
-            Y_old = 0.9*Y
+
+        Y = z/K
+        print(Y)
+        Y_old = 0.9*Y
+        y = Y/sum(Y)
+        while max(abs(Y/Y_old - 1))>1e-9: #convergência - critério do Schmall - vi no livro do Dandekar que tinha outro que segundo ele era melhor
+            Y_old = Y
+            lnphiz = fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'l')
+            lnphiy = fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'g')
+            print(lnphiy)
+            for i in range(len(Y)):
+                Y[i] = math.exp( math.log(z[i]) + lnphiz[i] - lnphiy[i] )
+
             y = Y/sum(Y)
 
-            while max(abs(Y/Y_old - 1))>1e-10: #convergência - critério do Schmall - vi no livro do Dandekar que tinha outro que segundo ele era melhor
-                Y_old = Y
-                lnphiz = fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'l')
-                lnphiy = fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'g')
-
-                for i in range(len(Y)):
-                    Y[i] = math.exp( math.log(z[i]) + lnphiz[i] - lnphiy[i] )
-
-                y = Y/sum(Y);
-
-            if sum(Y) <= 1: print('estavel')#estavel2 = 1
-            else: print('instavel') #estavel2 = 0
+        if sum(Y) <= 1: print('estavel')#estavel2 = 1
+        else: print('instavel') #estavel2 = 0
 
     ## Used alone when the phase investigated is clearly vapour like (ph == 2)
-        if ph == 'g' or ph == 'l/g':
-            Y = K*z
-            Y_old = 0.9*Y
-            y = np.divide(Y,sum(Y)) #ta dando erro
 
-            while max(abs(Y/Y_old - 1))>1e-9:
-                Y_old = Y
-                lnphiz = fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'g')
-                lnphiy = fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'l')
-                for i in range(len(Y)):
-                    Y[i] = math.exp( math.log(z[i]) + lnphiz[i] - lnphiy[i] )
-                y = np.divide(Y,sum(Y))
+        Y = z*K
+        Y_old = 0.9*Y
+        y = Y/sum(Y) #ta dando erro
 
-            if sum(Y) <= 1: print('estavel')#estavel2 = 1
-            else: print('instavel') #estavel2 = 0
+        while max(abs(Y/Y_old - 1))>1e-9:
+            Y_old = Y
+            lnphiz = fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'g')
+            lnphiy = fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'l')
+            for i in range(len(Y)):
+                Y[i] = math.exp( math.log(z[i]) + lnphiz[i] - lnphiy[i] )
+            y = Y/sum(Y)
+
+        if sum(Y) <= 1: print('estavel')#estavel2 = 1
+        else: print('instavel') #estavel2 = 0
 
         '''
         if estavel1==1 and estavel2==1: return 'estavel'
@@ -170,7 +171,7 @@ class StabilityTest:
         TPD = np.zeros(len(t)) ##F
         for i in range(0,len(t)):
             aux = 0;
-            lnphiz = fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b) #original phase
+            lnphiz = fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'l') #original phase
 
             x = np.array([1-t[i],t[i]]) #new phase composition (1-t e t) - apenas válido para Nc=2 acredito eu.
 
@@ -178,17 +179,17 @@ class StabilityTest:
             a fração molar do segundo componente de x varia direto com t, que é a
             variável de plotagem. Logo, a distancia dos planos tangentes será
             zeros em z[Nc-1]. O contrário ocorreria'''
-            lnphix = fugacity.lnphi(x,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b); #new phase (vapor- ph=2)
+            lnphix = fugacity.lnphi(x,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'g'); #new phase (vapor- ph=2)
             for j in range(0,Nc):
                 fix = math.exp(lnphix[j])*x[j]*P
                 fiz = math.exp(lnphiz[j])*z[j]*P
                 aux = aux + x[j]*R*T*(math.log(fix/fiz))
             TPD[i] = aux
 
-        for i in range(len(t)):
+        '''for i in range(len(t)):
             if abs(TPD[i] - K[1]) < 0.1:
                 print(TPD[i])
-                print('ysp',t[i])
+                print('ysp',t[i])'''
 
         plt.figure(0)
         plt.plot(t,TPD)

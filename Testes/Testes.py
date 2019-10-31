@@ -8,24 +8,24 @@ class estabilidade(unittest.TestCase):
 #Unidades estão atualmente no SI
 
     def test_caso2(self):
-        z = np.array([0.2,0.8]) #exemplo aleatório
+        z = np.array([0.7,0.3]) #exemplo aleatório
         caso = 2
 
         if caso == 2:
             Nc = 2;
-            P = (100)*10E5 #* 10E5 / 101325) * 14.7; pressão de 100bar e ele converte para atm e depois psi
-            T = 350 #*9/5 - T em K to R
-            Tc = np.array([190.6, 460.4]);
-            Pc =np.array([45.4,33.4])*10E5; # 14.7*
+            P = (100* 1E5 / 101325)*14.7# pressão de 100bar e ele converte para atm e depois psi
+            T = 350*9/5 #- T em K to R
+            Tc = np.array([190.6, 460.4])*9/5;
+            Pc =np.array([45.4,33.4])*14.7; # 14.7*
             w = np.array([0.008,0.227]);
             Bin = np.array([[0,0.0236],[0.0236,0]]);
         C7 = 'n'
         ph = 'l'
         print('caso2:')
         StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z,ph)
-        #StabilityTest.TPD(Nc,C7,T,P,R,Tc,Pc,Bin,w,z)
+        StabilityTest.TPD(Nc,C7,T,P,R,Tc,Pc,Bin,w,z)
 
-    def teste_table16_1(self): #checando o fator de compressibilidade - Z=1.3225 (ans:1.32411) - acho aceitavel considerando as aprox
+    '''def teste_table16_1(self): #checando o fator de compressibilidade - Z=1.3225 (ans:1.32411) - acho aceitavel considerando as aprox
         #               Met       Prop     n-Pent       n-Dec      n-Hexadec
         z   = np.array([0.5449,  0.1394,   0.1314,     0.0869,      0.0974])
         Tc  = np.array([   343,     666,      845,       1112,        1291])*(5/9)
@@ -75,4 +75,4 @@ class estabilidade(unittest.TestCase):
         ph = 'l/g'
         C7 = 'y'
         print('16_5:')
-        StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z,ph)
+        StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z,ph)'''

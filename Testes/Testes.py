@@ -10,10 +10,10 @@ class estabilidade(unittest.TestCase):
     def test_caso2(self):
         z = np.array([0.7,0.3]) #exemplo aleatório
         caso = 2
-
         if caso == 2:
+            R = 10.73
             Nc = 2;
-            P = (100* 1E5 / 101325)*14.7# pressão de 100bar e ele converte para atm e depois psi
+            P = (100*1E5/101325)*14.7# pressão de 100bar e ele converte para atm e depois psi
             T = 350*9/5 #- T em K to R
             Tc = np.array([190.6, 460.4])*9/5;
             Pc =np.array([45.4,33.4])*14.7; # 14.7*

@@ -81,7 +81,6 @@ class fugacity:
         aalpha = 0; bm = 0;
 
         bm = sum(x*b)
-
         B = bm*P/(R*T)
         for i in range(0,Nc):
             for j in range(0,Nc):
@@ -123,33 +122,39 @@ class StabilityTest:
         '''eos = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=z,kijs=Bin,T=T,P=P)'''
 
 
-        ## Used alone when the phase investigated is clearly liquid like (ph == 1)
+        ## Used alone when the phase investigated is clearly vapor like (ph == g)
 
         Y = z/K
-        print(Y)
-        Y_old = 0.9*Y
+        Yold = 0.9*Y
         y = Y/sum(Y)
-        while max(abs(Y/Y_old - 1))>1e-9: #convergência - critério do Schmall - vi no livro do Dandekar que tinha outro que segundo ele era melhor
-            Y_old = Y
+
+        while max(abs(Y/Yold - 1))>1e-10: #convergência
+            Yold = np.copy(Y)
             lnphiz = fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'l')
             lnphiy = fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'g')
-            print(lnphiy)
-            for i in range(len(Y)):
+
+            for i in range(Nc):
                 Y[i] = math.exp( math.log(z[i]) + lnphiz[i] - lnphiy[i] )
+            y = Y/sum(Y);
 
-            y = Y/sum(Y)
-
-        if sum(Y) <= 1: print('estavel')#estavel2 = 1
+        if sum(Y) <= 1: print('estavel')
         else: print('instavel') #estavel2 = 0
 
-    ## Used alone when the phase investigated is clearly vapour like (ph == 2)
+        ''' If this first test returns stable: The original mixture corresponds
+        that the Gibbs free energy is at global minimum, there is only one
+        stationary point is where y = z. So, it does not have a new phase,
+        doesn't need a phase split. If it returns unstable: There is another
+        composition that makes the Gibbs free energy at his global minimum wich
+        corresponds to a negative value where sum(Y)>1'''
 
-        Y = z*K
+        ## Used alone when the phase investigated is clearly liquid like (ph == l)
+
+        Y = K*z
         Y_old = 0.9*Y
-        y = Y/sum(Y) #ta dando erro
+        y = Y/sum(Y)
 
-        while max(abs(Y/Y_old - 1))>1e-9:
-            Y_old = Y
+        while max(abs(Y/Y_old - 1))>1e-10:
+            Y_old = np.copy(Y)
             lnphiz = fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'g')
             lnphiy = fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'l')
             for i in range(len(Y)):
@@ -159,9 +164,8 @@ class StabilityTest:
         if sum(Y) <= 1: print('estavel')#estavel2 = 1
         else: print('instavel') #estavel2 = 0
 
-        '''
-        if estavel1==1 and estavel2==1: return 'estavel'
-        else: return 'instavel'''
+    '''The same thing happens here. The difference is that, the original phase
+    is gas, and then the "new" phase is liquid. ''' #completar aqui ainda.
 
     def TPD(Nc,C7,T,P,R,Tc,Pc,Bin,w,z): #atualmente só funciona para 2D
         x = np.zeros(Nc)
@@ -187,7 +191,7 @@ class StabilityTest:
             TPD[i] = aux
 
         '''for i in range(len(t)):
-            if abs(TPD[i] - K[1]) < 0.1:
+            if (TPD[i]) < 0:
                 print(TPD[i])
                 print('ysp',t[i])'''
 

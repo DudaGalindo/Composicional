@@ -99,7 +99,6 @@ class fugacity:
 
     def lnphi(x,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,ph):
         lnphi = np.zeros(Nc)
-        lnphi_termo = np.zeros(Nc)
         aalpha = 0; bm = 0;
 
         bm = sum(x*b)
@@ -112,10 +111,7 @@ class fugacity:
         '''eos = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=x,kijs=Bin,T=T,P=P)
         if eos.phase == 'l': V = eos.V_l
         else: V = eos.V_g'''
-        '''Vl,Vv = fugacity.V_PR(bm,R,T,P,A,aalpha,ph)
-        if ph == 'l': V = Vl
-        else: V = Vv
-        Z = P*V/(R*T)'''
+
         Z = fugacity.Z_PR(B,A,ph)
 
         for i in range(0,Nc):
@@ -180,7 +176,7 @@ class StabilityTest:
             Y_old = np.copy(Y)
             lnphiz = fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'g')
             lnphiy = fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'l')
-            
+
             for i in range(len(Y)):
                 Y[i] = math.exp( math.log(z[i]) + lnphiz[i] - lnphiy[i] )
             y = Y/sum(Y)
@@ -188,8 +184,12 @@ class StabilityTest:
         if sum(Y) <= 1: print('estavel')#estavel2 = 1
         else: print('instavel') #estavel2 = 0
 
-    ''''The same thing happens here. The difference is that, the original phase
-    is gas, and then the "new" phase is liquid. ''' #completar aqui ainda.
+    '''OBS: In both tests, the fugacity coefficient of the original phase is
+    calculated. For a mixture, however, they present the same value, once there
+    is only one compressibility factor. The ph = 'g' or ph = 'l' just inffer if
+    the present fluid is composed by only one component (its not a mixture).'''
+    '''The same thing happens here. The difference is that, the original phase
+    is gas, and then the "new" phase is liquid. ''' #completar aqui ainda. !!!
 
     def TPD(Nc,C7,T,P,R,Tc,Pc,Bin,w,z): #atualmente só funciona para 2D
         x = np.zeros(Nc)

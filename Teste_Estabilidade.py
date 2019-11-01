@@ -31,10 +31,32 @@ class fugacity:
         return K,b,aalpha_ij
 
 
+    def Z_PR(B,A,ph):
+        #Z**3 - (1-B)*Z**2 + (A-2*B-3*B**2)*Z-(A*B-B**2-B**3)
+        coef = [1,-(1-B),(A-2*B-3*B**2),-(A*B-B**2-B**3)]
+        Z = np.roots(coef)
+        root = np.isreal(Z) # return True for real roots
+
+        # Saving them in the result vector Zr
+        pos = np.where(root == True) #position where the real roots are
+        Z_reais = np.zeros(len(pos))
+
+        for i in range(0,len(Z_reais)):
+            Z_reais[i] = np.real(Z[pos[i]]) #Saving the real roots
+
+        if sum(pos)>1:
+            if ph == 'l': Z_ans = min(Z_reais)
+            else: Z_ans = max(Z_reais)
+        else: Z_ans = Z_reais
+
+        '''OBS: O caso acima considera que pode haver mais de uma raiz real uma
+        vez que o dado de entrada pode ser uma substancia simples.'''
+
+        return Z_ans
 
     def V_PR(bm,R,T,P,A,aalpha,ph):
         ## Acredito que aqui ele tenha usado a EOS de PR da equação cúbica pra resolver, identificando se vai ter uma,duas ou tres raízes.
-        # Não sei de onde ele tirou essa forma de escrever, mas pretendo testar com afunção do thermo que já retorna Vl e Vv
+        # Não sei de onde ele tirou essa forma de escrever
 
         p = bm - R*T/P
         q = -3*bm**2 - 2*R*T*bm/P + aalpha/P
@@ -90,13 +112,11 @@ class fugacity:
         '''eos = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=x,kijs=Bin,T=T,P=P)
         if eos.phase == 'l': V = eos.V_l
         else: V = eos.V_g'''
-
-        Vl,Vv = fugacity.V_PR(bm,R,T,P,A,aalpha,ph)
-        if ph == 'l':
-            V = Vl
+        '''Vl,Vv = fugacity.V_PR(bm,R,T,P,A,aalpha,ph)
+        if ph == 'l': V = Vl
         else: V = Vv
-
-        Z = P*V/(R*T)
+        Z = P*V/(R*T)'''
+        Z = fugacity.Z_PR(B,A,ph)
 
         for i in range(0,Nc):
             psi_i = 0
@@ -112,15 +132,18 @@ class fugacity:
 
 
 class StabilityTest:
-    def Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z,ph):
+    def Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z):
         K,b,aalpha_ij = fugacity.coefficientsPR(w,Bin,R,Tc,Pc,T,P,Nc,C7)
 
     #****************************Initial guess******************************#
     ## Both approaches bellow should be used in case the phase is in the critical region
 
         #identifying the initial phase 'z' mole fraction
-        '''eos = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=z,kijs=Bin,T=T,P=P)'''
-
+        '''eos = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=z,kijs=Bin,T=T,P=P)
+        print(eos.phase)'''
+        ''' Talvez aqui eu possa fazer uma modificação no que diz respeito a: o
+        estado inicial, se eu conheço ele, sei qual sua fase (liq ou vapor),
+        ja me limita na escolha dos testes - pensar mais sobre isso'''
 
         ## Used alone when the phase investigated is clearly vapor like (ph == g)
 
@@ -136,7 +159,7 @@ class StabilityTest:
             for i in range(Nc):
                 Y[i] = math.exp( math.log(z[i]) + lnphiz[i] - lnphiy[i] )
             y = Y/sum(Y);
-
+        print(sum(Y))
         if sum(Y) <= 1: print('estavel')
         else: print('instavel') #estavel2 = 0
 
@@ -157,14 +180,15 @@ class StabilityTest:
             Y_old = np.copy(Y)
             lnphiz = fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'g')
             lnphiy = fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'l')
+            
             for i in range(len(Y)):
                 Y[i] = math.exp( math.log(z[i]) + lnphiz[i] - lnphiy[i] )
             y = Y/sum(Y)
-
+        print(sum(Y))
         if sum(Y) <= 1: print('estavel')#estavel2 = 1
         else: print('instavel') #estavel2 = 0
 
-    '''The same thing happens here. The difference is that, the original phase
+    ''''The same thing happens here. The difference is that, the original phase
     is gas, and then the "new" phase is liquid. ''' #completar aqui ainda.
 
     def TPD(Nc,C7,T,P,R,Tc,Pc,Bin,w,z): #atualmente só funciona para 2D

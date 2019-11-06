@@ -1,12 +1,14 @@
 import numpy as np
-from ..Teste_Estabilidade import StabilityTest, fugacity
+from ..Checa_Estabilidade import StabilityTest, fugacity
+import thermo
 import unittest
 
 R = 8.3144598
 
 class estabilidade(unittest.TestCase):
 #Unidades estão atualmente no SI
-    def test_caso1(self):
+
+    '''def test_caso1(self):
         R = 10.73159;
         T = 200 + 459.67;
         P = 160;
@@ -68,30 +70,14 @@ class estabilidade(unittest.TestCase):
         ph = 'l'
         C7 = 'n'
         print('16_3:')
-        StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)
+        StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)'''
 
-    '''def teste_table16_5z(self): #unstable
-        #               Met       Prop     n-Pent       n-Dec      n-Hexadec
-        z   = np.array([0.8232,  0.0871,   0.0505,     0.0198,      0.0194])
-        Tc  = np.array([   343,     666,      845,       1112,        1291])*(5/9)
-        Pc  = np.array([ 667.2,   615.8,    489.4,      305.7,       205.7])*6894.7573
-        w   = np.array([ 0.008,   0.152,    0.251,      0.490,       0.742])
-        Bin = np.array([[0,0.009,0.021,0.052,0.080],[0.009,0,0.003,0.019,0.039],\
-                        [0.021,0.003,0,0.008,0.022],[0.052,0.019,0.008,0,0.004],\
-                        [0.08,0.039,0.022,0.004,0]])
-        Nc = len(z)
-        T = (100+459.67)*5/9
-        P = 1500*6894.7573
-        ph = 'l/g'
-        C7 = 'y'
-        print('16_5:')
-        StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)
 
-    def teste_table16_7x(self): #understand the meaning of having a mixture as th entry parameter
+    def teste_table16_7x(self): #understand the meaning of having a mixture as the entry parameter
         #               Met       Prop     n-Pent       n-Dec      n-Hexadec
         x   = np.array([0.35630,0.14651,  0.22041,     0.13818,    0.13860])
         y   = np.array([0.89911,0.07744,  0.02288,     0.00055,    0.00002])
-        nl = 0.1398;nv = 0.8602; z = x*nl+y*nv
+        nl = 0.1398;nv = 0.8602; z = x*nv+y*nl
         Tc  = np.array([   343,     666,      845,       1112,        1291])*(5/9)
         Pc  = np.array([ 667.2,   615.8,    489.4,      305.7,       205.7])*6894.7573
         w   = np.array([ 0.008,   0.152,    0.251,      0.490,       0.742])
@@ -103,8 +89,20 @@ class estabilidade(unittest.TestCase):
         P = 1500*6894.7573
         C7 = 'y'
         print('16_7x:')
-        K,b,aalpha_ij = fugacity.coefficientsPR(w,Bin,R,Tc,Pc,T,P,Nc,C7)
+        eos = thermo.eos_mix.SRKMIX(T=T,P=P,Tcs=Tc,Pcs=Pc,omegas=w,zs=z,kijs=Bin)
+        print('z',eos.phase)
 
-        StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,x)
-        print('hold')
-        StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,y)'''
+        '''
+        eosl = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=x,kijs=Bin,T=T,P=P)
+        print('x',eosl.phase)
+        StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,y)
+        eosg = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=y,kijs=Bin,T=T,P=P)
+        print('y',eosg.phase)'''
+
+        '''I've notice that if the mixture is in the two phase region, neither the
+        code, neither the thermo.eos_mix module are able to identify (at least it
+        did not identify in this example, although according to the thermo.eos_mix
+        module, it should have identified), in fact both understands that there's just one phase present. So, due to
+        that, I conclude that for this to work, the entry parameters have to
+        be for each phase, like this example shows, and the stability test is made
+        separetedly.'''

@@ -7,8 +7,8 @@ R = 8.3144598
 
 class estabilidade(unittest.TestCase):
 #Unidades estão atualmente no SI
-
-    '''def test_caso1(self):
+# Esses testes devem conter apenas uma fase. Se o sistema for composto por mais de uma fase, deve-se tomar x e y separadamente
+    def test_caso1(self):
         R = 10.73159;
         T = 200 + 459.67;
         P = 160;
@@ -70,10 +70,10 @@ class estabilidade(unittest.TestCase):
         ph = 'l'
         C7 = 'n'
         print('16_3:')
-        StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)'''
+        StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)
 
 
-    def teste_table16_7x(self): #understand the meaning of having a mixture as the entry parameter
+        '''def teste_table16_7x(self): #understand the meaning of having a mixture as the entry parameter
         #               Met       Prop     n-Pent       n-Dec      n-Hexadec
         x   = np.array([0.35630,0.14651,  0.22041,     0.13818,    0.13860])
         y   = np.array([0.89911,0.07744,  0.02288,     0.00055,    0.00002])
@@ -90,7 +90,7 @@ class estabilidade(unittest.TestCase):
         C7 = 'y'
         print('16_7x:')
         eos = thermo.eos_mix.SRKMIX(T=T,P=P,Tcs=Tc,Pcs=Pc,omegas=w,zs=z,kijs=Bin)
-        print('z',eos.phase)
+        print('z',eos.phase)'''
 
         '''
         eosl = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=x,kijs=Bin,T=T,P=P)

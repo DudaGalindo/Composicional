@@ -40,12 +40,12 @@ class IMPEC:
 
                 propC = IMPEC.properties() #provavelmente vai ta em outra classe/outro arquivo
 
-                estabilitity = phaseEstabilityTest(propC)
+                estabilitity = phaseStabilityTest(propC)
                 # Não tenho certeza se seria exatamente isso, acredito que só irei confirmar implementando
                 while estabilitity == 0:
                     phase new = flash_calculation
                     propC = IMPEC.properties()
-                    estabilitity = phaseEstabilityTest(propC)
+                    estabilitity = phaseStabilityTest(propC)
 
             p_old = p
 

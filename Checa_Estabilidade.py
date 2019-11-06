@@ -51,7 +51,7 @@ class fugacity:
             if ph == 'l': Z_ans = min(Z_reais)
             else: Z_ans = max(Z_reais)
         else: Z_ans = Z_reais
-        print(Z_reais)
+
         '''OBS: O caso acima considera que pode haver mais de uma raiz real uma
         vez que o dado de entrada pode ser uma substancia simples.'''
 

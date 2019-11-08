@@ -8,7 +8,7 @@ R = 8.3144598
 class estabilidade(unittest.TestCase):
 #Unidades estão atualmente no SI
 # Esses testes devem conter apenas uma fase. Se o sistema for composto por mais de uma fase, deve-se tomar x e y separadamente
-    def test_caso1(self):
+    '''def test_caso1(self):
         R = 10.73159;
         T = 200 + 459.67;
         P = 160;
@@ -21,7 +21,7 @@ class estabilidade(unittest.TestCase):
         Mw = np.array([16.043,44.097,58.124,86,134])
         Bin  = np.array([[0,0,0,0.01,0.02], [0,0,0,0.01,0.01], [0,0,0,0,0.01], [0.01,0.01,0,0,0.01], [0.02,0.01,0.01,0.01,0]])
         z = np.array([0.6,0.1,0.1,0.1,0.1])
-        C7 = 'n'
+        C7 = 0
         print('caso1:')
         StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)
 
@@ -34,11 +34,11 @@ class estabilidade(unittest.TestCase):
         Pc =np.array([45.4,33.4])*1E5#*14.7; # 14.7*
         w = np.array([0.008,0.227]);
         Bin = np.array([[0,0.0236],[0.0236,0]]);
-        C7 = 'n'
+        C7 = 0
         ph = 'l'
         print('caso2:')
         StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)
-        #StabilityTest.TPD(Nc,C7,T,P,R,Tc,Pc,Bin,w,z)
+        #StabilityTest.TPD(Nc,C7,T,P,R,Tc,Pc,Bin,w,z)'''
 
     def teste_table16_1(self): #checando o fator de compressibilidade - Z=1.3225 (ans:1.32411) - acho aceitavel considerando as aprox
         #               Met       Prop     n-Pent       n-Dec      n-Hexadec
@@ -53,8 +53,7 @@ class estabilidade(unittest.TestCase):
         T = 338.7
         P = 5000*6894.7573
         # Is there heptane plus in the composition: if yes, C7 = 'y', no, C7 = 'n'
-        C7 = 'y'
-        ph = 'l'
+        C7 = 1
         print('16_1:')
         StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)
 
@@ -71,7 +70,7 @@ class estabilidade(unittest.TestCase):
         T = (100+459.67)*5/9
         P = 2600*6894.7573
         ph = 'l'
-        C7 = 'n'
+        C7 = 0
         print('16_3:')
         StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)
 
@@ -90,7 +89,7 @@ class estabilidade(unittest.TestCase):
         Nc = len(z)
         T = (100+459.67)*5/9
         P = 1500*6894.7573
-        C7 = 'y'
+        C7 = 1
         #print('16_7x:')
         #eos = thermo.eos_mix.SRKMIX(T=T,P=P,Tcs=Tc,Pcs=Pc,omegas=w,zs=z,kijs=Bin)
         #eosl = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=x,kijs=Bin,T=T,P=P)

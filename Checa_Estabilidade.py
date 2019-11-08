@@ -13,76 +13,50 @@ import matplotlib.pyplot as plt
 
 class Fugacity:
     def coefficientsPR(w,Bin,R,Tc,Pc,T,P,Nc,C7):
-        a = np.zeros(Nc)
-        b = np.zeros(Nc)
-        K = np.zeros(Nc)
-        aalpha_i = np.zeros(Nc); aalpha_ij= np.zeros((Nc,Nc))
+        # I think that the method to calculate k would be just the general one for heavier components
+        k = (0.379642+1.48503*w-0.1644*w**2+0.016667*w**3)*C7+\
+            (0.3746 + 1.54226*w -0.26992*w**2)*(1-C7)
+        alpha = (1+k*(1-np.sqrt(T/Tc)))**2;
+        aalpha_i = 0.45724*(R*Tc)**2/Pc*alpha
+        b = 0.07780*R*Tc/Pc;
+        K = np.exp(5.37*(1+w)*(1-Tc/T))*(Pc/P); # Wilson equation (K - equilimbrium ratio)
+        aalpha_i_reshape = np.ones((Nc,Nc))*aalpha_i[:,np.newaxis]
+        aalpha_ij = np.sqrt(aalpha_i_reshape.T*aalpha_i[:,np.newaxis])*(1.- Bin)
 
-        for i in range(0,Nc):
-            if C7 == 'y':# For heavier components:
-            #I think that the "if" statemant can be removed and the method to calculate k would be just the general one for heavier components
-                k = 0.379642+1.48503*w[i]-0.1644*w[i]**2+0.016667*w[i]**3
-            else: k = 0.3746 + 1.54226*w[i] -0.26992*w[i]**2;
-            alpha = (1+k*(1-(T/Tc[i])**(1/2)))**2;
-            aalpha_i[i] = 0.45724*(R*Tc[i])**2*alpha/Pc[i];
-            b[i] = 0.07780*R*Tc[i]/Pc[i];
-            K[i] = math.exp(5.37*(1+w[i])*(1-1/(T/Tc[i])))/(P/Pc[i]); # Wilson equation (K - equilimbrium ratio)
-
-        for i in range(0,Nc):
-            for j in range(0,Nc):
-                aalpha_ij[i,j] = (aalpha_i[i]*aalpha_i[j])**(1/2) *(1.
-                                  - Bin[i,j]); # aalphaij
         return K,b,aalpha_ij
 
 
     def Z_PR(B,A,ph):
-        #Z**3 - (1-B)*Z**2 + (A-2*B-3*B**2)*Z-(A*B-B**2-B**3)
+        # PR cubic EOS: Z**3 - (1-B)*Z**2 + (A-2*B-3*B**2)*Z-(A*B-B**2-B**3)
         coef = [1,-(1-B),(A-2*B-3*B**2),-(A*B-B**2-B**3)]
         Z = np.roots(coef)
         root = np.isreal(Z) # return True for real roots
-
-        # Saving them in the result vector Zr
-        pos = np.where(root == True) #position where the real roots are
-        Z_reais = np.zeros(len(pos))
-
-        for i in range(0,len(Z_reais)):
-            Z_reais[i] = np.real(Z[pos[i]]) #Saving the real roots
+        real_roots_position = np.where(root == True) #position where the real roots are - criada apenas para organização
+        Z_reais = np.real(Z[real_roots_position[:]]) #Saving the real roots
 
         ''' This part below, considers that the phase is composed by a pure
-         component, so the EOS model can return more than one real root'''
-        if sum(pos)>1:
-            if ph == 'l': Z_ans = min(Z_reais)
-            else: Z_ans = max(Z_reais)
-        else: Z_ans = Z_reais
+         component, so the EOS model can return more than one real root.
+            If liquid, Zl = min(Z) and gas Zv = max(Z).
+            You can notice that, if there's only one real root, it works as well.'''
+
+        Z_ans = min(Z_reais)*ph + max(Z_reais)*(1-ph)
 
         return Z_ans
 
 
     def lnphi(x,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,ph):
-        lnphi = np.zeros(Nc)
-        aalpha = 0; bm = 0;
-
         bm = sum(x*b)
         B = bm*P/(R*T)
-        for i in range(0,Nc):
-            for j in range(0,Nc):
-                aalpha = aalpha + x[i]*x[j]*aalpha_ij[i,j]
+        x_reshape = np.ones(aalpha_ij.shape)*x[:,np.newaxis]
+        aalpha = (x_reshape.T*x[:,np.newaxis]*aalpha_ij).sum()
         A = aalpha*P/(R*T)**2
-
-        '''eos = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=x,kijs=Bin,T=T,P=P)
-        if eos.phase == 'l': V = eos.V_l
-        else: V = eos.V_g'''
 
         Z = Fugacity.Z_PR(B,A,ph)
 
-        for i in range(0,Nc):
-            psi_i = 0
-            for j in range(0,Nc):
-                psi_i = psi_i + x[j]*aalpha_ij[i,j]
-
-            lnphi[i] = b[i]/bm*(Z-1) - np.log(Z - B) - \
-                A/(2*2**(1/2)*B)*(2*psi_i/aalpha -\
-                b[i]/bm)*np.log((Z+(1+2**(1/2))*B)/(Z+(1-2**(1/2))*B))
+        psi = (x_reshape*aalpha_ij).sum(axis = 0)
+        lnphi = b/bm*(Z-1)-np.log(Z-B)-A/(2*(2**(1/2))*B)*\
+                (2*psi[:]/aalpha-b/bm)*np.log((Z+(1+2**(1/2))*B)/\
+                (Z+(1-2**(1/2))*B))
 
         return lnphi
 
@@ -96,11 +70,7 @@ class StabilityTest:
     ## Both approaches bellow should be used in case the phase is in the critical region
 
         #identifying the initial phase 'z' mole fraction
-        '''eos = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=z,kijs=Bin,T=T,P=P)
-        print(eos.phase)'''
-        ''' Talvez aqui eu possa fazer uma modificação no que diz respeito a: o
-        estado inicial, se eu conheço ele, sei qual sua fase (liq ou vapor),
-        ja me limita na escolha dos testes - pensar mais sobre isso'''
+        ''' In the lnphi function: 0 stands for gas phase and 1 for liquid'''
 
     #*****************************Test one**********************************#
         #Used alone when the phase investigated (y) is clearly vapor like (ph == g)
@@ -111,12 +81,11 @@ class StabilityTest:
 
         while max(abs(Y/Yold - 1))>1e-10: #convergência
             Yold = np.copy(Y)
-            lnphiz = Fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'l')
-            lnphiy = Fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'g')
-
-            for i in range(Nc):
-                Y[i] = math.exp( math.log(z[i]) + lnphiz[i] - lnphiy[i] )
+            lnphiz = Fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,1)
+            lnphiy = Fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,0)
+            Y = np.exp(np.log(z) + lnphiz - lnphiy)
             y = Y/sum(Y);
+
         print(sum(Y))
         if sum(Y) <= 1: print('estavel')
         else: print('instavel') #estavel2 = 0
@@ -136,11 +105,9 @@ class StabilityTest:
 
         while max(abs(Y/Y_old - 1))>1e-10:
             Y_old = np.copy(Y)
-            lnphiz = Fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'g')
-            lnphiy = Fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'l')
-
-            for i in range(len(Y)):
-                Y[i] = math.exp( math.log(z[i]) + lnphiz[i] - lnphiy[i] )
+            lnphiz = Fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,0)
+            lnphiy = Fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,1)
+            Y = np.exp(np.log(z) + lnphiz - lnphiy)
             y = Y/sum(Y)
         print(sum(Y))
         if sum(Y) <= 1: print('estavel')#estavel2 = 1
@@ -159,7 +126,7 @@ class StabilityTest:
     a two phase liquid system. '''#-Discutir com alguém sobre essa última afirmação
 
 
-    def TPD(Nc,C7,T,P,R,Tc,Pc,Bin,w,z): #atualmente só funciona para 2D
+    def TPD(Nc,C7,T,P,R,Tc,Pc,Bin,w,z): #atualmente só funciona para 2D - falta modificar ainda. Mas só modifico quando eu ver onde vou usar isso
         x = np.zeros(Nc)
         K,b,aalpha_ij = fugacity.coefficientsPR(w,Bin,R,Tc,Pc,T,P,Nc,C7)
         #**********************Tangent Plane distance plot*********************#

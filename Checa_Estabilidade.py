@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
     if the mixture is in the two phase region, it should be identified the molar
     fractions of the components in each phase.'''
 
-class fugacity:
+class Fugacity:
     def coefficientsPR(w,Bin,R,Tc,Pc,T,P,Nc,C7):
         a = np.zeros(Nc)
         b = np.zeros(Nc)
@@ -20,6 +20,7 @@ class fugacity:
 
         for i in range(0,Nc):
             if C7 == 'y':# For heavier components:
+            #I think that the "if" statemant can be removed and the method to calculate k would be just the general one for heavier components
                 k = 0.379642+1.48503*w[i]-0.1644*w[i]**2+0.016667*w[i]**3
             else: k = 0.3746 + 1.54226*w[i] -0.26992*w[i]**2;
             alpha = (1+k*(1-(T/Tc[i])**(1/2)))**2;
@@ -47,13 +48,12 @@ class fugacity:
         for i in range(0,len(Z_reais)):
             Z_reais[i] = np.real(Z[pos[i]]) #Saving the real roots
 
+        ''' This part below, considers that the phase is composed by a pure
+         component, so the EOS model can return more than one real root'''
         if sum(pos)>1:
             if ph == 'l': Z_ans = min(Z_reais)
             else: Z_ans = max(Z_reais)
         else: Z_ans = Z_reais
-
-        '''OBS: O caso acima considera que pode haver mais de uma raiz real uma
-        vez que o dado de entrada pode ser uma substancia simples.'''
 
         return Z_ans
 
@@ -73,7 +73,7 @@ class fugacity:
         if eos.phase == 'l': V = eos.V_l
         else: V = eos.V_g'''
 
-        Z = fugacity.Z_PR(B,A,ph)
+        Z = Fugacity.Z_PR(B,A,ph)
 
         for i in range(0,Nc):
             psi_i = 0
@@ -90,7 +90,7 @@ class fugacity:
 
 class StabilityTest:
     def Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z):
-        K,b,aalpha_ij = fugacity.coefficientsPR(w,Bin,R,Tc,Pc,T,P,Nc,C7)
+        K,b,aalpha_ij = Fugacity.coefficientsPR(w,Bin,R,Tc,Pc,T,P,Nc,C7)
 
     #****************************INITIAL GUESS******************************#
     ## Both approaches bellow should be used in case the phase is in the critical region
@@ -111,8 +111,8 @@ class StabilityTest:
 
         while max(abs(Y/Yold - 1))>1e-10: #convergência
             Yold = np.copy(Y)
-            lnphiz = fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'l')
-            lnphiy = fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'g')
+            lnphiz = Fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'l')
+            lnphiy = Fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'g')
 
             for i in range(Nc):
                 Y[i] = math.exp( math.log(z[i]) + lnphiz[i] - lnphiy[i] )
@@ -136,8 +136,8 @@ class StabilityTest:
 
         while max(abs(Y/Y_old - 1))>1e-10:
             Y_old = np.copy(Y)
-            lnphiz = fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'g')
-            lnphiy = fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'l')
+            lnphiz = Fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'g')
+            lnphiy = Fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,'l')
 
             for i in range(len(Y)):
                 Y[i] = math.exp( math.log(z[i]) + lnphiz[i] - lnphiy[i] )
@@ -153,7 +153,10 @@ class StabilityTest:
     calculated. For a mixture, however, they have the same value once there
     is only one compressibility factor. The ph = 'g' or ph = 'l' just inffer if
     the phase of the original mixture is unknown, so the initial guess changes,
-    or if the present fluid is composed by only one component (its not a mixture).'''
+    or if the present fluid is composed by only one component (its not a mixture).
+    This means that, if it's a mixture and you know the phase is liquid for example,
+    and in a way ir returns a instability in the second test, you will probably have
+    a two phase liquid system. '''#-Discutir com alguém sobre essa última afirmação
 
 
     def TPD(Nc,C7,T,P,R,Tc,Pc,Bin,w,z): #atualmente só funciona para 2D

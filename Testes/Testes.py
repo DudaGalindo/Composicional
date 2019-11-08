@@ -1,5 +1,5 @@
 import numpy as np
-from ..Checa_Estabilidade import StabilityTest, fugacity
+from ..Checa_Estabilidade import StabilityTest, Fugacity
 import thermo
 import unittest
 
@@ -21,6 +21,9 @@ class estabilidade(unittest.TestCase):
         Mw = np.array([16.043,44.097,58.124,86,134])
         Bin  = np.array([[0,0,0,0.01,0.02], [0,0,0,0.01,0.01], [0,0,0,0,0.01], [0.01,0.01,0,0,0.01], [0.02,0.01,0.01,0.01,0]])
         z = np.array([0.6,0.1,0.1,0.1,0.1])
+        C7 = 'n'
+        print('caso1:')
+        StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)
 
     def test_caso2(self):
         z = np.array([0.7,0.3]) #exemplo aleatório
@@ -73,7 +76,7 @@ class estabilidade(unittest.TestCase):
         StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)
 
 
-        '''def teste_table16_7x(self): #understand the meaning of having a mixture as the entry parameter
+    def teste_table16_7x(self): #understand the meaning of having a mixture as the entry parameter
         #               Met       Prop     n-Pent       n-Dec      n-Hexadec
         x   = np.array([0.35630,0.14651,  0.22041,     0.13818,    0.13860])
         y   = np.array([0.89911,0.07744,  0.02288,     0.00055,    0.00002])
@@ -88,21 +91,18 @@ class estabilidade(unittest.TestCase):
         T = (100+459.67)*5/9
         P = 1500*6894.7573
         C7 = 'y'
-        print('16_7x:')
-        eos = thermo.eos_mix.SRKMIX(T=T,P=P,Tcs=Tc,Pcs=Pc,omegas=w,zs=z,kijs=Bin)
-        print('z',eos.phase)'''
+        #print('16_7x:')
+        #eos = thermo.eos_mix.SRKMIX(T=T,P=P,Tcs=Tc,Pcs=Pc,omegas=w,zs=z,kijs=Bin)
+        #eosl = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=x,kijs=Bin,T=T,P=P)
+        #print('x',eosl.phase)
+        #StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,y)
+        #eosg = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=y,kijs=Bin,T=T,P=P)
+        #print('y',eosg.phase)
 
-        '''
-        eosl = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=x,kijs=Bin,T=T,P=P)
-        print('x',eosl.phase)
-        StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,y)
-        eosg = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=y,kijs=Bin,T=T,P=P)
-        print('y',eosg.phase)'''
-
-        '''I've notice that if the mixture is in the two phase region, neither the
-        code, neither the thermo.eos_mix module are able to identify (at least it
-        did not identify in this example, although according to the thermo.eos_mix
-        module, it should have identified), in fact both understands that there's just one phase present. So, due to
-        that, I conclude that for this to work, the entry parameters have to
-        be for each phase, like this example shows, and the stability test is made
-        separetedly.'''
+    '''I've notice that if the mixture is in the two phase region, the EOS
+    model does not identify that, in fact it only works for one phase at a time.
+     So, due to that, I conclude that for this to work, the entry parameters have to
+    be for each phase, like this example shows, and the stability test is made
+    separetedly.'''
+    '''Furthermore I'll implement the code to obtain the two phases composition
+    based on having the general one (z)'''

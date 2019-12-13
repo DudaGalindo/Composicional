@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 
 class Fugacity:
     def coefficientsPR(w,Bin,R,Tc,Pc,T,P,Nc,C7):
-        # I think that the method to calculate k would be just the general one for heavier components
+        # I think that the method to calculate k would be just the general one
+        #for heavier components, but I end up considering both
         k = (0.379642+1.48503*w-0.1644*w**2+0.016667*w**3)*C7+\
             (0.3746 + 1.54226*w -0.26992*w**2)*(1-C7)
         alpha = (1+k*(1-np.sqrt(T/Tc)))**2;
@@ -50,9 +51,7 @@ class Fugacity:
         x_reshape = np.ones(aalpha_ij.shape)*x[:,np.newaxis]
         aalpha = (x_reshape.T*x[:,np.newaxis]*aalpha_ij).sum()
         A = aalpha*P/(R*T)**2
-
         Z = Fugacity.Z_PR(B,A,ph)
-
         psi = (x_reshape*aalpha_ij).sum(axis = 0)
         lnphi = b/bm*(Z-1)-np.log(Z-B)-A/(2*(2**(1/2))*B)*\
                 (2*psi[:]/aalpha-b/bm)*np.log((Z+(1+2**(1/2))*B)/\
@@ -85,7 +84,7 @@ class StabilityTest:
             lnphiy = Fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,0)
             Y = np.exp(np.log(z) + lnphiz - lnphiy)
             y = Y/sum(Y);
-
+            
         print(sum(Y))
         if sum(Y) <= 1: print('estavel')
         else: print('instavel') #estavel2 = 0
@@ -114,7 +113,7 @@ class StabilityTest:
         else: print('instavel') #estavel2 = 0
 
         '''The same thing happens here. The difference is that, the original
-        phase is gas, and then the "new" phase is liquid. '''
+        phase is gas, and then the "new" phase suppose to be liquid. '''
 
     '''OBS: In both tests, the fugacity coefficient of the original phase is
     calculated. For a mixture, however, they have the same value once there

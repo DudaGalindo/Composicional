@@ -27,7 +27,7 @@ class StabilityTest(object):
 
     def run(self):
         StabilityTest.Stability(self)
-        
+
 
     def coefficientsPR(self):
         # I think that the method to calculate k would be just the general one
@@ -130,12 +130,14 @@ class StabilityTest(object):
 
         '''OBS: In both tests, the fugacity coefficient of the original phase is
         calculated. For a mixture, however, they have the same value once there
-        is only one compressibility factor. The ph = 'g' or ph = 'l' just inffer if
-        the phase of the original mixture is unknown, so the initial guess changes,
-        or if the present fluid is composed by only one component (its not a mixture).
-        This means that, if it's a mixture and you know the phase is liquid for example,
-        and in a way ir returns a instability in the second test, you will probably have
-        a two phase liquid system. '''#-Discutir com alguém sobre essa última afirmação
+        is only one compressibility factor.
+        The ph = 'g' or ph = 'l' just inffer if the phase of the original
+        mixture is unknown, so the initial guess changes, or if the present
+        fluid is composed by only one component.
+        In all cases simulated, for multicomponent mixtures, it means that
+        the two approaches find two different stationary points. Wich means
+        that, if one returns unstable the system is unstable. The stability of
+        the phase is something a little bit more complex to guarantee. '''#-Discutir com alguém sobre essa última afirmação
         return 2
 
 

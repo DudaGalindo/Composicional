@@ -11,18 +11,35 @@ import matplotlib.pyplot as plt
     if the mixture is in the two phase region, it should be identified the molar
     fractions of the components in each phase.'''
 
-class Fugacity:
-    def coefficientsPR(w,Bin,R,Tc,Pc,T,P,Nc,C7):
+class StabilityTest(object):
+    def __init__(self,w,Bin,R,Tc,Pc,T,P,Nc,C7,z):
+        self.w = w
+        self.Bin = Bin
+        self.R = R
+        self.Tc = Tc
+        self.Pc = Pc
+        self.T = T
+        self.P = P
+        self.Nc = Nc
+        self.C7 = C7
+        self.z = z
+        self.K,self.b,self.aalpha_ij = StabilityTest.coefficientsPR(self)
+
+    def run(self):
+        StabilityTest.Stability(self)
+        
+
+    def coefficientsPR(self):
         # I think that the method to calculate k would be just the general one
         #for heavier components, but I end up considering both
-        k = (0.379642+1.48503*w-0.1644*w**2+0.016667*w**3)*C7+\
-            (0.3746 + 1.54226*w -0.26992*w**2)*(1-C7)
-        alpha = (1+k*(1-np.sqrt(T/Tc)))**2;
-        aalpha_i = 0.45724*(R*Tc)**2/Pc*alpha
-        b = 0.07780*R*Tc/Pc;
-        K = np.exp(5.37*(1+w)*(1-Tc/T))*(Pc/P); # Wilson equation (K - equilimbrium ratio)
-        aalpha_i_reshape = np.ones((Nc,Nc))*aalpha_i[:,np.newaxis]
-        aalpha_ij = np.sqrt(aalpha_i_reshape.T*aalpha_i[:,np.newaxis])*(1.- Bin)
+        k = (0.379642+1.48503*self.w-0.1644*self.w**2+0.016667*self.w**3)*self.C7+\
+            (0.3746 + 1.54226*self.w -0.26992*self.w**2)*(1-self.C7)
+        alpha = (1+k*(1-np.sqrt(self.T/self.Tc)))**2;
+        aalpha_i = 0.45724*(self.R*self.Tc)**2/self.Pc*alpha
+        b = 0.07780*self.R*self.Tc/self.Pc;
+        K = np.exp(5.37*(1+self.w)*(1-self.Tc/self.T))*(self.Pc/self.P); # Wilson equation (K - equilimbrium ratio)
+        aalpha_i_reshape = np.ones((self.Nc,self.Nc))*aalpha_i[:,np.newaxis]
+        aalpha_ij = np.sqrt(aalpha_i_reshape.T*aalpha_i[:,np.newaxis])*(1.- self.Bin)
 
         return K,b,aalpha_ij
 
@@ -45,25 +62,21 @@ class Fugacity:
         return Z_ans
 
 
-    def lnphi(x,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,ph):
-        bm = sum(x*b)
-        B = bm*P/(R*T)
-        x_reshape = np.ones(aalpha_ij.shape)*x[:,np.newaxis]
-        aalpha = (x_reshape.T*x[:,np.newaxis]*aalpha_ij).sum()
-        A = aalpha*P/(R*T)**2
-        Z = Fugacity.Z_PR(B,A,ph)
-        psi = (x_reshape*aalpha_ij).sum(axis = 0)
-        lnphi = b/bm*(Z-1)-np.log(Z-B)-A/(2*(2**(1/2))*B)*\
-                (2*psi[:]/aalpha-b/bm)*np.log((Z+(1+2**(1/2))*B)/\
+    def lnphi(self,x,ph):
+        bm = sum(x*self.b)
+        B = bm*self.P/(self.R*self.T)
+        x_reshape = np.ones((self.aalpha_ij).shape)*x[:,np.newaxis]
+        aalpha = (x_reshape.T*x[:,np.newaxis]*self.aalpha_ij).sum()
+        A = aalpha*self.P/(self.R*self.T)**2
+        Z = StabilityTest.Z_PR(B,A,ph)
+        psi = (x_reshape*self.aalpha_ij).sum(axis = 0)
+        lnphi = self.b/bm*(Z-1)-np.log(Z-B)-A/(2*(2**(1/2))*B)*\
+                (2*psi[:]/aalpha-self.b/bm)*np.log((Z+(1+2**(1/2))*B)/\
                 (Z+(1-2**(1/2))*B))
 
         return lnphi
 
-
-
-class StabilityTest:
-    def Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z):
-        K,b,aalpha_ij = Fugacity.coefficientsPR(w,Bin,R,Tc,Pc,T,P,Nc,C7)
+    def Stability(self):
 
     #****************************INITIAL GUESS******************************#
     ## Both approaches bellow should be used in case the phase is in the critical region
@@ -74,17 +87,17 @@ class StabilityTest:
     #*****************************Test one**********************************#
         #Used alone when the phase investigated (y) is clearly vapor like (ph == g)
 
-        Y = z/K
+        Y = self.z/self.K
         Yold = 0.9*Y
         y = Y/sum(Y)
 
         while max(abs(Y/Yold - 1))>1e-10: #convergência
             Yold = np.copy(Y)
-            lnphiz = Fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,1)
-            lnphiy = Fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,0)
-            Y = np.exp(np.log(z) + lnphiz - lnphiy)
+            lnphiz = StabilityTest.lnphi(self,self.z,1)
+            lnphiy = StabilityTest.lnphi(self,y,0)
+            Y = np.exp(np.log(self.z) + lnphiz - lnphiy)
             y = Y/sum(Y);
-            
+
         print(sum(Y))
         if sum(Y) <= 1: print('estavel')
         else: print('instavel') #estavel2 = 0
@@ -93,20 +106,20 @@ class StabilityTest:
         that the Gibbs free energy is at global minimum, there is only one
         stationary point is where y = z. So, it does not have a new phase,
         doesn't need a phase split. If it returns unstable: There is another
-        composition that makes the Gibbs free energy at his global minimum wich
-        corresponds to a negative value where sum(Y)>1'''
+        composition that makes the Gibbs free energy at its global minimum
+        where sum(Y)>1'''
     #*****************************Test two**********************************#
         #Used alone when the phase investigated (y) is clearly liquid like (ph == l)
 
-        Y = K*z
+        Y = self.K*self.z
         Y_old = 0.9*Y
         y = Y/sum(Y)
 
         while max(abs(Y/Y_old - 1))>1e-10:
             Y_old = np.copy(Y)
-            lnphiz = Fugacity.lnphi(z,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,0)
-            lnphiy = Fugacity.lnphi(y,Nc,T,P,R,Tc,Pc,Bin,w,aalpha_ij,b,1)
-            Y = np.exp(np.log(z) + lnphiz - lnphiy)
+            lnphiz = StabilityTest.lnphi(self,self.z,0)
+            lnphiy = StabilityTest.lnphi(self,y,1)
+            Y = np.exp(np.log(self.z) + lnphiz - lnphiy)
             y = Y/sum(Y)
         print(sum(Y))
         if sum(Y) <= 1: print('estavel')#estavel2 = 1
@@ -115,14 +128,15 @@ class StabilityTest:
         '''The same thing happens here. The difference is that, the original
         phase is gas, and then the "new" phase suppose to be liquid. '''
 
-    '''OBS: In both tests, the fugacity coefficient of the original phase is
-    calculated. For a mixture, however, they have the same value once there
-    is only one compressibility factor. The ph = 'g' or ph = 'l' just inffer if
-    the phase of the original mixture is unknown, so the initial guess changes,
-    or if the present fluid is composed by only one component (its not a mixture).
-    This means that, if it's a mixture and you know the phase is liquid for example,
-    and in a way ir returns a instability in the second test, you will probably have
-    a two phase liquid system. '''#-Discutir com alguém sobre essa última afirmação
+        '''OBS: In both tests, the fugacity coefficient of the original phase is
+        calculated. For a mixture, however, they have the same value once there
+        is only one compressibility factor. The ph = 'g' or ph = 'l' just inffer if
+        the phase of the original mixture is unknown, so the initial guess changes,
+        or if the present fluid is composed by only one component (its not a mixture).
+        This means that, if it's a mixture and you know the phase is liquid for example,
+        and in a way ir returns a instability in the second test, you will probably have
+        a two phase liquid system. '''#-Discutir com alguém sobre essa última afirmação
+        return 2
 
 
     def TPD(Nc,C7,T,P,R,Tc,Pc,Bin,w,z): #atualmente só funciona para 2D - falta modificar ainda. Mas só modifico quando eu ver onde vou usar isso

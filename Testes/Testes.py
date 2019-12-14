@@ -1,5 +1,5 @@
 import numpy as np
-from ..Checa_Estabilidade import StabilityTest, Fugacity
+from ..Checa_Estabilidade import StabilityTest
 import thermo
 import unittest
 
@@ -55,7 +55,9 @@ class estabilidade(unittest.TestCase):
         # Is there heptane plus in the composition: if yes, C7 = 'y', no, C7 = 'n'
         C7 = 1
         print('16_1:')
-        StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)
+        obj = StabilityTest(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)
+        StabilityTest.run(obj)
+        #StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)
 
 
     def teste_table16_3x(self):
@@ -72,8 +74,8 @@ class estabilidade(unittest.TestCase):
         ph = 'l'
         C7 = 0
         print('16_3:')
-        StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)
-
+        obj = StabilityTest(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)
+        StabilityTest.run(obj)
 
     def teste_table16_7x(self): #understand the meaning of having a mixture as the entry parameter
         #               Met       Prop     n-Pent       n-Dec      n-Hexadec

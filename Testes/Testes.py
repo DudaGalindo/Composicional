@@ -26,7 +26,7 @@ class estabilidade(unittest.TestCase):
         StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)
 
     def test_caso2(self):
-        z = np.array([0.7,0.3]) #exemplo aleatório
+        z = np.array([0.5,0.5]) #exemplo aleatório
         Nc = 2;
         P = (100*1E5)#/101325)*14.7# pressão de 100bar e ele converte para atm e depois psi
         T = 350#*9/5 #- T em K to R

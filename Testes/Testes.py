@@ -1,5 +1,6 @@
 import numpy as np
 from ..Checa_Estabilidade import StabilityTest
+from ..Multifasico import  Multiphase
 import thermo
 import unittest
 
@@ -8,7 +9,7 @@ R = 8.3144598
 class estabilidade(unittest.TestCase):
 #Unidades estão atualmente no SI
 # Esses testes devem conter apenas uma fase. Se o sistema for composto por mais de uma fase, deve-se tomar x e y separadamente
-    '''def test_caso1(self):
+    def test_caso1(self):
         R = 10.73159;
         T = 200 + 459.67;
         P = 160;
@@ -23,9 +24,11 @@ class estabilidade(unittest.TestCase):
         z = np.array([0.6,0.1,0.1,0.1,0.1])
         C7 = 0
         print('caso1:')
-        StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)
+        obj = StabilityTest(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)
+        StabilityTest.run(obj)
+        Multiphase.molar_fractions(obj)
 
-    def test_caso2(self):
+    '''def test_caso2(self):
         z = np.array([0.5,0.5]) #exemplo aleatório
         Nc = 2;
         P = (100*1E5)#/101325)*14.7# pressão de 100bar e ele converte para atm e depois psi
@@ -38,7 +41,7 @@ class estabilidade(unittest.TestCase):
         ph = 'l'
         print('caso2:')
         StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)
-        #StabilityTest.TPD(Nc,C7,T,P,R,Tc,Pc,Bin,w,z)'''
+        #StabilityTest.TPD(Nc,C7,T,P,R,Tc,Pc,Bin,w,z)
 
     def teste_table16_1(self): #checando o fator de compressibilidade - Z=1.3225 (ans:1.32411) - acho aceitavel considerando as aprox
         #               Met       Prop     n-Pent       n-Dec      n-Hexadec
@@ -98,7 +101,7 @@ class estabilidade(unittest.TestCase):
         #print('x',eosl.phase)
         #StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,y)
         #eosg = thermo.eos_mix.PRMIX(Tcs=Tc,Pcs=Pc,omegas=w,zs=y,kijs=Bin,T=T,P=P)
-        #print('y',eosg.phase)
+        #print('y',eosg.phase)'''
 
     '''I've notice that if the mixture is in the two phase region, the EOS
     model does not identify that, in fact it only works for one phase at a time.

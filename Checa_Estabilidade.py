@@ -71,7 +71,7 @@ class StabilityTest(object):
         Z = StabilityTest.Z_PR(B,A,ph)
         psi = (x_reshape*self.aalpha_ij).sum(axis = 0)
         lnphi = self.b/bm*(Z-1)-np.log(Z-B)-A/(2*(2**(1/2))*B)*\
-                (2*psi[:]/aalpha-self.b/bm)*np.log((Z+(1+2**(1/2))*B)/\
+                (2*psi/aalpha-self.b/bm)*np.log((Z+(1+2**(1/2))*B)/\
                 (Z+(1-2**(1/2))*B))
 
         return lnphi
@@ -90,10 +90,9 @@ class StabilityTest(object):
         Y = self.z/self.K
         Yold = 0.9*Y
         y = Y/sum(Y)
-
+        lnphiz = StabilityTest.lnphi(self,self.z,1)
         while max(abs(Y/Yold - 1))>1e-10: #convergência
             Yold = np.copy(Y)
-            lnphiz = StabilityTest.lnphi(self,self.z,1)
             lnphiy = StabilityTest.lnphi(self,y,0)
             Y = np.exp(np.log(self.z) + lnphiz - lnphiy)
             y = Y/sum(Y);
@@ -114,10 +113,9 @@ class StabilityTest(object):
         Y = self.K*self.z
         Y_old = 0.9*Y
         y = Y/sum(Y)
-
+        lnphiz = StabilityTest.lnphi(self,self.z,0)
         while max(abs(Y/Y_old - 1))>1e-10:
             Y_old = np.copy(Y)
-            lnphiz = StabilityTest.lnphi(self,self.z,0)
             lnphiy = StabilityTest.lnphi(self,y,1)
             Y = np.exp(np.log(self.z) + lnphiz - lnphiy)
             y = Y/sum(Y)
@@ -137,7 +135,8 @@ class StabilityTest(object):
         In all cases simulated, for multicomponent mixtures, it means that
         the two approaches find two different stationary points. Wich means
         that, if one returns unstable the system is unstable. The stability of
-        the phase is something a little bit more complex to guarantee. '''#-Discutir com alguém sobre essa última afirmação
+        the phase is something a little bit more complex to guarantee. '''
+        #-Discutir com alguém sobre essa última afirmação
         return 2
 
 

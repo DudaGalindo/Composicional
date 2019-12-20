@@ -1,6 +1,5 @@
 import numpy as np
 from ..Checa_Estabilidade import StabilityTest
-from ..Multifasico import  Flash
 import thermo
 import unittest
 
@@ -29,22 +28,33 @@ class estabilidade(unittest.TestCase):
         if sp1>1 or sp2>1:
             obj.molar_properties(z,Mw)
 
-    '''def test_caso2(self):
+    def test_caso2(self):
         z = np.array([0.5,0.5]) #exemplo aleatório
         Nc = 2;
         P = (100*1E5)#/101325)*14.7# pressão de 100bar e ele converte para atm e depois psi
         T = 350#*9/5 #- T em K to R
         Tc = np.array([190.6, 460.4])#*9/5;
         Pc =np.array([45.4,33.4])*1E5#*14.7; # 14.7*
-        w = np.array([0.008,0.227]);
-        Bin = np.array([[0,0.0236],[0.0236,0]]);
+        w = np.array([0.008,0.227])
+        Bin = np.array([[0,0.0236],[0.0236,0]])
+        Mw = np.array([44.097,58.124])
         C7 = 0
         ph = 'l'
         print('caso2:')
-        StabilityTest.Stability(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)
-        #StabilityTest.TPD(Nc,C7,T,P,R,Tc,Pc,Bin,w,z)
+        obj = StabilityTest(w,Bin,R,Tc,Pc,T,P,Nc,C7)
+        sp1,sp2 = obj.Stability(z)
+        if sp1>1 or sp2>1:
+            obj.molar_properties(z,Mw)
+        if sp1<1 and sp2<1:
+            TPD = obj.TPD(z)
+            if TPD.any()<0: #checar se isso iria funcionar
+                obj.molar_properties(z,Mw)
+        #print('x: ','y: ',obj.x,obj.y)
+        #print('K: ',obj.K)
+        #print('L: ','V: ',obj.L,obj.V)
+        #print('fl: ','fv: ',obj.fl,obj.fv)
 
-    def teste_table16_1(self): #checando o fator de compressibilidade - Z=1.3225 (ans:1.32411) - acho aceitavel considerando as aprox
+    '''def teste_table16_1(self): #checando o fator de compressibilidade - Z=1.3225 (ans:1.32411) - acho aceitavel considerando as aprox
         #               Met       Prop     n-Pent       n-Dec      n-Hexadec
         z   = np.array([0.5449,  0.1394,   0.1314,     0.0869,      0.0974])
         Tc  = np.array([   343,     666,      845,       1112,        1291])*(5/9)

@@ -10,16 +10,15 @@ class estabilidade(unittest.TestCase):
 #Unidades estão atualmente no SI
 # Esses testes devem conter apenas uma fase. Se o sistema for composto por mais de uma fase, deve-se tomar x e y separadamente
     def test_caso1(self):
-        R = 10.73159;
-        T = 200 + 459.67;
-        P = 160;
+        T = (200 + 459.6)*5/9 #Rankine*5/9=Kelvin
+        P = 160*6894.7573 #psi to Pa
         Nc = 5;
         Tc = np.array([-116.32,206.24,305.96,454.1,660.38])
-        Tc = Tc + 459.67
-        Pc = np.array([667.19386,615.75821,551.09625,477.028914,367.5444663])
+        Tc = (Tc + 459.67)*5/9
+        Pc = np.array([667.19386,615.75821,551.09625,477.028914,367.5444663])*6894.7573
         #Vshift = [0 0 0 0 0];
         w  = np.array([0.008,0.152,0.193,0.27504,0.443774])
-        Mw = np.array([16.043,44.097,58.124,86,134])
+        Mw = np.array([16.043,44.097,58.124,86,134]) #molecular weight
         Bin  = np.array([[0,0,0,0.01,0.02], [0,0,0,0.01,0.01], [0,0,0,0,0.01], [0.01,0.01,0,0,0.01], [0.02,0.01,0.01,0.01,0]])
         z = np.array([0.6,0.1,0.1,0.1,0.1])
         C7 = 0

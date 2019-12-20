@@ -1,6 +1,6 @@
 import numpy as np
 from ..Checa_Estabilidade import StabilityTest
-from ..Multifasico import  Multiphase
+from ..Multifasico import  Flash
 import thermo
 import unittest
 
@@ -23,9 +23,11 @@ class estabilidade(unittest.TestCase):
         z = np.array([0.6,0.1,0.1,0.1,0.1])
         C7 = 0
         print('caso1:')
-        obj = StabilityTest(w,Bin,R,Tc,Pc,T,P,Nc,C7,z)
-        StabilityTest.run(obj)
-        Multiphase.molar_fractions(obj)
+
+        obj = StabilityTest(w,Bin,R,Tc,Pc,T,P,Nc,C7)
+        sp1,sp2 = obj.Stability(z)
+        if sp1>1 or sp2>1:
+            obj.molar_properties(z,Mw)
 
     '''def test_caso2(self):
         z = np.array([0.5,0.5]) #exemplo aleatório

@@ -134,7 +134,7 @@ class StabilityTest(object):
             i = i+1
             f = sum((1-self.K)*z/(L+(1-L)*self.K))
             df = -sum((1-self.K)**2*z/(L+(1-L)*self.K)**2)
-            L = L -f/df
+            L = L - f/df
             if L>Lmax: L = Lmax
             elif L<Lmin: L = Lmin
 
@@ -144,7 +144,7 @@ class StabilityTest(object):
 
 
     def objective_function_Yinghui(self,z):
-        K1 = max(self.K);KNc = min(self.K)
+        K1 = max(self.K); KNc = min(self.K)
 
         ''' shaping z to Nc-2 components by removing z1 and zNc'''
         z1 = z[self.K==K]
@@ -164,6 +164,8 @@ class StabilityTest(object):
         x1 = (x1_min+x1_max)/2
         i = 0 #iterations counter
         f = 1 #just to get into the first loop
+
+        ''' solving for newton-raphson '''
         while abs(f) >10e-9:
             i = i+1
             f = 1 + ((K1-KNc)/(KNc-1))*x1 +\
@@ -183,11 +185,10 @@ class StabilityTest(object):
         self.x = np.concatenate((x1,xi,xNc),axis=None)
         self.y = self.K*self.x
 
-
     def molar_properties(self,z,Mw):
         # Aqui a correlação de wilson é utilizada apenas para achar o K inicial,
         self.fv = 2*np.ones(len(z));self.fl = np.ones(len(z))
-        while max(abs(self.fv/self.fl - 1)) > 10e-9:
+        while max(abs(self.fv/self.fl - 1)) > 10e-8:
             if len(z) <=2:
                 self.objective_function_Whitson(z)
             else: self.objective_function_Yinghui(z)
@@ -208,46 +209,6 @@ class StabilityTest(object):
         ''' Phase Mass Densities '''
         self.rho_L = self.Mw_L/self.L
         self.rho_V = self.Mw_V/self.V
-
-
-    def TPD(self): #atualmente só funciona para 2D - falta modificar ainda. Mas só modifico quando eu ver onde vou usar isso
-        x = np.zeros(self.Nc)
-
-        #**********************Tangent Plane distance plot*********************#
-        t = np.linspace(0.01,0.99,0.9/0.002) #vetor auxiliar
-        TPD = np.zeros(len(t)) ##F
-
-        for i in range(0,len(t)):
-            aux = 0;
-            lnphiz = StabilityTest.lnphi(self,self.z,1) #original phase
-
-            #x = np.array([1-t[i],t[i]]) #new phase composition (1-t e t) - apenas válido para Nc=2 acredito eu.
-            for k in range(0,self.Nc-1):
-                x[k] = (1-t[i])/(self.Nc-1)
-                x[self.Nc-1] = t[i]
-
-            print(x)
-            '''O modo que x varia implica no formato de TPD. No presente exemplo,
-            a fração molar do segundo componente de x varia direto com t, que é a
-            variável de plotagem. Logo, a distancia dos planos tangentes será
-            zero em z[Nc-1]. O contrário ocorreria'''
-            lnphix = StabilityTest.lnphi(self,x,0); #new phase (vapor- ph=2)
-            self.fv = np.exp(lnphiv)*(self.y*self.P)
-            self.fl = np.exp(lnphil)*(self.x*self.P)
-            self.K = (self.fl/self.fv)*self.K
-
-        ''' Molar Volume Fractions '''
-        self.V = (z-self.x)/(self.y-self.x)
-        self.L = 1 - self.V
-
-        ''' Phase Molecular Weight '''
-        self.Mw_L = sum(self.x*Mw)
-        self.Mw_V = sum(self.y*Mw)
-
-        ''' Phase Mass Densities '''
-        self.rho_L = self.Mw_L/self.L
-        self.rho_V = self.Mw_V/self.V
-
 
     def TPD(self,z): #ainda não sei onde usar isso
         x = np.zeros(self.Nc)

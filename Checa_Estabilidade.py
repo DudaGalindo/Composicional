@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 ## Todas as equações foram confirmadas pelo livro do Dandekar e a biblioteca do thermo
 
 class StabilityTest(object):
-    def __init__(self,w,Bin,R,Tc,Pc,T,P,Nc,C7):
+    def __init__(self,w,Bin,R,Tc,Pc,T,P,C7):
         self.w = w
         self.Bin = Bin
         self.R = R
@@ -15,7 +15,7 @@ class StabilityTest(object):
         self.Pc = Pc
         self.T = T
         self.P = P
-        self.Nc = Nc
+        self.Nc = len(w)
         self.C7 = C7
         #StabilityTest.TPD(self)
 
@@ -83,9 +83,9 @@ class StabilityTest(object):
             y = Y/sum(Y);
 
         stationary_point1 = sum(Y)
-        print(sum(Y))
-        if sum(Y) <= 1: print('estavel')
-        else: print('instavel') #estavel2 = 0
+        #print(sum(Y))
+        #if sum(Y) <= 1: print('estavel')
+        #else: print('instavel') #estavel2 = 0
 
         ''' If this first test returns stable: There might be a chance that the
         Gibbs free energy is at its global minimum. However, as will be
@@ -106,9 +106,9 @@ class StabilityTest(object):
             y = Y/sum(Y)
 
         stationary_point2 = sum(Y)
-        print(sum(Y))
-        if sum(Y) <= 1: print('estavel')#estavel2 = 1
-        else: print('instavel') #estavel2 = 0
+        #print(sum(Y))
+        #if sum(Y) <= 1: print('estavel')#estavel2 = 1
+        #else: print('instavel') #estavel2 = 0
 
         '''The same thing happens here. The difference is that, the original
         phase is gas, and then the "new" phase is supposed to be liquid.
@@ -123,23 +123,25 @@ class StabilityTest(object):
         return stationary_point1,stationary_point2
 
     def objective_function_Whitson(self,z):
+        #solving for L instead of V, as demonstraded for Whitson
+        Vmax = 1/(1-min(self.K))
+        Vmin = 1/(1-max(self.K))
+        V = (Vmin+Vmax)/2
 
-        Lmin = min(0,min(self.K)/(min(self.K)-1))
-        Lmax = max(1,max(self.K)/(max(self.K)-1))
-        L = (Lmin+Lmax)/2
+        i=0 #iteration counter
+        Vold = V/2 #just to get into the loop
 
-        f = 1 #just to get into the loop
-        i=0
-        while abs(f) >10e-9:
-            i = i+1
-            f = sum((1-self.K)*z/(L+(1-L)*self.K))
-            df = -sum((1-self.K)**2*z/(L+(1-L)*self.K)**2)
-            L = L - f/df
-            if L>Lmax: L = Lmax
-            elif L<Lmin: L = Lmin
-
+        ''' solving for newton-raphson'''
+        while abs(V/Vold-1)>10e-8:
+            Vold = V
+            f = sum((self.K-1)*z/(1+V*(self.K-1)))
+            df = -sum((self.K-1)**2*z/(1+V*(self.K-1))**2)
+            V = V - f/df
+            if V>Vmax: V = Vmax
+            elif V<Vmin: V = Vmin
+            i = i+1 #iteration counter
         #print(i)
-        self.x = z/(L+(1-L)*self.K)
+        self.x = z/(1+V*(self.K-1))
         self.y = self.K*self.x
 
 
@@ -147,7 +149,7 @@ class StabilityTest(object):
         K1 = max(self.K); KNc = min(self.K)
 
         ''' shaping z to Nc-2 components by removing z1 and zNc'''
-        z1 = z[self.K==K]
+        z1 = z[K1==self.K]
         aux1 = z[z==z[self.K==K1]]
         index1 = np.argwhere(z==aux1)
         zi = np.delete(z,index1[0])
@@ -159,15 +161,26 @@ class StabilityTest(object):
         ''' shaping K to Nc-2 components by removing K1 and KNc '''
         Ki = self.K[(self.K!=K1) & (self.K!=KNc)]
 
-        x1_min = z1*(1-KNc)/(K1-KNc)
-        x1_max = (1-KNc)/(K1-KNc)
+        if all(z>0) and len(z)<10:
+            x1_min = z1*(1-KNc)/(K1-KNc)
+            x1_max = (1-KNc)/(K1-KNc)
+        else:
+            theta = np.ones(len(z))
+            theta[self.K>1] = (1-KNc)/(self.K[self.K>1]-KNc)
+            x1_max = max(np.append((self.K-1)*z1/(z*(K1-1)/theta-(K1-self.K)),0))
+            arr = (self.K-1)*z1/(z*(K1-1)/theta-(K1-self.K))
+            arr[arr<0] = 1
+            x1_min = min(arr)
+
         x1 = (x1_min+x1_max)/2
-        i = 0 #iterations counter
-        f = 1 #just to get into the first loop
+        #i = 0 #iterations counter
+
+        V = (z1-x1)/(x1*(K1-1));Vold = V/2
 
         ''' solving for newton-raphson '''
-        while abs(f) >10e-9:
-            i = i+1
+        while abs(V/Vold-1) >10e-9:
+            Vold = V
+            #i = i+1
             f = 1 + ((K1-KNc)/(KNc-1))*x1 +\
                 sum(((Ki-KNc)/(KNc-1))*\
                 zi*(K1-1)*x1/((Ki-1)*z1+(K1-Ki)*x1))
@@ -175,9 +188,10 @@ class StabilityTest(object):
             df = ((K1-KNc)/(KNc-1)) +\
                 sum(((Ki-KNc)/(KNc-1))*zi*z1*(K1-1)*\
                 (Ki-1)/((Ki-1)*z1+(K1-Ki)*x1)**2)
-
             x1 = x1 -f/df
-            if (x1>x1_max) | (x1<x1_min): x1 = (x1_min+x1_max)/2
+            if (x1>x1_max) | (x1<x1_min): x1 = (x1_min+x1_max)/2 #recommended
+            V = (z1-x1)/(x1*(K1-1))
+
         #print(i)
 
         xi = (K1-1)*zi*x1/((Ki-1)*z1+(K1-Ki)*x1)
@@ -186,7 +200,7 @@ class StabilityTest(object):
         self.y = self.K*self.x
 
     def molar_properties(self,z,Mw):
-        # Aqui a correlação de wilson é utilizada apenas para achar o K inicial,
+        # Aqui a correlação de wilson é utilizada apenas para achar o K inicial
         self.fv = 2*np.ones(len(z));self.fl = np.ones(len(z))
         while max(abs(self.fv/self.fl - 1)) > 10e-8:
             if len(z) <=2:

@@ -252,8 +252,8 @@ class StabilityTest(object):
             self.K = (self.fl/self.fv)*self.K
 
     def molar_properties_Yinghui(self,z):
-
-        while max(abs(self.fv/self.fl - 1)) > 1e-9:
+        print(self.K)
+        while max(abs(self.fv/self.fl - 1)**2) > 1e-9:
             self.objective_function_Yinghui(z)
 
  # talvez essa parte seja desnecessária - estou investigando ainda
@@ -272,7 +272,7 @@ class StabilityTest(object):
             self.fv = np.exp(lnphiv)*(self.y*self.P)
             self.fl = np.exp(lnphil)*(self.x*self.P)
             self.K = (self.fl/self.fv)*self.K
-
+            print(self.K)
 
     def TPD(self,z): #ainda não sei onde usar isso
         x = np.zeros(self.Nc)

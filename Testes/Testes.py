@@ -50,9 +50,9 @@ class estabilidade(unittest.TestCase):
                         [0.08,0.039,0.022,0.004,0]])
         w = np.array([0.008,0.152,0.251,0.490,0.742])
         Mw = np.array([16.043,44.097,72.15,142.29,226.41])
-        T = 100+459.67#Fahrenheit
+        T = 100+460#Fahrenheit
         P = 1500 #psia
-        C7 = 0
+        C7 = np.array([0,0,0,1,1])
 
         print('\ncasoN:')
 
@@ -65,7 +65,9 @@ class estabilidade(unittest.TestCase):
         print('K: ',obj.K)
         print('L: ',obj.L[1],'V: ',obj.V[1])
         print('fl: ',obj.fl,'fv: ',obj.fv)
-
+    def test_book2(self):
+        z = np.array([0.5,0.3,0.2])
+        
     '''def test_caso2(self):
         Bin = np.array([[0, 0.033],[0.033, 0]])
         Tc = np.array([369.8, 425.2])*9/5

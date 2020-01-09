@@ -1,11 +1,11 @@
 import numpy as np
-from ..Checa_Estabilidade import StabilityTest
+from stability_check import StabilityCheck
 import thermo
 import unittest
 
 #R = 8.3144598
 R = 10.73159
-class estabilidade(unittest.TestCase):
+class StabilityTest(unittest.TestCase):
 #Unidades estão atualmente no SI
     def test_caso1(self):
         T = (200 + 459.67)#*5/9 #Rankine*5/9=Kelvin
@@ -16,12 +16,18 @@ class estabilidade(unittest.TestCase):
         #Vshift = [0 0 0 0 0];
         w  = np.array([0.008,0.152,0.193,0.27504,0.443774])
         Mw = np.array([16.043,44.097,58.124,86,134]) #molecular weight
-        Bin  = np.array([[0,0,0,0.01,0.02], [0,0,0,0.01,0.01], [0,0,0,0,0.01], [0.01,0.01,0,0,0.01], [0.02,0.01,0.01,0.01,0]])
+        Bin = np.array(
+            [[0.00, 0.00, 0.00, 0.01, 0.02],
+             [0.00, 0.00, 0.00, 0.01, 0.01],
+             [0.00, 0.00, 0.00, 0.00, 0.01],
+             [0.01, 0.01, 0.00, 0.00, 0.01],
+             [0.02, 0.01, 0.01, 0.01, 0.00]]
+        )
         z = np.array([0.6,0.1,0.1,0.1,0.1])
         C7 = 0
         print('\ncaso1:')
 
-        obj = StabilityTest(w,Bin,R,Tc,Pc,T,P,C7)
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,C7)
         sp1,sp2 = obj.Stability(z)
         if sp1>1 or sp2>1:
             obj.molar_properties(z,Mw)
@@ -48,7 +54,7 @@ class estabilidade(unittest.TestCase):
         P = 14.7*(3.86e6/101325)
         C7 = 0
         print('\ncaso2:')
-        obj = StabilityTest(w,Bin,R,Tc,Pc,T,P,C7)
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,C7)
         sp1,sp2 = obj.Stability(z)
         if sp1>1 or sp2>1:
             obj.molar_properties(z,Mw)
@@ -56,7 +62,7 @@ class estabilidade(unittest.TestCase):
         print('K: ',obj.K)
         print('L: ',obj.L[1],'V: ',obj.V[1])
         print('fl: ',obj.fl,'fv: ',obj.fv)
-        
+
     def test_caso3(self):
         z = np.array([0.5,0.5]) #exemplo aleatório
         P = (100*1E5)/101325*14.7# pressão de 100bar e ele converte para atm e depois psi
@@ -68,7 +74,7 @@ class estabilidade(unittest.TestCase):
         Mw = np.array([44.097,58.124])
         C7 = 0
         print('\ncaso3:')
-        obj = StabilityTest(w,Bin,R,Tc,Pc,T,P,C7)
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,C7)
         sp1,sp2 = obj.Stability(z)
         if sp1>1 or sp2>1:
             obj.molar_properties(z,Mw)

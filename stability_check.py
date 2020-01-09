@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 ## Encontrar os pontos estacionarios. Estes correspondem aos pontos nos quais a derivada de g com respeito a Y é 0
 ## Todas as equações foram confirmadas pelo livro do Dandekar e a biblioteca do thermo
 
-class StabilityTest(object):
+
+class StabilityCheck:
     def __init__(self,w,Bin,R,Tc,Pc,T,P,C7):
         self.w = w
         self.Bin = Bin
@@ -17,19 +18,23 @@ class StabilityTest(object):
         self.P = P
         self.Nc = len(w)
         self.C7 = C7
-        #StabilityTest.TPD(self)
+        # StabilityTest.TPD(self)
 
     def coefficientsPR(self):
         # I think that the method to calculate k would be just the general one
-        #for heavier components, but I ended up considering both
-        k = (0.379642+1.48503*self.w-0.1644*self.w**2+0.016667*self.w**3)*self.C7+\
-            (0.37464 + 1.5422*self.w -0.26992*self.w**2)*(1-self.C7)
+        # for heavier components, but I ended up considering both
+        k = (
+            0.379642 + 1.48503 * self.w - 0.1644 * self.w ** 2+0.016667 * self.w ** 3
+        ) * self.C7 + (0.37464 + 1.5422*self.w -0.26992*self.w**2)*(1-self.C7)
         alpha = (1+k*(1-(self.T/self.Tc)**(1/2)))**2;
         aalpha_i = 0.45724*(self.R*self.Tc)**2/self.Pc*alpha
-        self.b = 0.07780*self.R*self.Tc/self.Pc;
-        self.K = np.exp(5.37*(1+self.w)*(1-self.Tc/self.T))*(self.Pc/self.P); # Wilson equation (K - equilimbrium ratio)
+        self.b = 0.07780*self.R*self.Tc/self.Pc
+        # Wilson equation (K - equilimbrium ratio)
+        self.K = np.exp(5.37*(1+self.w)*(1-self.Tc/self.T))*(self.Pc/self.P)
         aalpha_i_reshape = np.ones((self.Nc,self.Nc))*aalpha_i[:,np.newaxis]
-        self.aalpha_ij = np.sqrt(aalpha_i_reshape.T*aalpha_i[:,np.newaxis])*(1.- self.Bin)
+        self.aalpha_ij = np.sqrt(
+            aalpha_i_reshape.T * aalpha_i[:, np.newaxis]
+        )*(1.- self.Bin)
 
 
     def Z_PR(B,A,ph):
@@ -53,7 +58,7 @@ class StabilityTest(object):
         x_reshape = np.ones((self.aalpha_ij).shape)*x[:,np.newaxis]
         aalpha = (x_reshape.T*x[:,np.newaxis]*self.aalpha_ij).sum()
         A = aalpha*self.P/(self.R*self.T)**2
-        Z = StabilityTest.Z_PR(B,A,ph) #Checar se a diferença ta no fator de compressibilidade - o jeito que é calculado
+        Z = StabilityCheck.Z_PR(B,A,ph) #Checar se a diferença ta no fator de compressibilidade - o jeito que é calculado
         psi = (x_reshape*self.aalpha_ij).sum(axis = 0)
         lnphi = self.b/bm*(Z-1)-np.log(Z-B)-A/(2*(2**(1/2))*B)*\
                 (2*psi/aalpha-self.b/bm)*np.log((Z+(1+2**(1/2))*B)/\
@@ -283,7 +288,7 @@ class StabilityTest(object):
 
         for i in range(0,len(t)):
             aux = 0;
-            lnphiz = StabilityTest.lnphi(self,z,1) #original phase
+            lnphiz = StabilityCheck.lnphi(self,z,1) #original phase
 
             #x = np.array([1-t[i],t[i]]) #new phase composition (1-t e t) - apenas válido para Nc=2 acredito eu.
             for k in range(0,self.Nc-1):
@@ -294,7 +299,7 @@ class StabilityTest(object):
             a fração molar do segundo componente de x varia direto com t, que é a
             variável de plotagem. Logo, a distancia dos planos tangentes será
             zero em z[Nc-1]. O contrário ocorreria'''
-            lnphix = StabilityTest.lnphi(self,x,0); #new phase (vapor- ph=2)
+            lnphix = StabilityCheck.lnphi(self,x,0); #new phase (vapor- ph=2)
             for j in range(0,self.Nc):
                 fix = math.exp(lnphix[j])*x[j]*self.P
                 fiz = math.exp(lnphiz[j])*z[j]*self.P

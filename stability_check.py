@@ -1,14 +1,17 @@
+"""Check stability of a thermodynamic equilibrium."""
 import numpy as np
 import math
-from math import pi
-import thermo
 import matplotlib.pyplot as plt
-## Encontrar os pontos estacionarios. Estes correspondem aos pontos nos quais a derivada de g com respeito a Y é 0
-## Todas as equações foram confirmadas pelo livro do Dandekar e a biblioteca do thermo
+# Encontrar os pontos estacionarios. Estes correspondem aos pontos nos quais
+# a derivada de g com respeito a Y é 0
+# Todas as equações foram confirmadas pelo livro do Dandekar e a biblioteca do
+# thermo
 
 
 class StabilityCheck:
-    def __init__(self,w,Bin,R,Tc,Pc,T,P,C7):
+    """Check forstability of a thermodynamic equilibrium."""
+
+    def __init__(self, w, Bin, R, Tc, Pc, T, P, C7):
         self.w = w
         self.Bin = Bin
         self.R = R
@@ -23,14 +26,21 @@ class StabilityCheck:
     def coefficientsPR(self):
         # I think that the method to calculate k would be just the general one
         # for heavier components, but I ended up considering both
+        PR1 = 0.379642
+        PR2 = 1.48503
+        PR3 = 0.1644
+        PR4 = 0.016667
+        PR5 = 0.37464
+        PR6 = 1.5422
+        PR7 = 0.26992
         k = (
-            0.379642 + 1.48503 * self.w - 0.1644 * self.w ** 2+0.016667 * self.w ** 3
-        ) * self.C7 + (0.37464 + 1.5422*self.w -0.26992*self.w**2)*(1-self.C7)
+            PR1 + PR2 * self.w - PR3 * self.w ** 2 + PR4 * self.w ** 3
+        ) * self.C7 + (PR5 + PR6 * self.w - PR7 * self.w ** 2) * (1 - self.C7)
         alpha = (1+k*(1-(self.T/self.Tc)**(1/2)))**2;
         aalpha_i = 0.45724*(self.R*self.Tc)**2/self.Pc*alpha
         self.b = 0.07780*self.R*self.Tc/self.Pc
         # Wilson equation (K - equilimbrium ratio)
-        self.K = np.exp(5.37*(1+self.w)*(1-self.Tc/self.T))*(self.Pc/self.P)
+        self.K = np.exp(5.37 * (1 + self.w) * (1 - self.Tc / self.T)) * (self.Pc / self.P)
         aalpha_i_reshape = np.ones((self.Nc,self.Nc))*aalpha_i[:,np.newaxis]
         self.aalpha_ij = np.sqrt(
             aalpha_i_reshape.T * aalpha_i[:, np.newaxis]
@@ -41,8 +51,10 @@ class StabilityCheck:
         # PR cubic EOS: Z**3 - (1-B)*Z**2 + (A-2*B-3*B**2)*Z-(A*B-B**2-B**3)
         coef = [1,-(1-B),(A-2*B-3*B**2),-(A*B-B**2-B**3)]
         Z = np.roots(coef)
-        root = np.isreal(Z) # return True for real roots
-        real_roots_position = np.where(root == True) #position where the real roots are - crated for organization only
+        # return True for real roots
+        root = np.isreal(Z)
+        # position where the real roots are - crated for organization only
+        real_roots_position = np.where(root == True)
         Z_reais = np.real(Z[real_roots_position[:]]) #Saving the real roots
         Z_ans = min(Z_reais)*ph + max(Z_reais)*(1-ph)
         ''' This last line, considers that the phase is composed by a pure
@@ -115,27 +127,30 @@ class StabilityCheck:
         if sum(Y) <= 1: print('estavel')#estavel2 = 1
         else: print('instavel') #estavel2 = 0
 
-        '''The same thing happens here. The difference is that, the original
+        """
+        The same thing happens here. The difference is that, the original
         phase is gas, and then the "new" phase is supposed to be liquid.
         In cases that the compressibility equation returns only one root,
         both tests work like two different initial guess for the same problem,
-        being more likely to find a stationary point that makes the phase unstable.'''
+        being more likely to find a stationary point that makes the phase
+        unstable.
+        """
 
         ''' If one of these approaches returns unstable the system is unstable.
         The stability of the phase is something a little bit more complex
         to guarantee. '''
-        #-Discutir com alguém sobre essa última afirmação
-        return stationary_point1,stationary_point2
+        # -Discutir com alguém sobre essa última afirmação
+        return stationary_point1, stationary_point2
 
     def objective_function_Whitson(self,z):
-        '''solving for V'''
-        Vmax = 1/(1-min(self.K))
-        Vmin = 1/(1-max(self.K))
+        """Solving for V"""
+        Vmax = 1 / (1 - min(self.K))
+        Vmin = 1 / (1-max(self.K))
         V = (Vmin+Vmax)/2
         #i=0 #iteration counter
         Vold = V/2 #just to get into the loop
 
-        ''' solving for newton-raphson'''
+        '''solving for newton-raphson'''
         while abs(V/Vold-1)>1e-8:
             Vold = V
             f = sum((self.K-1)*z/(1+V*(self.K-1)))

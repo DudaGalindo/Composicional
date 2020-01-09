@@ -23,7 +23,7 @@ class StabilityTest(object):
         # I think that the method to calculate k would be just the general one
         #for heavier components, but I ended up considering both
         k = (0.379642+1.48503*self.w-0.1644*self.w**2+0.016667*self.w**3)*self.C7+\
-            (0.37464 + 1.54226*self.w -0.26992*self.w**2)*(1-self.C7)
+            (0.37464 + 1.5422*self.w -0.26992*self.w**2)*(1-self.C7)
         alpha = (1+k*(1-np.sqrt(self.T/self.Tc)))**2;
         aalpha_i = 0.45724*(self.R*self.Tc)**2/self.Pc*alpha
         self.b = 0.07780*self.R*self.Tc/self.Pc;
@@ -32,12 +32,12 @@ class StabilityTest(object):
         self.aalpha_ij = np.sqrt(aalpha_i_reshape.T*aalpha_i[:,np.newaxis])*(1.- self.Bin)
 
 
-    def Z_PR(self,B,A,ph):
+    def Z_PR(B,A,ph):
         # PR cubic EOS: Z**3 - (1-B)*Z**2 + (A-2*B-3*B**2)*Z-(A*B-B**2-B**3)
         coef = [1,-(1-B),(A-2*B-3*B**2),-(A*B-B**2-B**3)]
         Z = np.roots(coef)
-        self.root = np.isreal(Z) # return True for real roots
-        real_roots_position = np.where(self.root == True) #position where the real roots are - crated for organization only
+        root = np.isreal(Z) # return True for real roots
+        real_roots_position = np.where(root == True) #position where the real roots are - crated for organization only
         Z_reais = np.real(Z[real_roots_position[:]]) #Saving the real roots
         Z_ans = min(Z_reais)*ph + max(Z_reais)*(1-ph)
         ''' This last line, considers that the phase is composed by a pure
@@ -53,7 +53,7 @@ class StabilityTest(object):
         x_reshape = np.ones((self.aalpha_ij).shape)*x[:,np.newaxis]
         aalpha = (x_reshape.T*x[:,np.newaxis]*self.aalpha_ij).sum()
         A = aalpha*self.P/(self.R*self.T)**2
-        Z = self.Z_PR(B,A,ph)
+        Z = StabilityTest.Z_PR(B,A,ph) #Checar se a diferença ta no fator de compressibilidade - o jeito que é calculado
         psi = (x_reshape*self.aalpha_ij).sum(axis = 0)
         lnphi = self.b/bm*(Z-1)-np.log(Z-B)-A/(2*(2**(1/2))*B)*\
                 (2*psi/aalpha-self.b/bm)*np.log((Z+(1+2**(1/2))*B)/\
@@ -76,7 +76,7 @@ class StabilityTest(object):
         Yold = 0.9*Y
         y = Y/sum(Y)
         lnphiz = self.lnphi(z,1)
-        while max(abs(Y/Yold - 1))>1e-10: #convergência
+        while max(abs(Y/Yold - 1))>1e-9: #convergência
             Yold = np.copy(Y)
             lnphiy = self.lnphi(y,0)
             Y = np.exp(np.log(z) + lnphiz - lnphiy)
@@ -99,7 +99,7 @@ class StabilityTest(object):
         Y_old = 0.9*Y
         y = Y/sum(Y)
         lnphiz = self.lnphi(z,0)
-        while max(abs(Y/Y_old - 1))>1e-10:
+        while max(abs(Y/Y_old - 1))>1e-9:
             Y_old = np.copy(Y)
             lnphiy = self.lnphi(y,1)
             Y = np.exp(np.log(z) + lnphiz - lnphiy)
@@ -124,24 +124,33 @@ class StabilityTest(object):
 
     def objective_function_Whitson(self,z):
         #solving for V
-        Vmax = 1/(1-min(self.K))
-        Vmin = 1/(1-max(self.K))
-        V = (Vmin+Vmax)/2
+        #Vmax = 1/(1-min(self.K))
+        #Vmin = 1/(1-max(self.K))
+        #V = (Vmin+Vmax)/2
+        Lmax = max(self.K)/(max(self.K)-1)
+        Lmin = min(self.K)/(min(self.K)-1)
+        L = (Lmin + Lmax)/2
 
         i=0 #iteration counter
-        Vold = V/2 #just to get into the loop
-
+        #Vold = V/2 #just to get into the loop
+        Lold = L/2
         ''' solving for newton-raphson'''
-        while abs(V/Vold-1)>10e-9:
-            Vold = V
-            f = sum((self.K-1)*z/(1+V*(self.K-1)))
-            df = -sum((self.K-1)**2*z/(1+V*(self.K-1))**2)
-            V = V - f/df
-            if V>Vmax: V = (Vold+Vmax)/2
-            elif V<Vmin: V = (Vold+Vmin)/2
+        while abs(L/Lold-1)>1e-8:
+            Lold = L
+            f = sum((1-self.K)*z/(Lold+(1-Lold)*(self.K)))
+            #f = sum((self.K-1)*z/(1+V*(self.K-1)))
+            df = -sum((1-self.K)**2*z/(Lold+(1-Lold)*(self.K))**2)
+            #df = -sum((self.K-1)**2*z/(1+V*(self.K-1))**2)
+            L = L - f/df
+            #V = V - f/df
+            #if V>Vmax: V = Vmax
+            #elif V<Vmin: V = Vmin
+            if L>Lmax: L = (Lold+Lmax)/2
+            elif L<Lmin: L = (Lold+Lmin)/2
             i = i+1 #iteration counter
-        #print(i)
-        self.x = z/(1+V*(self.K-1))
+        
+        self.x = z/(L+(1-L)*(self.K))
+        #self.x = z/(1+V*(self.K-1))
         self.y = self.K*self.x
 
 
@@ -178,7 +187,7 @@ class StabilityTest(object):
         V = (z1-x1)/(x1*(K1-1));Vold = V/2
 
         ''' solving for newton-raphson '''
-        while abs(V/Vold-1) >10e-9:
+        while abs(V/Vold-1) >1e-8:
             Vold = V
             #i = i+1
             f = 1 + ((K1-KNc)/(KNc-1))*x1 +\
@@ -202,27 +211,9 @@ class StabilityTest(object):
     def molar_properties(self,z,Mw):
         # Aqui a correlação de wilson é utilizada apenas para achar o K inicial
         self.fv = 2*np.ones(len(z));self.fl = np.ones(len(z)) #entrar no primeiro loop
-        while max(abs(self.fv/self.fl - 1)) > 10e-9:
-            #if len(z) <=2:
-            self.objective_function_Whitson(z)
-            #else: self.objective_function_Yinghui(z)
- # talvez essa parte seja desnecessária - estou investigando ainda
-            lnphil_x = self.lnphi(self.x,1)
-            lnphiv_x = self.lnphi(self.x,0)
-            lnphil_y = self.lnphi(self.y,1)
-            lnphiv_y = self.lnphi(self.y,0)
-            delta_gx = sum(self.x*(lnphil_x-lnphiv_x))
-            delta_gy = sum(self.y*(lnphil_y-lnphiv_y))
-
-            if delta_gx>0: lnphil = lnphil_x
-            else: lnphil = lnphiv_x
-
-            if delta_gy>0: lnphiv = lnphiv_y
-            else: lnphiv = lnphil_y
-
-            self.fv = np.exp(lnphiv)*(self.y*self.P)
-            self.fl = np.exp(lnphil)*(self.x*self.P)
-            self.K = (self.fl/self.fv)*self.K
+        self.molar_properties_Whitson(z,Mw)
+        '''if z<=2: self.molar_properties_Whitson(z,Mw)
+        else: self.molar_properties_Yinghui(z,Mw)'''
 
         ''' Molar Volume Fractions '''
         self.V = (z-self.x)/(self.y-self.x)
@@ -235,8 +226,63 @@ class StabilityTest(object):
         ''' Phase Mass Densities '''
         self.rho_L = self.Mw_L/self.L
         self.rho_V = self.Mw_V/self.V
-        self.fv = np.exp(lnphiv)*(self.y*self.P)
-        self.fl = np.exp(lnphil)*(self.x*self.P)
+
+
+    def molar_properties_Whitson(self,z,Mw):
+
+        while max(abs(self.fv/self.fl - 1)) > 1e-9:
+            self.objective_function_Whitson(z)
+            # In order to verify the state of each new phase, in consequence,
+            #the new phases stabilities, we have to identify the composition
+            #that makes the Gibbs free energy smaller
+            lnphiv_x = self.lnphi(self.x,0)
+            lnphil_x = self.lnphi(self.x,1)
+            lnphiv_y = self.lnphi(self.y,0)
+            lnphil_y = self.lnphi(self.y,1)
+
+            deltaGx_molar = sum(self.x*(lnphiv_x - lnphil_x))
+            deltaGy_molar = sum(self.y*(lnphil_y - lnphiv_y))
+            if deltaGx_molar<0: lnphil = self.lnphi(self.x,0)
+            else: lnphil = self.lnphi(self.x,1)
+            if deltaGy_molar<0: lnphiv = self.lnphi(self.y,1)
+            else: lnphiv = self.lnphi(self.y,0)
+            '''
+            spx = self.Stability(x)
+            spy = self.Stability(y)
+
+            if spx[0]>1: lnphil = self.lnphi(self.x,1)
+            if spx[1]>1: lnphil = self.lnphi(self.x,0)
+            if spx[0]<1 and spx[1]<1: lnphil = self.lnphi(self.x,0)
+            if spy[0]>1: lnphiv = self.lnphi(self.y,1)
+            if spy[1]>1: lnphiv = self.lnphi(self.y,0)
+            if spy[0]<1 and spy[1]<1: lnphil = self.lnphi(self.y,)'''
+
+            self.fv = np.exp(lnphiv)*(self.y*self.P)
+            self.fl = np.exp(lnphil)*(self.x*self.P)
+            self.K = (self.fl/self.fv)*self.K
+
+    def molar_properties_Yinghui(self,z,Mw):
+
+        while max(abs(self.fv/self.fl - 1)) > 1e-9:
+            self.objective_function_Yinghui(z)
+
+ # talvez essa parte seja desnecessária - estou investigando ainda
+            lnphiv_x = self.lnphi(self.x,0)
+            lnphil_x = self.lnphi(self.x,1)
+            lnphiv_y = self.lnphi(self.y,0)
+            lnphil_y = self.lnphi(self.y,1)
+
+            deltaGx_molar = sum(self.x*(lnphiv_x - lnphil_x))
+            deltaGy_molar = sum(self.y*(lnphil_y - lnphiv_y))
+            if deltaGx_molar<0: lnphil = self.lnphi(self.x,0)
+            else: lnphil = self.lnphi(self.x,1)
+            if deltaGy_molar<0: lnphiv = self.lnphi(self.y,1)
+            else: lnphiv = self.lnphi(self.y,0)
+
+            self.fv = np.exp(lnphiv)*(self.y*self.P)
+            self.fl = np.exp(lnphil)*(self.x*self.P)
+            self.K = (self.fl/self.fv)*self.K
+
 
     def TPD(self,z): #ainda não sei onde usar isso
         x = np.zeros(self.Nc)

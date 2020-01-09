@@ -202,8 +202,8 @@ class StabilityTest(object):
         # Aqui a correlação de wilson é utilizada apenas para achar o K inicial
         self.fv = 2*np.ones(len(z));self.fl = np.ones(len(z)) #entrar no primeiro loop
 
-        if len(z)<=2: self.molar_properties_Whitson(z,Mw)
-        else: self.molar_properties_Yinghui(z,Mw)
+        if len(z)<=2: self.molar_properties_Whitson(z)
+        else: self.molar_properties_Yinghui(z)
 
         ''' Molar Volume Fractions '''
         self.V = (z-self.x)/(self.y-self.x)
@@ -218,7 +218,7 @@ class StabilityTest(object):
         self.rho_V = self.Mw_V/self.V
 
 
-    def molar_properties_Whitson(self,z,Mw):
+    def molar_properties_Whitson(self,z):
 
         while max(abs(self.fv/self.fl - 1)) > 1e-9:
             self.objective_function_Whitson(z)
@@ -251,7 +251,7 @@ class StabilityTest(object):
             self.fl = np.exp(lnphil)*(self.x*self.P)
             self.K = (self.fl/self.fv)*self.K
 
-    def molar_properties_Yinghui(self,z,Mw):
+    def molar_properties_Yinghui(self,z):
 
         while max(abs(self.fv/self.fl - 1)) > 1e-9:
             self.objective_function_Yinghui(z)

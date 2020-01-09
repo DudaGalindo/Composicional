@@ -24,7 +24,7 @@ class StabilityTest(object):
         #for heavier components, but I ended up considering both
         k = (0.379642+1.48503*self.w-0.1644*self.w**2+0.016667*self.w**3)*self.C7+\
             (0.37464 + 1.5422*self.w -0.26992*self.w**2)*(1-self.C7)
-        alpha = (1+k*(1-np.sqrt(self.T/self.Tc)))**2;
+        alpha = (1+k*(1-(self.T/self.Tc)**(1/2)))**2;
         aalpha_i = 0.45724*(self.R*self.Tc)**2/self.Pc*alpha
         self.b = 0.07780*self.R*self.Tc/self.Pc;
         self.K = np.exp(5.37*(1+self.w)*(1-self.Tc/self.T))*(self.Pc/self.P); # Wilson equation (K - equilimbrium ratio)
@@ -42,7 +42,7 @@ class StabilityTest(object):
         Z_ans = min(Z_reais)*ph + max(Z_reais)*(1-ph)
         ''' This last line, considers that the phase is composed by a pure
          component, so the EOS model can return more than one real root.
-            If liquid, Zl = min(Z) and gas Zv = max(Z).
+            If liquid, Zl = min(Z) and gas, Zv = max(Z).
             You can notice that, if there's only one real root, it works as well.'''
         return Z_ans
 
@@ -83,9 +83,9 @@ class StabilityTest(object):
             y = Y/sum(Y);
 
         stationary_point1 = sum(Y)
-        #print(sum(Y))
-        #if sum(Y) <= 1: print('estavel')
-        #else: print('instavel') #estavel2 = 0
+        print(sum(Y))
+        if sum(Y) <= 1: print('estavel')
+        else: print('instavel') #estavel2 = 0
 
         ''' If this first test returns stable: There might be a chance that the
         Gibbs free energy is at its global minimum. However, as will be
@@ -106,9 +106,9 @@ class StabilityTest(object):
             y = Y/sum(Y)
 
         stationary_point2 = sum(Y)
-        #print(sum(Y))
-        #if sum(Y) <= 1: print('estavel')#estavel2 = 1
-        #else: print('instavel') #estavel2 = 0
+        print(sum(Y))
+        if sum(Y) <= 1: print('estavel')#estavel2 = 1
+        else: print('instavel') #estavel2 = 0
 
         '''The same thing happens here. The difference is that, the original
         phase is gas, and then the "new" phase is supposed to be liquid.
@@ -123,38 +123,28 @@ class StabilityTest(object):
         return stationary_point1,stationary_point2
 
     def objective_function_Whitson(self,z):
-        #solving for V
-        #Vmax = 1/(1-min(self.K))
-        #Vmin = 1/(1-max(self.K))
-        #V = (Vmin+Vmax)/2
-        Lmax = max(self.K)/(max(self.K)-1)
-        Lmin = min(self.K)/(min(self.K)-1)
-        L = (Lmin + Lmax)/2
+        '''solving for V'''
+        Vmax = 1/(1-min(self.K))
+        Vmin = 1/(1-max(self.K))
+        V = (Vmin+Vmax)/2
+        #i=0 #iteration counter
+        Vold = V/2 #just to get into the loop
 
-        i=0 #iteration counter
-        #Vold = V/2 #just to get into the loop
-        Lold = L/2
         ''' solving for newton-raphson'''
-        while abs(L/Lold-1)>1e-8:
-            Lold = L
-            f = sum((1-self.K)*z/(Lold+(1-Lold)*(self.K)))
-            #f = sum((self.K-1)*z/(1+V*(self.K-1)))
-            df = -sum((1-self.K)**2*z/(Lold+(1-Lold)*(self.K))**2)
-            #df = -sum((self.K-1)**2*z/(1+V*(self.K-1))**2)
-            L = L - f/df
-            #V = V - f/df
-            #if V>Vmax: V = Vmax
-            #elif V<Vmin: V = Vmin
-            if L>Lmax: L = (Lold+Lmax)/2
-            elif L<Lmin: L = (Lold+Lmin)/2
-            i = i+1 #iteration counter
-        
-        self.x = z/(L+(1-L)*(self.K))
-        #self.x = z/(1+V*(self.K-1))
+        while abs(V/Vold-1)>1e-8:
+            Vold = V
+            f = sum((self.K-1)*z/(1+V*(self.K-1)))
+            df = -sum((self.K-1)**2*z/(1+V*(self.K-1))**2)
+            V = V - f/df
+            if V>Vmax: V = Vmax
+            elif V<Vmin: V = Vmin
+            #i = i+1 #iteration counter
+        self.x = z/(1+V*(self.K-1))
         self.y = self.K*self.x
 
 
     def objective_function_Yinghui(self,z):
+        "try to make this smaller"
         K1 = max(self.K); KNc = min(self.K)
 
         ''' shaping z to Nc-2 components by removing z1 and zNc'''
@@ -211,9 +201,9 @@ class StabilityTest(object):
     def molar_properties(self,z,Mw):
         # Aqui a correlação de wilson é utilizada apenas para achar o K inicial
         self.fv = 2*np.ones(len(z));self.fl = np.ones(len(z)) #entrar no primeiro loop
-        self.molar_properties_Whitson(z,Mw)
-        '''if z<=2: self.molar_properties_Whitson(z,Mw)
-        else: self.molar_properties_Yinghui(z,Mw)'''
+
+        if len(z)<=2: self.molar_properties_Whitson(z,Mw)
+        else: self.molar_properties_Yinghui(z,Mw)
 
         ''' Molar Volume Fractions '''
         self.V = (z-self.x)/(self.y-self.x)

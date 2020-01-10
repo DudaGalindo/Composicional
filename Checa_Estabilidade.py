@@ -53,7 +53,7 @@ class StabilityTest(object):
         x_reshape = np.ones((self.aalpha_ij).shape)*x[:,np.newaxis]
         aalpha = (x_reshape.T*x[:,np.newaxis]*self.aalpha_ij).sum()
         A = aalpha*self.P/(self.R*self.T)**2
-        Z = StabilityTest.Z_PR(B,A,ph) #Checar se a diferença ta no fator de compressibilidade - o jeito que é calculado
+        Z = StabilityTest.Z_PR(B,A,ph)
         psi = (x_reshape*self.aalpha_ij).sum(axis = 0)
         lnphi = self.b/bm*(Z-1)-np.log(Z-B)-A/(2*(2**(1/2))*B)*\
                 (2*psi/aalpha-self.b/bm)*np.log((Z+(1+2**(1/2))*B)/\
@@ -139,6 +139,7 @@ class StabilityTest(object):
             if V>Vmax: V = Vmax
             elif V<Vmin: V = Vmin
             #i = i+1 #iteration counter
+        #print(i)
         self.x = z/(1+V*(self.K-1))
         self.y = self.K*self.x
 
@@ -148,38 +149,43 @@ class StabilityTest(object):
         K1 = max(self.K); KNc = min(self.K)
 
         ''' shaping z to Nc-2 components by removing z1 and zNc'''
-        z1 = z[K1==self.K]
+        z1 = z[self.K==K1]
+
         aux1 = z[z==z[self.K==K1]]
-        index1 = np.argwhere(z==aux1)
+        index1 = np.argwhere(z==aux1[0])
         zi = np.delete(z,index1[0])
 
         auxNc = zi[zi == z[self.K==KNc]]
-        indexNc = np.argwhere(zi==auxNc)
+        indexNc = np.argwhere(zi==auxNc[0])
         zi = np.delete(zi,indexNc[len(indexNc)-1])
 
         ''' shaping K to Nc-2 components by removing K1 and KNc '''
         Ki = self.K[(self.K!=K1) & (self.K!=KNc)]
 
-        if all(z>0) and len(z)<10:
-            x1_min = z1*(1-KNc)/(K1-KNc)
-            x1_max = (1-KNc)/(K1-KNc)
-        else:
+        x1_min = z1*(1-KNc)/(K1-KNc)
+        x1_max = (1-KNc)/(K1-KNc)
+
+        #print(x1_min,x1_max)
+        if any(z<0):
             theta = np.ones(len(z))
             theta[self.K>1] = (1-KNc)/(self.K[self.K>1]-KNc)
-            x1_max = max(np.append((self.K-1)*z1/(z*(K1-1)/theta-(K1-self.K)),0))
             arr = (self.K-1)*z1/(z*(K1-1)/theta-(K1-self.K))
-            arr[arr<0] = 1
-            x1_min = min(arr)
+            if all((self.K[z!=0]-1)*z1/z[z!=0]>0):
+                arr[arr<0] = 100
+                x1_max = min(arr)
+            else:
+                x1_min = max(np.append(arr,0))
+                #x1_max = theta[self.K==K1]
+        if x1_min>x1_max:
+            raise ValueError('Does not exist a physical root')
 
         x1 = (x1_min+x1_max)/2
-        #i = 0 #iterations counter
 
-        V = (z1-x1)/(x1*(K1-1));Vold = V/2
-
+        #V = (z1-x1)/(x1*(K1-1));Vold = V/2
+        f=1
         ''' solving for newton-raphson '''
-        while abs(V/Vold-1) >1e-8:
-            Vold = V
-            #i = i+1
+        while abs(f) >1e-10 and z1!=0:
+
             f = 1 + ((K1-KNc)/(KNc-1))*x1 +\
                 sum(((Ki-KNc)/(KNc-1))*\
                 zi*(K1-1)*x1/((Ki-1)*z1+(K1-Ki)*x1))
@@ -187,18 +193,29 @@ class StabilityTest(object):
             df = ((K1-KNc)/(KNc-1)) +\
                 sum(((Ki-KNc)/(KNc-1))*zi*z1*(K1-1)*\
                 (Ki-1)/((Ki-1)*z1+(K1-Ki)*x1)**2)
-            x1 = x1 -f/df
-            if (x1>x1_max) | (x1<x1_min): x1 = (x1_min+x1_max)/2 #recommended
-            V = (z1-x1)/(x1*(K1-1))
+            x1 = x1 - f/df
+            #if f*df>0: x1_max = x1
+            #else: x1_min = x1
+            if (x1>x1_max) or (x1<x1_min): x1 = (x1_min+x1_max)/2 #recommended
+            #V = (z1-x1)/(x1*(K1-1))
 
-        #print(i)
+        self.x = np.zeros(self.Nc)
+        if z1==0:
+            xi = (K1-1)*zi/(K1 - Ki)
+            self.x[self.K==KNc] = (K1-1)*z[self.K==KNc]/(K1 - self.K[self.K==KNc])
+            self.x[self.K==K1] = 1 - sum(xi) - sum(self.x)
+        else:
+            xi = (K1-1)*zi*x1/((Ki-1)*z1+(K1-Ki)*x1)
+            self.x[self.K==K1] = x1
+            self.x[self.K==KNc] = 1 - sum(xi) - x1
 
-        xi = (K1-1)*zi*x1/((Ki-1)*z1+(K1-Ki)*x1)
-        xNc = 1 - sum(xi) - x1
-        self.x = np.concatenate((x1,xi,xNc),axis=None)
+        for i in range(0,len(xi)):
+            self.x[self.K==Ki[i]] = xi[i]
         self.y = self.K*self.x
 
+
     def molar_properties(self,z,Mw):
+        self.coefficientsPR()
         # Aqui a correlação de wilson é utilizada apenas para achar o K inicial
         self.fv = 2*np.ones(len(z));self.fl = np.ones(len(z)) #entrar no primeiro loop
 
@@ -232,31 +249,22 @@ class StabilityTest(object):
 
             deltaGx_molar = sum(self.x*(lnphiv_x - lnphil_x))
             deltaGy_molar = sum(self.y*(lnphil_y - lnphiv_y))
-            if deltaGx_molar<0: lnphil = self.lnphi(self.x,0)
-            else: lnphil = self.lnphi(self.x,1)
-            if deltaGy_molar<0: lnphiv = self.lnphi(self.y,1)
-            else: lnphiv = self.lnphi(self.y,0)
-            '''
-            spx = self.Stability(x)
-            spy = self.Stability(y)
-
-            if spx[0]>1: lnphil = self.lnphi(self.x,1)
-            if spx[1]>1: lnphil = self.lnphi(self.x,0)
-            if spx[0]<1 and spx[1]<1: lnphil = self.lnphi(self.x,0)
-            if spy[0]>1: lnphiv = self.lnphi(self.y,1)
-            if spy[1]>1: lnphiv = self.lnphi(self.y,0)
-            if spy[0]<1 and spy[1]<1: lnphil = self.lnphi(self.y,)'''
+            if deltaGx_molar<0: lnphil = lnphiv_x
+            else: lnphil = lnphil_x
+            if deltaGy_molar<0: lnphiv = lnphil_y
+            else: lnphiv = lnphiv_y
 
             self.fv = np.exp(lnphiv)*(self.y*self.P)
             self.fl = np.exp(lnphil)*(self.x*self.P)
             self.K = (self.fl/self.fv)*self.K
 
     def molar_properties_Yinghui(self,z):
-        print(self.K)
-        while max(abs(self.fv/self.fl - 1)**2) > 1e-9:
+        razao = np.ones(self.Nc)/2 #passar do primeiro
+        while max(abs(razao - 1)) > 1e-9:
+            razao = np.ones(self.Nc)*1.0000000001 #pra funcionar se tiver fl=fv=0
+
             self.objective_function_Yinghui(z)
 
- # talvez essa parte seja desnecessária - estou investigando ainda
             lnphiv_x = self.lnphi(self.x,0)
             lnphil_x = self.lnphi(self.x,1)
             lnphiv_y = self.lnphi(self.y,0)
@@ -264,15 +272,24 @@ class StabilityTest(object):
 
             deltaGx_molar = sum(self.x*(lnphiv_x - lnphil_x))
             deltaGy_molar = sum(self.y*(lnphil_y - lnphiv_y))
-            if deltaGx_molar<0: lnphil = self.lnphi(self.x,0)
-            else: lnphil = self.lnphi(self.x,1)
-            if deltaGy_molar<0: lnphiv = self.lnphi(self.y,1)
-            else: lnphiv = self.lnphi(self.y,0)
 
-            self.fv = np.exp(lnphiv)*(self.y*self.P)
+            if deltaGx_molar<0: lnphil = lnphiv_x
+            else: lnphil = lnphil_x
+            if deltaGy_molar<0: lnphiv = lnphil_y
+            else: lnphiv = lnphiv_y
+
             self.fl = np.exp(lnphil)*(self.x*self.P)
-            self.K = (self.fl/self.fv)*self.K
-            print(self.K)
+            self.fv = np.exp(lnphiv)*(self.y*self.P)
+            if any(self.fv==0):
+                index_fl = np.argwhere(self.fl!=0)
+                index_fv = np.argwhere(self.fv!=0)
+                razao[index_fl[index_fl==index_fv]] = self.fl[index_fl[index_fl==index_fv]]/self.fv[index_fv[index_fv==index_fv]]
+                self.K[index_fl[index_fl==index_fv]] = razao[index_fl[index_fl==index_fv]]*self.K[index_fl[index_fl==index_fv]]
+            else:
+                razao = self.fl/self.fv
+                self.K = razao*self.K
+
+            #print(razao)
 
     def TPD(self,z): #ainda não sei onde usar isso
         x = np.zeros(self.Nc)

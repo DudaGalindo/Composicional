@@ -30,7 +30,7 @@ class testes_Li_et_al_table4(unittest.TestCase):
         '''Run:'''
         obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
         obj.run(z,prop.Mw)
-
+        
         '''Verify Results'''
         x = [0.1676,0.2239,0.3088,0.2997]
         y = [0.9115,0.0686,0.0190,0.0009]

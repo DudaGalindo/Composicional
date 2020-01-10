@@ -141,8 +141,10 @@ class StabilityCheck:
         ''' If one of these approaches returns unstable the system is unstable.
         The stability of the phase is something a little bit more complex
         to guarantee. '''
-        #-Discutir com alguém sobre essa última afirmação
+
         return stationary_point1,stationary_point2
+
+    """-------------Below starts biphasic flash calculations-----------------"""
 
     def solve_objective_function_Yinghui(self, z1, zi, z, K1, KNc, Ki):
 
@@ -152,32 +154,25 @@ class StabilityCheck:
         if any(z < 0):
             theta = np.ones(len(z))
             theta[self.K > 1] = (1 - KNc) / (self.K[self.K > 1] - KNc)
-            arr = (self.K - 1) * z1 / (z * (K1 - 1) / theta - (K1 - self.K))
+            aux_eq = (self.K - 1) * z1 / (z * (K1 - 1) / theta - (K1 - self.K))
             if all((self.K[z != 0] - 1) * z1 / z[z != 0] > 0):
-                arr[arr < 0] = 100
-                x1_max = min(arr)
-            else:
-                x1_min = max(np.append(arr, 0))
+                aux_eq = aux_eq[aux_eq >= 0] #se arr<0 é descartado
+                x1_max = min(aux_eq)
+            else: x1_min = max(np.append(arr, 0))
 
-        if x1_min > x1_max:
-            raise ValueError('Does not exist a physical root')
+        if x1_min > x1_max: raise ValueError('There is no physical root')
 
         x1 = (x1_min + x1_max) / 2
         f = 1
-        ''' solving for newton-raphson '''
         while abs(f) > 1e-10:
-
             f = 1 + ((K1 - KNc) / (KNc - 1)) * x1 + sum(((Ki - KNc) / (KNc - 1))
                * zi * (K1 - 1) * x1 / ((Ki - 1) * z1 + (K1 - Ki) * x1))
-
             df = ((K1 - KNc) / (KNc - 1)) + sum(((Ki - KNc) / (KNc - 1)) * zi *
                 z1 * (K1 - 1)* (Ki - 1) / ((Ki - 1) * z1 + (K1 - Ki) * x1) ** 2)
-
-            x1 = x1 - f/df
-
+            x1 = x1 - f/df #Newton-Raphson iterative method
             if (x1 > x1_max) or (x1 < x1_min): x1 = (x1_min + x1_max)/2 #recommended
-            #if f*df>0: x1_max = x1 #isso no paper diz pra fazer mas n deu certo
-            #if f*df<0: x1_min = x1
+            if f * df > 0: x1_max = x1
+            if f * df < 0: x1_min = x1
 
         xi = (K1 - 1) * zi * x1 / ((Ki - 1) * z1 + (K1 - Ki) * x1)
         self.x[self.K == K1] = x1
@@ -185,27 +180,28 @@ class StabilityCheck:
         return xi
 
     def Yinghui_method(self, z):
+
+        """ Shaping K to Nc-2 components by removing K1 and KNc """
         K1 = max(self.K); KNc = min(self.K)
+        Ki = self.K[(self.K != K1) & (self.K != KNc)]
 
-        ''' shaping z to Nc-2 components by removing z1 and zNc'''
+        """ Shaping z to Nc-2 components by removing z1 and zNc """
         z1 = z[self.K == K1]
-
         aux1 = z[z == z1]
         index1 = np.argwhere(z == aux1[0])
         zi = np.delete(z, index1[0])
-
         auxNc = zi[zi == z[self.K == KNc]]
         indexNc = np.argwhere(zi == auxNc[0])
         zi = np.delete(zi, indexNc[len(indexNc) - 1])
 
-        ''' shaping K to Nc-2 components by removing K1 and KNc '''
-        Ki = self.K[(self.K != K1) & (self.K != KNc)]
+        #starting x
         self.x = np.zeros(self.Nc)
 
+        """ Solution """
         if z1 != 0:
             xi = self.solve_objective_function_Yinghui(z1, zi, z, K1, KNc, Ki)
         else:
-            'Explicit Calculation of xi'
+            '''Explicit Calculation of xi'''
             xi = (K1 - 1) * zi / (K1 - Ki)
             self.x[self.K == KNc] = (K1 - 1) * z[self.K == KNc] / (K1 -
                                     self.K[self.K == KNc])
@@ -214,55 +210,12 @@ class StabilityCheck:
         #ainda não sei como tirar esse for
         for i in range(0, len(xi)):
             self.x[self.K == Ki[i]] = xi[i]
+
         self.y = self.K * self.x
-
-    def solve_objective_function_Whitson(self, z):
-        """ Solving for V """
-        Vmax = 1 / (1 - min(self.K))
-        Vmin = 1 / (1 - max(self.K))
-        V = (Vmin + Vmax) / 2
-        #i=0 #iteration counter
-        Vold = V / 2 #just to get into the loop
-
-        ''' solving for newton-raphson'''
-        while abs(V / Vold - 1) > 1e-8:
-            Vold = V
-            f = sum((self.K - 1) * z / (1 + V * (self.K - 1)))
-            df = -sum((self.K - 1) ** 2 * z / (1 + V * (self.K - 1)) ** 2)
-            V = V - f / df
-            if V > Vmax: V = Vmax
-            elif V < Vmin: V = Vmin
-            #i = i+1 #iteration counter
-        #print(i)
-        self.x = z / (1 + V * (self.K - 1))
-        self.y = self.K * self.x
-
-
-    def molar_properties_Whitson(self, z):
-
-        while max(abs(self.fv / self.fl - 1)) > 1e-9:
-            self.solve_objective_function_Whitson(z)
-            # In order to verify the state of each new phase, in consequence,
-            #the new phases stabilities, we have to identify the composition
-            #that makes the Gibbs free energy smaller
-            lnphix = [self.lnphi(self.x, 0), self.lnphi(self.x, 1)]
-            lnphiy = [self.lnphi(self.y, 0), self.lnphi(self.y, 1)]
-            deltaGx_molar = sum(self.x * (lnphix[0] - lnphix[1]))
-            deltaGy_molar = sum(self.y * (lnphiy[1] - lnphiy[0]))
-            lnphil = -lnphix[0] * np.sign(1 - np.sign(deltaGx_molar)) * \
-                    np.sign(deltaGx_molar) + lnphix[1] * np.sign(1 +
-                    np.sign(deltaGx_molar))
-            lnphiv = -lnphiy[1] * np.sign(1 - np.sign(deltaGy_molar)) * \
-                    np.sign(deltaGy_molar) + lnphiy[0] * np.sign(1 +
-                    np.sign(deltaGy_molar))
-            self.fv = np.exp(lnphiv) * (self.y * self.P)
-            self.fl = np.exp(lnphil) * (self.x * self.P)
-            self.K = (self.fl / self.fv) * self.K
 
     def molar_properties_Yinghui(self,z):
-        #razao = fl/fv - here an arbitrary vector to enter in the iterative mode
+        #razao = fl/fv -> an arbitrary vector to enter in the iterative mode
         razao = np.ones(self.Nc)/2
-
         while max(abs(razao - 1)) > 1e-9:
             self.Yinghui_method(z)
 
@@ -293,6 +246,50 @@ class StabilityCheck:
                               where = self.fv != 0)
             self.K = razao * self.K
 
+
+    def solve_objective_function_Whitson(self, z):
+        """ Solving for V """
+        #K1 = max(self.K); KNc = min(self.K)
+        Vmax = 1 / (1 - min(self.K))
+        Vmin = 1 / (1 - max(self.K))
+        #Vmin = ((K1-KNc)*z[self.K==K1]-(1-KNc))/((1-KNc)*(K1-1))
+        #proposed by Li et al for Whitson method
+        V = (Vmin + Vmax) / 2
+        Vold = V / 2 #just to get into the loop
+
+        while abs(V / Vold - 1) > 1e-8:
+            Vold = V
+            f = sum((self.K - 1) * z / (1 + V * (self.K - 1)))
+            df = -sum((self.K - 1) ** 2 * z / (1 + V * (self.K - 1)) ** 2)
+            V = V - f / df #Newton-Raphson iterative method
+            if V > Vmax: V = Vmax
+            elif V < Vmin: V = Vmin
+
+        self.x = z / (1 + V * (self.K - 1))
+        self.y = self.K * self.x
+
+
+    def molar_properties_Whitson(self, z):
+
+        while max(abs(self.fv / self.fl - 1)) > 1e-9:
+            self.solve_objective_function_Whitson(z)
+            # In order to verify the state of each new phase, in consequence,
+            #the new phases stabilities, we have to identify the composition
+            #that makes the Gibbs free energy smaller
+            lnphix = [self.lnphi(self.x, 0), self.lnphi(self.x, 1)]
+            lnphiy = [self.lnphi(self.y, 0), self.lnphi(self.y, 1)]
+            deltaGx_molar = sum(self.x * (lnphix[0] - lnphix[1]))
+            deltaGy_molar = sum(self.y * (lnphiy[1] - lnphiy[0]))
+            lnphil = -lnphix[0] * np.sign(1 - np.sign(deltaGx_molar)) * \
+                    np.sign(deltaGx_molar) + lnphix[1] * np.sign(1 +
+                    np.sign(deltaGx_molar))
+            lnphiv = -lnphiy[1] * np.sign(1 - np.sign(deltaGy_molar)) * \
+                    np.sign(deltaGy_molar) + lnphiy[0] * np.sign(1 +
+                    np.sign(deltaGy_molar))
+            self.fv = np.exp(lnphiv) * (self.y * self.P)
+            self.fl = np.exp(lnphil) * (self.x * self.P)
+            self.K = (self.fl / self.fv) * self.K
+
     def molar_properties(self,z,Mw):
         self.coefficientsPR()
         # Aqui a correlação de wilson é utilizada apenas para achar o K inicial
@@ -302,8 +299,8 @@ class StabilityCheck:
         else: self.molar_properties_Yinghui(z)
 
         ''' Molar Volume Fractions '''
-        self.V = (z[self.x!=0] - self.x[self.x!=0]) / (self.y[self.x!=0] -
-                self.x[self.x!=0])
+        self.V = (z[self.x != 0] - self.x[self.x != 0]) / (self.y[self.x != 0] -
+                self.x[self.x != 0])
         self.L = 1 - self.V
 
         ''' Phase Molecular Weight '''
@@ -313,6 +310,7 @@ class StabilityCheck:
         ''' Phase Mass Densities '''
         self.rho_L = self.Mw_L / self.L
         self.rho_V = self.Mw_V / self.V
+        # se precisar retornar mais coisa, entra aqui
 
 
 

@@ -33,9 +33,11 @@ class testes_Li_et_al_table4(unittest.TestCase):
         y = [0.9115,0.0686,0.0190,0.0009]
         K = [5.4393,0.3062,0.0616,0.0031]
 
-        self.assertEqual([obj.x[0],obj.x[1],obj.x[2],obj.x[3]],x,'ValueError:Failed')
-        self.assertEqual([obj.y[0],obj.y[1],obj.y[2],obj.y[3]],y,'ValueError:Failed')
-        self.assertEqual([obj.K[0],obj.K[1],obj.K[2],obj.K[3]],K,'ValueError:Failed')
+        for i in range(obj.Nc):
+            self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
+            self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
+            if obj.x[i] != 0 and obj.y[i] != 0:
+                self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
 
     def test4(self):
         z = np.array([0,0,0,1])
@@ -56,9 +58,11 @@ class testes_Li_et_al_table4(unittest.TestCase):
         y = [0.9980,0.0000,0.0000,0.0020]
         K = [5.7895,0.2867,0.0538,0.0024]
 
-        self.assertEqual([obj.x[0],obj.x[1],obj.x[2],obj.x[3]],x,'ValueError:Failed')
-        self.assertEqual([obj.y[0],obj.y[1],obj.y[2],obj.y[3]],y,'ValueError:Failed')
-        self.assertEqual([obj.K[0],obj.K[3]],[K[0],K[3]],'ValueError:Failed')
+        for i in range(obj.Nc):
+            self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
+            self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
+            if obj.x[i] != 0 and obj.y[i] != 0:
+                self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
 
     def test3(self):
         z = np.array([0,0,1,0])
@@ -71,17 +75,17 @@ class testes_Li_et_al_table4(unittest.TestCase):
         # sp1,sp2 = obj.Stability(z)
         # if sp1>1 or sp2>1:
         #     obj.molar_properties(z,Mw)
-        obj.x = np.round(obj.x,4)
-        obj.y = np.round(obj.y,4)
-        obj.K = np.round(obj.K,4)
+
 
         x = [0.1789,0.0000,0.8211,0.0000]
         y = [0.9507,0.0000,0.0493,0.0000]
         K = [5.3130,0.2999,0.0600,0.0030]
 
-        self.assertEqual([obj.x[0],obj.x[1],obj.x[2],obj.x[3]],x,'ValueError:Failed')
-        self.assertEqual([obj.y[0],obj.y[1],obj.y[2],obj.y[3]],y,'ValueError:Failed')
-        self.assertEqual([obj.K[0],obj.K[2]],[K[0],K[2]],'ValueError:Failed')
+        for i in range(obj.Nc):
+            self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
+            self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
+            if obj.x[i] != 0 and obj.y[i] != 0:
+                self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
 
     def test2(self):
         z = np.array([0,1,0,0])
@@ -102,9 +106,11 @@ class testes_Li_et_al_table4(unittest.TestCase):
         y = [0.6960,0.3040,0.0000,0.0000]
         K = [4.2473,0.3636,0.0905,0.0066]
 
-        self.assertEqual([obj.x[0],obj.x[1],obj.x[2],obj.x[3]],x,'ValueError:Failed')
-        self.assertEqual([obj.y[0],obj.y[1],obj.y[2],obj.y[3]],y,'ValueError:Failed')
-        self.assertEqual([obj.K[0],obj.K[1]],[K[0],K[1]],'ValueError:Failed')
+        for i in range(obj.Nc):
+            self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
+            self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
+            if obj.x[i] != 0 and obj.y[i] != 0:
+                self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
 
     def test1(self):
         z = np.array([1,0,0,0])
@@ -125,9 +131,11 @@ class testes_Li_et_al_table4(unittest.TestCase):
         y = [0.9980,0.0000,0.0000,0.0020]
         K = [5.7895,0.2867,0.0538,0.0024]
 
-        self.assertEqual([obj.x[0],obj.x[1],obj.x[2],obj.x[3]],x,'ValueError:Failed')
-        self.assertEqual([obj.y[0],obj.y[1],obj.y[2],obj.y[3]],y,'ValueError:Failed')
-        self.assertEqual([obj.K[0],obj.K[3]],[K[0],K[3]],'ValueError:Failed')
+        for i in range(obj.Nc):
+            self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
+            self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
+            if obj.x[i] != 0 and obj.y[i] != 0:
+                self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
 
 class testes_casos_Schmall(unittest.TestCase):
     def test_caso1(self):

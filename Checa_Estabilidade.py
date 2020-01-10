@@ -122,7 +122,7 @@ class StabilityTest(object):
         #-Discutir com alguém sobre essa última afirmação
         return stationary_point1,stationary_point2
 
-    def objective_function_Whitson(self,z):
+    def solve_objective_function_Whitson(self,z):
         '''solving for V'''
         Vmax = 1/(1-min(self.K))
         Vmin = 1/(1-max(self.K))
@@ -143,29 +143,11 @@ class StabilityTest(object):
         self.x = z/(1+V*(self.K-1))
         self.y = self.K*self.x
 
-
-    def objective_function_Yinghui(self,z):
-        "try to make this smaller"
-        K1 = max(self.K); KNc = min(self.K)
-
-        ''' shaping z to Nc-2 components by removing z1 and zNc'''
-        z1 = z[self.K==K1]
-
-        aux1 = z[z==z[self.K==K1]]
-        index1 = np.argwhere(z==aux1[0])
-        zi = np.delete(z,index1[0])
-
-        auxNc = zi[zi == z[self.K==KNc]]
-        indexNc = np.argwhere(zi==auxNc[0])
-        zi = np.delete(zi,indexNc[len(indexNc)-1])
-
-        ''' shaping K to Nc-2 components by removing K1 and KNc '''
-        Ki = self.K[(self.K!=K1) & (self.K!=KNc)]
+    def solve_objective_function_Yinghui(self,z1,zi,z,K1,KNc,Ki):
 
         x1_min = z1*(1-KNc)/(K1-KNc)
         x1_max = (1-KNc)/(K1-KNc)
 
-        #print(x1_min,x1_max)
         if any(z<0):
             theta = np.ones(len(z))
             theta[self.K>1] = (1-KNc)/(self.K[self.K>1]-KNc)
@@ -175,16 +157,14 @@ class StabilityTest(object):
                 x1_max = min(arr)
             else:
                 x1_min = max(np.append(arr,0))
-                #x1_max = theta[self.K==K1]
+
         if x1_min>x1_max:
             raise ValueError('Does not exist a physical root')
 
         x1 = (x1_min+x1_max)/2
-
-        #V = (z1-x1)/(x1*(K1-1));Vold = V/2
         f=1
         ''' solving for newton-raphson '''
-        while abs(f) >1e-10 and z1!=0:
+        while abs(f) >1e-10:
 
             f = 1 + ((K1-KNc)/(KNc-1))*x1 +\
                 sum(((Ki-KNc)/(KNc-1))*\
@@ -195,20 +175,40 @@ class StabilityTest(object):
                 (Ki-1)/((Ki-1)*z1+(K1-Ki)*x1)**2)
             x1 = x1 - f/df
             #if f*df>0: x1_max = x1
-            #else: x1_min = x1
+            #if f*df<0: x1_min = x1
             if (x1>x1_max) or (x1<x1_min): x1 = (x1_min+x1_max)/2 #recommended
-            #V = (z1-x1)/(x1*(K1-1))
 
+        xi = (K1-1)*zi*x1/((Ki-1)*z1+(K1-Ki)*x1)
+        self.x[self.K==K1] = x1
+        self.x[self.K==KNc] = 1 - sum(xi) - x1
+        return xi
+
+    def Yinghui_method(self,z):
+        K1 = max(self.K); KNc = min(self.K)
+
+        ''' shaping z to Nc-2 components by removing z1 and zNc'''
+        z1 = z[self.K==K1]
+
+        aux1 = z[z==z1]
+        index1 = np.argwhere(z==aux1[0])
+        zi = np.delete(z,index1[0])
+
+        auxNc = zi[zi == z[self.K==KNc]]
+        indexNc = np.argwhere(zi==auxNc[0])
+        zi = np.delete(zi,indexNc[len(indexNc)-1])
+
+        ''' shaping K to Nc-2 components by removing K1 and KNc '''
+        Ki = self.K[(self.K!=K1) & (self.K!=KNc)]
         self.x = np.zeros(self.Nc)
-        if z1==0:
+
+        if z1!=0: xi = self.solve_objective_function_Yinghui(z1,zi,z,K1,KNc,Ki)
+        else:
+            'Explicit Calculus of xi'
             xi = (K1-1)*zi/(K1 - Ki)
             self.x[self.K==KNc] = (K1-1)*z[self.K==KNc]/(K1 - self.K[self.K==KNc])
             self.x[self.K==K1] = 1 - sum(xi) - sum(self.x)
-        else:
-            xi = (K1-1)*zi*x1/((Ki-1)*z1+(K1-Ki)*x1)
-            self.x[self.K==K1] = x1
-            self.x[self.K==KNc] = 1 - sum(xi) - x1
 
+        #ainda não sei como tirar esse for
         for i in range(0,len(xi)):
             self.x[self.K==Ki[i]] = xi[i]
         self.y = self.K*self.x
@@ -238,7 +238,7 @@ class StabilityTest(object):
     def molar_properties_Whitson(self,z):
 
         while max(abs(self.fv/self.fl - 1)) > 1e-9:
-            self.objective_function_Whitson(z)
+            self.solve_objective_function_Whitson(z)
             # In order to verify the state of each new phase, in consequence,
             #the new phases stabilities, we have to identify the composition
             #that makes the Gibbs free energy smaller
@@ -259,11 +259,11 @@ class StabilityTest(object):
             self.K = (self.fl/self.fv)*self.K
 
     def molar_properties_Yinghui(self,z):
-        razao = np.ones(self.Nc)/2 #passar do primeiro
+        razao = np.ones(self.Nc)/2 #variable created to predict cases that fl=fv=0
         while max(abs(razao - 1)) > 1e-9:
             razao = np.ones(self.Nc)*1.0000000001 #pra funcionar se tiver fl=fv=0
 
-            self.objective_function_Yinghui(z)
+            self.Yinghui_method(z)
 
             lnphiv_x = self.lnphi(self.x,0)
             lnphil_x = self.lnphi(self.x,1)
@@ -289,7 +289,6 @@ class StabilityTest(object):
                 razao = self.fl/self.fv
                 self.K = razao*self.K
 
-            #print(razao)
 
     def TPD(self,z): #ainda não sei onde usar isso
         x = np.zeros(self.Nc)

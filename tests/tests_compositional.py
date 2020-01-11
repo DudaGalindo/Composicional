@@ -30,7 +30,7 @@ class testes_Li_et_al_table4(unittest.TestCase):
         '''Run:'''
         obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
         obj.run(z,prop.Mw)
-        
+
         '''Verify Results'''
         x = [0.1676,0.2239,0.3088,0.2997]
         y = [0.9115,0.0686,0.0190,0.0009]
@@ -179,11 +179,6 @@ class testes_casos_Schmall(unittest.TestCase):
         print('\ncaso3:')
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,C7)
         obj.run(z,Mw)
-
-        '''if sp1<1 and sp2<1:
-            TPD = obj.TPD(z)
-            if TPD.any()<0: #checar se isso iria funcionar
-                obj.molar_properties(z,Mw)'''
 
         print('x: ',obj.x,'y: ',obj.y)
         print('K: ',obj.K)

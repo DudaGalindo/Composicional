@@ -28,6 +28,10 @@ class StabilityCheck:
             sp1,sp2 = self.Stability(z)
             if sp1 > 1 or sp2 > 1:
                 self.molar_properties(z, Mw)
+            '''if sp1<1 and sp2<1:
+                TPD = obj.TPD(z)
+                if TPD.any()<0: #checar se isso iria funcionar
+                    obj.molar_properties(z,Mw)'''
 
     def coefficientsPR(self):
         # The equilibrium ratio (K) is calculated by Wilson's equation
@@ -89,15 +93,15 @@ class StabilityCheck:
         ''' In the lnphi function: 0 stands for vapor phase and 1 for liquid'''
 
     #*****************************Test one**********************************#
-        #Used alone when the phase investigated (y) is clearly vapor like (ph = 0)
+        #Used alone when the phase investigated (z) is clearly vapor like (ph = 0)
 
         Y = z / self.K
         Yold = 0.9 * Y
         y = Y / sum(Y)
-        lnphiz = self.lnphi(z, 1)
+        lnphiz = self.lnphi(z, 0)
         while max(abs(Y / Yold - 1)) > 1e-9: #convergência
             Yold = np.copy(Y)
-            lnphiy = self.lnphi(y, 0)
+            lnphiy = self.lnphi(y, 1)
             Y = np.exp(np.log(z) + lnphiz - lnphiy)
             y = Y / sum(Y);
 
@@ -112,15 +116,15 @@ class StabilityCheck:
          If it returns unstable: There is another composition that makes the
         Gibbs free energy at its global minimum indicated by sum(Y)>1'''
     #*****************************Test two**********************************#
-        #Used alone when the phase investigated (y) is clearly liquid like (ph == 1)
+        #Used alone when the phase investigated (z) is clearly liquid like (ph == 1)
 
         Y = self.K * z
         Y_old = 0.9 * Y
         y = Y / sum(Y)
-        lnphiz = self.lnphi(z, 0)
+        lnphiz = self.lnphi(z, 1)
         while max(abs(Y / Y_old - 1)) > 1e-9:
             Y_old = np.copy(Y)
-            lnphiy = self.lnphi(y, 1)
+            lnphiy = self.lnphi(y, 0)
             Y = np.exp(np.log(z) + lnphiz - lnphiy)
             y = Y / sum(Y)
 

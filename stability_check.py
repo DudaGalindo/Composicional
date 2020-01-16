@@ -191,12 +191,10 @@ class StabilityCheck:
 
         """ Shaping z to Nc-2 components by removing z1 and zNc """
         z1 = z[self.K == K1]
-        aux1 = z[z == z1]
-        index1 = np.argwhere(z == aux1[0])
-        zi = np.delete(z, index1[0])
-        auxNc = zi[zi == z[self.K == KNc]]
-        indexNc = np.argwhere(zi == auxNc[0])
-        zi = np.delete(zi, indexNc[len(indexNc) - 1])
+        index1 = np.argwhere(self.K == K1)
+        zi = np.delete(z, index1)
+        indexNc = np.argwhere(self.K == KNc)
+        zi = np.delete(zi, indexNc - 1)
 
         #starting x
         self.x = np.zeros(self.Nc)

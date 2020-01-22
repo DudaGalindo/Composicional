@@ -26,8 +26,14 @@ class StabilityCheck:
             self.molar_properties(z, Mw)
         else:
             sp1,sp2 = self.Stability(z)
+            import pdb; pdb.set_trace()
             if sp1 > 1 or sp2 > 1:
                 self.molar_properties(z, Mw)
+            else:
+                self.x = 1; self.y = 1
+                if T<Tc:
+                elif T>Tc:
+                     self.y = 1; self.x = 0
             '''if sp1<1 and sp2<1:
                 TPD = obj.TPD(z)
                 if TPD.any()<0: #checar se isso iria funcionar
@@ -78,6 +84,7 @@ class StabilityCheck:
         A = aalpha * self.P / (self.R * self.T) ** 2
         Z = StabilityCheck.Z_PR(B, A, ph)
         psi = (x_reshape * self.aalpha_ij).sum(axis = 0)
+
         lnphi = self.b / bm * (Z - 1) - np.log(Z - B) - A / (2 * (2 ** (1/2))
                 * B) * (2 * psi / aalpha - self.b / bm) * np.log((Z + (1 +
                 2 ** (1/2)) * B) / (Z + (1 - 2 ** (1/2)) * B))
@@ -251,7 +258,6 @@ class StabilityCheck:
 
     def solve_objective_function_Whitson(self, z):
         """ Solving for V """
-        #K1 = max(self.K); KNc = min(self.K)
         Vmax = 1 / (1 - min(self.K))
         Vmin = 1 / (1 - max(self.K))
         #Vmin = ((K1-KNc)*z[self.K==K1]-(1-KNc))/((1-KNc)*(K1-1))
@@ -263,34 +269,41 @@ class StabilityCheck:
             Vold = V
             f = sum((self.K - 1) * z / (1 + V * (self.K - 1)))
             df = -sum((self.K - 1) ** 2 * z / (1 + V * (self.K - 1)) ** 2)
-            V = V - f / df #Newton-Raphson iterative method
-            if V > Vmax: V = Vmax
-            elif V < Vmin: V = Vmin
+            if df == 0: V = V
+            else: V = V - f / df #Newton-Raphson iterative method
+
+            if V > Vmax: V = (Vmax + Vold)/2
+            elif V < Vmin: V = (Vmin + Vold)/2
+            if Vold == 0 and V == 0: break
 
         self.x = z / (1 + V * (self.K - 1))
         self.y = self.K * self.x
 
-
     def molar_properties_Whitson(self, z):
-
-        while max(abs(self.fv / self.fl - 1)) > 1e-9:
+        razao = np.ones(self.Nc)/2
+        while max(abs(razao - 1)) > 1e-9:
             self.solve_objective_function_Whitson(z)
             # In order to verify the state of each new phase, in consequence,
             #the new phases stabilities, we have to identify the composition
             #that makes the Gibbs free energy smaller
             lnphix = [self.lnphi(self.x, 0), self.lnphi(self.x, 1)]
             lnphiy = [self.lnphi(self.y, 0), self.lnphi(self.y, 1)]
+
             deltaGx_molar = sum(self.x * (lnphix[0] - lnphix[1]))
-            deltaGy_molar = sum(self.y * (lnphiy[1] - lnphiy[0]))
+            # deltaGy_molar = sum(self.y * (lnphiy[1] - lnphiy[0]))
+
             lnphil = -lnphix[0] * np.sign(1 - np.sign(deltaGx_molar)) * \
                     np.sign(deltaGx_molar) + lnphix[1] * np.sign(1 +
                     np.sign(deltaGx_molar))
-            lnphiv = -lnphiy[1] * np.sign(1 - np.sign(deltaGy_molar)) * \
-                    np.sign(deltaGy_molar) + lnphiy[0] * np.sign(1 +
-                    np.sign(deltaGy_molar))
+            lnphiv = -lnphiy[1] * np.sign(1 - np.sign(deltaGx_molar)) * \
+                    np.sign(deltaGx_molar) + lnphiy[0] * np.sign(1 +
+                    np.sign(deltaGx_molar))
+
             self.fv = np.exp(lnphiv) * (self.y * self.P)
             self.fl = np.exp(lnphil) * (self.x * self.P)
-            self.K = (self.fl / self.fv) * self.K
+            razao = np.divide(self.fl, self.fv, out = razao / razao * (1 + 1e-10),
+                              where = self.fv != 0)
+            self.K = razao * self.K
 
     def molar_properties(self,z,Mw):
         self.coefficientsPR()
@@ -301,9 +314,9 @@ class StabilityCheck:
         else: self.molar_properties_Yinghui(z)
 
         ''' Molar Volume Fractions '''
-        self.V = (z[self.x != 0] - self.x[self.x != 0]) / (self.y[self.x != 0] -
-                self.x[self.x != 0])
-        self.L = 1 - self.V
+        # self.V = (z[self.x != 0] - self.x[self.x != 0]) / (self.y[self.x != 0] -
+        #         self.x[self.x != 0])
+        # self.L = 1 - self.V
 
         ''' Phase Molecular Weight '''
         self.Mw_L = sum(self.x * Mw)

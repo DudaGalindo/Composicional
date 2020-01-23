@@ -4,133 +4,157 @@ import thermo
 import unittest
 
 
-# class Li_et_al_table4:
-#     def __init__(self):
-#         self.R = 10.73159
-#         self.Tc = np.array([-116.59, 305.69, 453.65, 652.01])
-#         self.Tc = (self.Tc + 459.67)
-#         self.Pc = np.array([667.2,551.1,430.59,305.68])
-#         self.w = np.array([0.008,0.193,0.296,0.49])
-#         self.Mw = np.array([16.043,58.124,86.16,142.29])
-#         self.P = 600
-#         self.T = 160 + 459.67
-#         self.Bin = np.zeros([len(self.w),len(self.w)])
-#         self.C7 = np.array([0,0,0,1])
-#
-#
-# class testes_Li_et_al_table4(unittest.TestCase):
-#
-#     #Units: English system
-#     # methane n-butane n-hexane n-decane
-#
-#     def test5(self):
-#         prop = Li_et_al_table4()
-#         z = np.array([-0.58,0.38,0.6,0.6])
-#
-#         '''Run:'''
-#         obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
-#         obj.run(z,prop.Mw)
-#
-#         '''Verify Results'''
-#         x = [0.1676,0.2239,0.3088,0.2997]
-#         y = [0.9115,0.0686,0.0190,0.0009]
-#         K = [5.4393,0.3062,0.0616,0.0031]
-#
-#         for i in range(obj.Nc):
-#             self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
-#             self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
-#             if obj.x[i] != 0 and obj.y[i] != 0:
-#                 self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
-#
-#     def test4(self):
-#         prop = Li_et_al_table4()
-#         z = np.array([0,0,0,1])
-#
-#         '''Run:'''
-#         obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
-#         obj.run(z,prop.Mw)
-#
-#         '''Verify Results'''
-#         x = [0.1724,0.0000,0.0000,0.8276]
-#         y = [0.9980,0.0000,0.0000,0.0020]
-#         K = [5.7895,0.2867,0.0538,0.0024]
-#
-#         for i in range(obj.Nc):
-#             self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
-#             self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
-#             if obj.x[i] != 0 and obj.y[i] != 0:
-#                 self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
-#
-#     def test3(self):
-#         prop = Li_et_al_table4()
-#         z = np.array([0,0,1,0])
-#
-#         '''Run:'''
-#         obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
-#         obj.run(z,prop.Mw)
-#
-#         '''Verify Results'''
-#         x = [0.1789,0.0000,0.8211,0.0000]
-#         y = [0.9507,0.0000,0.0493,0.0000]
-#         K = [5.3130,0.2999,0.0600,0.0030]
-#
-#         for i in range(obj.Nc):
-#             self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
-#             self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
-#             if obj.x[i] != 0 and obj.y[i] != 0:
-#                 self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
-#
-#     def test2(self):
-#         prop = Li_et_al_table4()
-#         z = np.array([0,1,0,0])
-#
-#         '''Run:'''
-#         obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
-#         obj.run(z,prop.Mw)
-#
-#         '''Verify Results'''
-#         x = [0.1639,0.8361,0.0000,0.0000]
-#         y = [0.6960,0.3040,0.0000,0.0000]
-#         K = [4.2473,0.3636,0.0905,0.0066]
-#
-#         for i in range(obj.Nc):
-#             self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
-#             self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
-#             if obj.x[i] != 0 and obj.y[i] != 0:
-#                 self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
-#
-#     def test1(self):
-#         prop = Li_et_al_table4()
-#         z = np.array([1,0,0,0])
-#
-#         '''Run:'''
-#         obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
-#         obj.run(z,prop.Mw)
-#
-#         '''Verify Results'''
-#         x = [0.1724,0.0000,0.0000,0.8276]
-#         y = [0.9980,0.0000,0.0000,0.0020]
-#         K = [5.7895,0.2867,0.0538,0.0024]
-#
-#         for i in range(obj.Nc):
-#             self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
-#             self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
-#             if obj.x[i] != 0 and obj.y[i] != 0:
-#                 self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
+class Li_et_al_table4:
+    def __init__(self):
+        self.R = 10.73159
+        self.Tc = np.array([-116.59, 305.69, 453.65, 652.01])
+        self.Tc = (self.Tc + 459.67)
+        self.Pc = np.array([667.2,551.1,430.59,305.68])
+        self.w = np.array([0.008,0.193,0.296,0.49])
+        self.Mw = np.array([16.043,58.124,86.16,142.29])
+        self.P = 600
+        self.T = 160 + 459.67
+        self.Bin = np.zeros([len(self.w),len(self.w)])
+        self.C7 = np.array([0,0,0,1])
+
+
+class testes_Li_et_al_table4(unittest.TestCase):
+
+    #Units: English system
+    # methane n-butane n-hexane n-decane
+
+    def test5(self):
+        prop = Li_et_al_table4()
+        z = np.array([-0.58,0.38,0.6,0.6])
+
+        '''Run:'''
+        obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
+        obj.run(z,prop.Mw)
+
+        '''Verify Results'''
+        x = [0.1676,0.2239,0.3088,0.2997]
+        y = [0.9115,0.0686,0.0190,0.0009]
+        K = [5.4393,0.3062,0.0616,0.0031]
+
+        for i in range(obj.Nc):
+            self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
+            self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
+            if obj.x[i] != 0 and obj.y[i] != 0:
+                self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
+
+    def test4(self):
+        prop = Li_et_al_table4()
+        z = np.array([0,0,0,1])
+
+        '''Run:'''
+        obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
+        obj.run(z,prop.Mw)
+
+        '''Verify Results'''
+        x = [0.1724,0.0000,0.0000,0.8276]
+        y = [0.9980,0.0000,0.0000,0.0020]
+        K = [5.7895,0.2867,0.0538,0.0024]
+
+        for i in range(obj.Nc):
+            self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
+            self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
+            if obj.x[i] != 0 and obj.y[i] != 0:
+                self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
+
+    def test3(self):
+        prop = Li_et_al_table4()
+        z = np.array([0,0,1,0])
+
+        '''Run:'''
+        obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
+        obj.run(z,prop.Mw)
+
+        '''Verify Results'''
+        x = [0.1789,0.0000,0.8211,0.0000]
+        y = [0.9507,0.0000,0.0493,0.0000]
+        K = [5.3130,0.2999,0.0600,0.0030]
+
+        for i in range(obj.Nc):
+            self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
+            self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
+            if obj.x[i] != 0 and obj.y[i] != 0:
+                self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
+
+    def test2(self):
+        prop = Li_et_al_table4()
+        z = np.array([0,1,0,0])
+
+        '''Run:'''
+        obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
+        obj.run(z,prop.Mw)
+
+        '''Verify Results'''
+        x = [0.1639,0.8361,0.0000,0.0000]
+        y = [0.6960,0.3040,0.0000,0.0000]
+        K = [4.2473,0.3636,0.0905,0.0066]
+
+        for i in range(obj.Nc):
+            self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
+            self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
+            if obj.x[i] != 0 and obj.y[i] != 0:
+                self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
+
+    def test1(self):
+        prop = Li_et_al_table4()
+        z = np.array([1,0,0,0])
+
+        '''Run:'''
+        obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
+        obj.run(z,prop.Mw)
+
+        '''Verify Results'''
+        x = [0.1724,0.0000,0.0000,0.8276]
+        y = [0.9980,0.0000,0.0000,0.0020]
+        K = [5.7895,0.2867,0.0538,0.0024]
+
+        for i in range(obj.Nc):
+            self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
+            self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
+            if obj.x[i] != 0 and obj.y[i] != 0:
+                self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
 
 class testes_casos_Schmall(unittest.TestCase):
-    def teste_caso5(self):
-        R = 8.3144598
-        z = np.array([1.]) #exemplo aleatório
-        P = np.array([13.79e6])
-        T = np.array([366.33])
-        Tc = np.array([617.7])
-        Pc =np.array([2103000.0])
-        w = np.array([0.4885])
-        Bin = np.array([0])
-        Mw = np.array([142.28e-3],dtype = np.double)
-        C7 = np.array([0])
-        print('\ncaso5:')
+    # def teste_caso5(self):
+    #     R = 8.3144598
+    #     z = np.array([1.]) #exemplo aleatório
+    #     P = np.array([13.79e6])
+    #     T = np.array([366.33])
+    #     Tc = np.array([617.7])
+    #     Pc =np.array([2103000.0])
+    #     w = np.array([0.4885])
+    #     Bin = np.array([0])
+    #     Mw = np.array([142.28e-3],dtype = np.double)
+    #     C7 = np.array([0])
+    #     print('\ncaso5:')
+    #
+    #     obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,C7)
+    #     obj.run(z,Mw)
+    #
+    #     print('x: ',obj.x,'y: ',obj.y)
+    #     print('K: ',obj.K)
+    #     print('L: ',obj.L,'V: ',obj.V)
+    #     print('fl: ',obj.fl,'fv: ',obj.fv)
+
+    def test_caso1(self):
+        #Units: T[Rankine];P[psia]
+        R = 10.73159
+        T = (200 + 459.67) #Rankine*5/9=Kelvin
+        P = 160 #psi*6894.7573 = Pa
+        Tc = np.array([-116.32,206.24,305.96,454.1,660.38])
+        Tc = (Tc + 459.67)
+        Pc = np.array([667.19386,615.75821,551.09625,477.028914,367.5444663])#*6894.7573
+        w  = np.array([0.008,0.152,0.193,0.27504,0.443774])
+        Mw = np.array([16.043,44.097,58.124,86,134]) #molecular weight
+        Bin  = np.array([[0,0,0,0.01,0.02], [0,0,0,0.01,0.01], [0,0,0,0,0.01], [0.01,0.01,0,0,0.01], [0.02,0.01,0.01,0.01,0]])
+        z = np.array([0.6,0.1,0.1,0.1,0.1])
+        C7 = 0
+
+        print('\ncaso1:')
 
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,C7)
         obj.run(z,Mw)
@@ -140,71 +164,47 @@ class testes_casos_Schmall(unittest.TestCase):
         print('L: ',obj.L,'V: ',obj.V)
         print('fl: ',obj.fl,'fv: ',obj.fv)
 
-    # def test_caso1(self):
-    #     #Units: T[Rankine];P[psia]
-    #     R = 10.73159
-    #     T = (200 + 459.67) #Rankine*5/9=Kelvin
-    #     P = 160 #psi*6894.7573 = Pa
-    #     Tc = np.array([-116.32,206.24,305.96,454.1,660.38])
-    #     Tc = (Tc + 459.67)
-    #     Pc = np.array([667.19386,615.75821,551.09625,477.028914,367.5444663])#*6894.7573
-    #     w  = np.array([0.008,0.152,0.193,0.27504,0.443774])
-    #     Mw = np.array([16.043,44.097,58.124,86,134]) #molecular weight
-    #     Bin  = np.array([[0,0,0,0.01,0.02], [0,0,0,0.01,0.01], [0,0,0,0,0.01], [0.01,0.01,0,0,0.01], [0.02,0.01,0.01,0.01,0]])
-    #     z = np.array([0.6,0.1,0.1,0.1,0.1])
-    #     C7 = 0
-    #
-    #     print('\ncaso1:')
-    #
-    #     obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,C7)
-    #     obj.run(z,Mw)
-    #
-    #     print('x: ',obj.x,'y: ',obj.y)
-    #     print('K: ',obj.K)
-    #     print('L: ',obj.L[0],'V: ',obj.V[0])
-    #     print('fl: ',obj.fl,'fv: ',obj.fv)
+    def test_caso2(self):
+        R = 8.3144598
+        Bin = np.array([[0, 0.033],[0.033, 0]])
+        Tc = np.array([369.8, 425.2])*9/5
+        Pc = 14.7*np.array([41.9, 37.5])
+        w = np.array([0.152, 0.193])
+        Mw = np.array([44.097, 58.124])
+        z = np.array([0.5, 0.5])
+        T = 9/5*396
+        P = 14.7*(3.86e6/101325)
+        C7 = 0
 
-    # def test_caso2(self):
-    #     R = 8.3144598
-    #     Bin = np.array([[0, 0.033],[0.033, 0]])
-    #     Tc = np.array([369.8, 425.2])*9/5
-    #     Pc = 14.7*np.array([41.9, 37.5])
-    #     w = np.array([0.152, 0.193])
-    #     Mw = np.array([44.097, 58.124])
-    #     z = np.array([0.5, 0.5])
-    #     T = 9/5*396
-    #     P = 14.7*(3.86e6/101325)
-    #     C7 = 0
-    #
-    #     print('\ncaso2:')
-    #     obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,C7)
-    #     obj.run(z,Mw)
-    #
-    #     print('x: ',obj.x,'y: ',obj.y)
-    #     print('K: ',obj.K)
-    #     print('L: ',obj.L[1],'V: ',obj.V[1])
-    #     print('fl: ',obj.fl,'fv: ',obj.fv)
-    #
-    # def test_caso3(self):
-    #     R = 8.3144598
-    #     z = np.array([0.5,0.5]) #exemplo aleatório
-    #     P = (100*1E5)/101325*14.7# pressão de 100bar e ele converte para atm e depois psi
-    #     T = 350*9/5 #- T em K to R
-    #     Tc = np.array([190.6, 460.4])*9/5;
-    #     Pc =np.array([45.4,33.4])*14.7; # 14.7*
-    #     w = np.array([0.008,0.227])
-    #     Bin = np.array([[0,0.0236],[0.0236,0]])
-    #     Mw = np.array([44.097,58.124])
-    #     C7 = 0
-    #
-    #     print('\ncaso3:')
-    #     obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,C7)
-    #     obj.run(z,Mw)
-    #
-    #     print('x: ',obj.x,'y: ',obj.y)
-    #     print('K: ',obj.K)
-    #     print('L: ',obj.L[1],'V: ',obj.V[1])
-    #     print('fl: ',obj.fl,'fv: ',obj.fv)
+        print('\ncaso2:')
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,C7)
+        obj.run(z,Mw)
+
+        print('x: ',obj.x,'y: ',obj.y)
+        print('K: ',obj.K)
+        print('L: ',obj.L,'V: ',obj.V)
+        print('fl: ',obj.fl,'fv: ',obj.fv)
+
+    def test_caso3(self):
+        R = 8.3144598
+        z = np.array([0.5,0.5]) #exemplo aleatório
+        P = (100*1E5)/101325*14.7# pressão de 100bar e ele converte para atm e depois psi
+        T = 350*9/5 #- T em K to R
+        Tc = np.array([190.6, 460.4])*9/5;
+        Pc =np.array([45.4,33.4])*14.7; # 14.7*
+        w = np.array([0.008,0.227])
+        Bin = np.array([[0,0.0236],[0.0236,0]])
+        Mw = np.array([44.097,58.124])
+        C7 = 0
+
+        print('\ncaso3:')
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,C7)
+        obj.run(z,Mw)
+
+        print('x: ',obj.x,'y: ',obj.y)
+        print('K: ',obj.K)
+        print('L: ',obj.L,'V: ',obj.V)
+        print('fl: ',obj.fl,'fv: ',obj.fv)
 
 
     # def test_bookDandekar(self):
@@ -228,7 +228,7 @@ class testes_casos_Schmall(unittest.TestCase):
     #     obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,C7)
     #     sp1,sp2 = obj.Stability(z)
     #     if sp1>1 or sp2>1:
-    #         obj.molar_properties(z,Mw)
+    #         obj.molar_properties(z)
     #
     #     print('x: ',obj.x,'y: ',obj.y)
     #     print('K: ',obj.K)
@@ -253,7 +253,7 @@ class testes_casos_Schmall(unittest.TestCase):
     #     obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,C7)
     #     sp1,sp2 = obj.Stability(z)
     #     if sp1>1 or sp2>1:
-    #         obj.molar_properties(z,Mw)
+    #         obj.molar_properties(z)
     #
     #     print('x: ',obj.x,'y: ',obj.y)
     #     print('K: ',obj.K)

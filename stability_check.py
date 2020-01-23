@@ -22,26 +22,28 @@ class StabilityCheck:
         #StabilityCheck.TPD(self)
 
     def run(self, z, Mw):
+        self.equilibrium_ratio_Wilson()
         if any(z <= 0):
-            self.molar_properties(z, Mw)
+            self.molar_properties(z)
         else:
             sp1,sp2 = self.Stability(z)
-            import pdb; pdb.set_trace()
             if sp1 > 1 or sp2 > 1:
-                self.molar_properties(z, Mw)
+                self.molar_properties(z)
             else:
                 self.x = 1; self.y = 1
-                if T<Tc:
-                elif T>Tc:
-                     self.y = 1; self.x = 0
-            '''if sp1<1 and sp2<1:
+        self.Mw_L, self.eta_L, self.rho_L = self.other_properties(self.x,Mw)
+        self.Mw_V, self.eta_V, self.rho_V = self.other_properties(self.y,Mw)
+        '''if sp1<1 and sp2<1:
                 TPD = obj.TPD(z)
                 if TPD.any()<0: #checar se isso iria funcionar
                     obj.molar_properties(z,Mw)'''
 
-    def coefficientsPR(self):
-        # The equilibrium ratio (K) is calculated by Wilson's equation
+    def equilibrium_ratio_Wilson(self):
+        self.K = np.exp(5.37 * (1 + self.w) * (1 - self.Tc / self.T)) * \
+                (self.Pc / self.P)
 
+    def coefficientsPR(self, l):
+        #l - any phase molar composition
         PR_kC7 = np.array([0.379642, 1.48503, 0.1644, 0.016667])
         PR_k = np.array([0.37464, 1.5422, 0.26992])
 
@@ -51,12 +53,17 @@ class StabilityCheck:
         alpha = (1 + k * (1 - (self.T / self.Tc) ** (1 / 2))) ** 2
         aalpha_i = 0.45724 * (self.R * self.Tc) ** 2 / self.Pc * alpha
         self.b = 0.07780 * self.R * self.Tc / self.Pc
-        self.K = np.exp(5.37 * (1 + self.w) * (1 - self.Tc / self.T)) * \
-                (self.Pc / self.P)
         aalpha_i_reshape = np.ones((self.Nc,self.Nc)) * aalpha_i[:,np.newaxis]
-        self.aalpha_ij = np.sqrt(aalpha_i_reshape.T * aalpha_i[:,np.newaxis]) \
+        aalpha_ij = np.sqrt(aalpha_i_reshape.T * aalpha_i[:,np.newaxis]) \
                         * (1 - self.Bin)
+        self.bm = sum(l * self.b)
+        B = self.bm * self.P / (self.R * self.T)
+        l_reshape = np.ones((aalpha_ij).shape) * l[:, np.newaxis]
+        self.aalpha = (l_reshape.T * l[:,np.newaxis] * aalpha_ij).sum()
+        A = self.aalpha * self.P / (self.R * self.T) ** 2
+        self.psi = (l_reshape * aalpha_ij).sum(axis = 0)
 
+        return A, B
 
     def Z_PR(B, A, ph):
         # PR cubic EOS: Z**3 - (1-B)*Z**2 + (A-2*B-3*B**2)*Z-(A*B-B**2-B**3)
@@ -75,29 +82,23 @@ class StabilityCheck:
         it works as well.'''
         return Z_ans
 
-
-    def lnphi(self, x, ph):
-        bm = sum(x * self.b)
-        B = bm * self.P / (self.R * self.T)
-        x_reshape = np.ones((self.aalpha_ij).shape) * x[:, np.newaxis]
-        aalpha = (x_reshape.T * x[:,np.newaxis] * self.aalpha_ij).sum()
-        A = aalpha * self.P / (self.R * self.T) ** 2
+    def lnphi(self, l, ph):
+        #l - any phase molar composition
+        A, B = self.coefficientsPR(l)
         Z = StabilityCheck.Z_PR(B, A, ph)
-        psi = (x_reshape * self.aalpha_ij).sum(axis = 0)
-
-        lnphi = self.b / bm * (Z - 1) - np.log(Z - B) - A / (2 * (2 ** (1/2))
-                * B) * (2 * psi / aalpha - self.b / bm) * np.log((Z + (1 +
+        lnphi = self.b / self.bm * (Z - 1) - np.log(Z - B) - A / (2 * (2 ** (1/2))
+                * B) * (2 * self.psi / self.aalpha - self.b / self.bm) * np.log((Z + (1 +
                 2 ** (1/2)) * B) / (Z + (1 - 2 ** (1/2)) * B))
 
         return lnphi
 
-    def Stability(self,z):
-        self.coefficientsPR()
+
+    """-------------Below starts stability test calculation -----------------"""
+
+    def Stability(self, z):
+        ''' In the lnphi function: 0 stands for vapor phase and 1 for liquid '''
     #****************************INITIAL GUESS******************************#
     ## Both approaches bellow should be used in case the phase is in the critical region
-
-        #identifying the initial phase 'z' mole fraction
-        ''' In the lnphi function: 0 stands for vapor phase and 1 for liquid'''
 
     #*****************************Test one**********************************#
         #Used alone when the phase investigated (z) is clearly vapor like (ph = 0)
@@ -156,6 +157,38 @@ class StabilityCheck:
         return stationary_point1,stationary_point2
 
     """-------------Below starts biphasic flash calculations-----------------"""
+    def molar_properties(self, z):
+        self.fv = 2 * np.ones(self.Nc); self.fl = np.ones(self.Nc) #entrar no primeiro loop
+        if self.Nc <= 2: self.molar_properties_Whitson(z)
+        else: self.molar_properties_Yinghui(z)
+        self.L = 1 - self.V
+
+    def deltaG_molar(self, l, ph):
+        # "ph" is the phase originally intended for each phase.
+        # l - any phase molar composition
+        # Example: x - liquid(ph=1); y - vapor(ph=0)
+        #   In order to verify the state of each new phase, in consequence,
+        # the new phases stabilities, we have to identify the phase state
+        # that makes the Gibbs free energy smaller
+
+        lnphi = [self.lnphi(l, 1 - ph), self.lnphi(l, ph)]
+        deltaG_molar = sum(l * (lnphi[1 - ph] - lnphi[ph]))
+        if deltaG_molar >= 0: ph = ph
+        else: ph = 1 - ph
+        """
+        This part above means that:
+        if deltaGx_molar>=0: lnphil = lnphix[1]
+                            (lnphi for x in the liquid phase)
+        if deltaGx_molar<0: lnphil = lnphix[0]
+                            (lnphi for x in the vapour phase)
+                            because it minimizes the Gibbs molar energy
+        The same analysis is made for the y phase composition.
+        """
+        return ph
+
+    def lnphi_based_on_deltaG(self, l, ph):
+        ph = self.deltaG_molar(l, ph)
+        return self.lnphi(l,ph)
 
     def solve_objective_function_Yinghui(self, z1, zi, z, K1, KNc, Ki):
 
@@ -222,39 +255,22 @@ class StabilityCheck:
 
         self.y = self.K * self.x
 
-    def molar_properties_Yinghui(self,z):
+    def molar_properties_Yinghui(self, z):
         #razao = fl/fv -> an arbitrary vector to enter in the iterative mode
         razao = np.ones(self.Nc)/2
         while max(abs(razao - 1)) > 1e-9:
             self.Yinghui_method(z)
-
-            lnphix = [self.lnphi(self.x, 0), self.lnphi(self.x, 1)]
-            lnphiy = [self.lnphi(self.y, 0), self.lnphi(self.y, 1)]
-            deltaGx_molar = sum(self.x * (lnphix[0] - lnphix[1]))
-            deltaGy_molar = sum(self.y * (lnphiy[1] - lnphiy[0]))
-            lnphil = -lnphix[0] * np.sign(1 - np.sign(deltaGx_molar)) * \
-                    np.sign(deltaGx_molar) + lnphix[1] * np.sign(1 +
-                    np.sign(deltaGx_molar))
-            lnphiv = -lnphiy[1] * np.sign(1 - np.sign(deltaGy_molar)) * \
-                    np.sign(deltaGy_molar) + lnphiy[0] * np.sign(1 +
-                    np.sign(deltaGy_molar))
-
-            """
-            This part above means that:
-            if deltaGx_molar>=0: lnphil = lnphix[1]
-                                (lnphi for x in the liquid phase)
-            if deltaGx_molar<0: lnphil = lnphix[0]
-                                (lnphi for x in the vapour phase)
-                                because it minimizes the Gibbs molar energy
-            The same analysis is made for the y phase composition.
-            """
+            lnphil = self.lnphi_based_on_deltaG(self.x, 1)
+            lnphiv = self.lnphi_based_on_deltaG(self.y, 0)
             self.fl = np.exp(lnphil) * (self.x * self.P)
             self.fv = np.exp(lnphiv) * (self.y * self.P)
-
             razao = np.divide(self.fl, self.fv, out = razao / razao * (1 + 1e-10),
                               where = self.fv != 0)
             self.K = razao * self.K
 
+        self.V = (z[self.x != 0] - self.x[self.x != 0]) / (self.y[self.x != 0] -
+                self.x[self.x != 0])
+        self.V = self.V[0]
 
     def solve_objective_function_Whitson(self, z):
         """ Solving for V """
@@ -262,71 +278,68 @@ class StabilityCheck:
         Vmin = 1 / (1 - max(self.K))
         #Vmin = ((K1-KNc)*z[self.K==K1]-(1-KNc))/((1-KNc)*(K1-1))
         #proposed by Li et al for Whitson method
-        V = (Vmin + Vmax) / 2
-        Vold = V / 2 #just to get into the loop
+        self.V = (Vmin + Vmax) / 2
+        Vold = self.V / 2 #just to get into the loop
 
-        while abs(V / Vold - 1) > 1e-8:
-            Vold = V
-            f = sum((self.K - 1) * z / (1 + V * (self.K - 1)))
-            df = -sum((self.K - 1) ** 2 * z / (1 + V * (self.K - 1)) ** 2)
-            if df == 0: V = V
-            else: V = V - f / df #Newton-Raphson iterative method
+        while abs(self.V / Vold - 1) > 1e-8:
+            Vold = self.V
+            f = sum((self.K - 1) * z / (1 + self.V * (self.K - 1)))
+            df = -sum((self.K - 1) ** 2 * z / (1 + self.V * (self.K - 1)) ** 2)
+            self.V = self.V - f / df #Newton-Raphson iterative method
 
-            if V > Vmax: V = (Vmax + Vold)/2
-            elif V < Vmin: V = (Vmin + Vold)/2
-            if Vold == 0 and V == 0: break
+            if self.V > Vmax: self.V = Vmax #(Vmax + Vold)/2
+            elif self.V < Vmin: self.V = Vmin #(Vmin + Vold)/2
 
-        self.x = z / (1 + V * (self.K - 1))
+        self.x = z / (1 + self.V * (self.K - 1))
         self.y = self.K * self.x
+        # Lmax = max(self.K)/(max(self.K)-1)
+        # Lmin = min(self.K)/(min(self.K)-1)
+        # L = (Lmin + Lmax)/2
+        # Lold = L/2
+        # import pdb; pdb.set_trace()
+        # while abs(L / Lold - 1) > 1e-9:
+        #     Lold = L
+        #     f = sum((1 - self.K) * z / (Lold + (1 - Lold) * self.K ))
+        #     df = -sum((1 - self.K) ** 2 * z / (Lold + (1 - Lold) * self.K) ** 2)
+        #     L = Lold - f / df #Newton-Raphson iterative method
+        #     if L > Lmax: L = (Lmax + Lold)/2
+        #     elif L < Lmin: L = (Lmin + Lold)/2
+        # # self.L = L
+        # # self.V = (1 - self.L)
+        # self.x = z / (L + (1 - L) * self.K)
+        # self.y = self.K * self.x
 
     def molar_properties_Whitson(self, z):
         razao = np.ones(self.Nc)/2
         while max(abs(razao - 1)) > 1e-9:
             self.solve_objective_function_Whitson(z)
-            # In order to verify the state of each new phase, in consequence,
-            #the new phases stabilities, we have to identify the composition
-            #that makes the Gibbs free energy smaller
-            lnphix = [self.lnphi(self.x, 0), self.lnphi(self.x, 1)]
-            lnphiy = [self.lnphi(self.y, 0), self.lnphi(self.y, 1)]
-
-            deltaGx_molar = sum(self.x * (lnphix[0] - lnphix[1]))
-            # deltaGy_molar = sum(self.y * (lnphiy[1] - lnphiy[0]))
-
-            lnphil = -lnphix[0] * np.sign(1 - np.sign(deltaGx_molar)) * \
-                    np.sign(deltaGx_molar) + lnphix[1] * np.sign(1 +
-                    np.sign(deltaGx_molar))
-            lnphiv = -lnphiy[1] * np.sign(1 - np.sign(deltaGx_molar)) * \
-                    np.sign(deltaGx_molar) + lnphiy[0] * np.sign(1 +
-                    np.sign(deltaGx_molar))
-
+            lnphil = self.lnphi_based_on_deltaG(self.x, 1)
+            lnphiv = self.lnphi_based_on_deltaG(self.y, 0)
             self.fv = np.exp(lnphiv) * (self.y * self.P)
             self.fl = np.exp(lnphil) * (self.x * self.P)
             razao = np.divide(self.fl, self.fv, out = razao / razao * (1 + 1e-10),
                               where = self.fv != 0)
             self.K = razao * self.K
 
-    def molar_properties(self,z,Mw):
-        self.coefficientsPR()
-        # Aqui a correlação de wilson é utilizada apenas para achar o K inicial
-        self.fv = 2 * np.ones(self.Nc); self.fl = np.ones(self.Nc) #entrar no primeiro loop
+        """
+        Legenda:
+            L: liquid phase molar fraction
+            V: vapor phase molar fraction
+            rho: phase mass density
+            Mw: phase molecular weight
+            eta: phase molar density
+        """
 
-        if self.Nc <= 2: self.molar_properties_Whitson(z)
-        else: self.molar_properties_Yinghui(z)
-
-        ''' Molar Volume Fractions '''
-        # self.V = (z[self.x != 0] - self.x[self.x != 0]) / (self.y[self.x != 0] -
-        #         self.x[self.x != 0])
-        # self.L = 1 - self.V
-
-        ''' Phase Molecular Weight '''
-        self.Mw_L = sum(self.x * Mw)
-        self.Mw_V = sum(self.y * Mw)
-
-        ''' Phase Mass Densities '''
-        self.rho_L = self.Mw_L / self.L
-        self.rho_V = self.Mw_V / self.V
+    def other_properties(self, l, Mw):
+        #l - any phase molar composition
+        A, B = self.coefficientsPR(l)
+        ph = self.deltaG_molar(l, 1)
+        Z = StabilityCheck.Z_PR(B, A, ph)
+        eta_phase = self.P / (Z * self.R * self.T)
+        Mw_phase = sum(l * Mw)
+        rho_phase = eta_phase * sum(l * Mw)
         # se precisar retornar mais coisa, entra aqui
-
+        return Mw_phase, eta_phase, rho_phase
 
 
     def TPD(self, z): #ainda não sei onde usar isso

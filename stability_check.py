@@ -29,8 +29,17 @@ class StabilityCheck:
             sp1,sp2 = self.Stability(z)
             if sp1 > 1 or sp2 > 1:
                 self.molar_properties(z)
-            else:
-                self.x = 1; self.y = 1
+            else: #tiny manipulation
+                self.x = np.ones(self.Nc); self.y = np.copy(self.x)
+                self.bubble_point_pressure()
+                if self.P > self.Pbubble: self.L = 1; self.V = 0
+                else: self.L = 0; self.V = 1
+                lnphil = self.lnphi_based_on_deltaG(self.x, 1)
+                lnphiv = self.lnphi_based_on_deltaG(self.y, 0)
+                self.fv = np.exp(lnphiv) * (self.y * self.P)
+                self.fl = np.exp(lnphil) * (self.x * self.P)
+                self.K = self.y/self.x
+
         self.Mw_L, self.eta_L, self.rho_L = self.other_properties(self.x,Mw)
         self.Mw_V, self.eta_V, self.rho_V = self.other_properties(self.y,Mw)
         '''if sp1<1 and sp2<1:
@@ -321,15 +330,6 @@ class StabilityCheck:
                               where = self.fv != 0)
             self.K = razao * self.K
 
-        """
-        Legenda:
-            L: liquid phase molar fraction
-            V: vapor phase molar fraction
-            rho: phase mass density
-            Mw: phase molecular weight
-            eta: phase molar density
-        """
-
     def other_properties(self, l, Mw):
         #l - any phase molar composition
         A, B = self.coefficientsPR(l)
@@ -338,9 +338,19 @@ class StabilityCheck:
         eta_phase = self.P / (Z * self.R * self.T)
         Mw_phase = sum(l * Mw)
         rho_phase = eta_phase * sum(l * Mw)
+        """
+        Legenda:
+            rho: phase mass density
+            Mw: phase molecular weight
+            eta: phase molar density
+        """
         # se precisar retornar mais coisa, entra aqui
         return Mw_phase, eta_phase, rho_phase
 
+    def bubble_point_pressure(self):
+        #Isso vem de uma junção da Lei de Dalton com a Lei de Raoult
+        Pv = self.K*self.P
+        self.Pbubble = sum(self.x * Pv)
 
     def TPD(self, z): #ainda não sei onde usar isso
         x = np.zeros(self.Nc)

@@ -91,14 +91,16 @@ class StabilityCheck:
         x2 = (2*b**3 - 9*a*b*c + 27*a**2*d)/(27*a**3)
         x3 = 18*a*b*c*d - 4*b**3*d + b**2*c**2 - 4*a*c**3 - 27*a**2*d**2
         x = np.array([x1,x2,x3])
-        reais = any(abs(x**3 - (1-B)*x**2 + (A-2*B-3*B**2)*x-(A*B-B**2-B**3)) < 1E-7)
+        reais = any((x**3 - (1-B)*x**2 + (A-2*B-3*B**2)*x-(A*B-B**2-B**3))**2 < 1E-7)
         Z = x[reais]
-        return Z_ans
+
+        return Z
 
     def lnphi(self, l, ph):
         #l - any phase molar composition
         A, B = self.coefficientsPR(l)
-        Z = StabilityCheck.Z_PR(B, A, ph)
+        Z_reais = StabilityCheck.Z_PR(B, A, ph)
+        Z = min(Z_reais) * ph + max(Z_reais) * (1 - ph)
         lnphi = self.b / self.bm * (Z - 1) - np.log(Z - B) - A / (2 * (2 ** (1/2))
                 * B) * (2 * self.psi / self.aalpha - self.b / self.bm) * np.log((Z + (1 +
                 2 ** (1/2)) * B) / (Z + (1 - 2 ** (1/2)) * B))

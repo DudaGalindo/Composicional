@@ -1,12 +1,11 @@
 """Check stability of a thermodynamic equilibrium."""
 import numpy as np
 import math
-import thermo
-from scipy.misc import derivative
 import sympy
 from sympy import *
 from mpmath import *
 import matplotlib.pyplot as plt
+
 ## Encontrar os pontos estacionarios. Estes correspondem aos pontos nos quais a derivada de g com respeito a Y é 0
 ## Todas as equações foram confirmadas pelo livro do Dandekar e a biblioteca do thermo
 
@@ -26,30 +25,83 @@ class StabilityCheck:
         self.C7 = C7
         #StabilityCheck.TPD(self)
 
+    def run_sym(self, z, ph):
+        l = sympy.symarray('l', len(z))
+        lnphi_all = self.lnphi_sym(l,1)
+
+        A, B = self.coefficientsPR(z)
+        Z = np.array(StabilityCheck.Z_PR_sym(B, A, ph))
+        real = np.full(len(Z), False, dtype=bool)
+        for r in range(0,len(Z)):
+            real[r] = sympify(Z[r]).is_real
+        Z_reais = Z[real]
+        Z_ans = min(Z_reais) * ph + max(Z_reais) * (1 - ph)
+
+        a = np.argwhere(Z == Z_ans)
+        lnphi = lnphi_all[a,:]
+        dlnphi_dn = np.zeros([self.Nc,self.Nc])
+
+        for i in range(0,self.Nc):
+            dlnphi_dl = sympy.diff(lnphi,l[i])
+            import pdb; pdb.set_trace()
+            func = lambdify(l, dlnphi_dl,'numpy')
+            dlnphi_dn[:,i] = np.array(func(*z)[0][0])
+        return dlnphi_dn
+
+    def dlnphi_dn(self):
+        dlnphil_dn = self.run_sym(self.x, 1)
+        dlnphiv_dn = self.run_sym(self.y, 0)
+        matriz = dlnphil_dn + dlnphiv_dn
+        print(matriz)
+
+    def Z_PR_sym(B, A, ph):
+        Z = symbols('Z')
+        a = Z**3 - (1-B)*Z**2 + (A-2*B-3*B**2)*Z-(A*B-B**2-B**3)
+        coef = [1, -(1 - B), (A - 2*B - 3*B**2), -(A*B - B**2 - B**3)]
+        Za = solve(a,Z)
+        return Za
+
+
+    def lnphi_sym(self, l, ph):
+        A, B = self.coefficientsPR(l)
+        Z = StabilityCheck.Z_PR_sym(B, A, ph)
+
+        lnphi1 =  (self.b / self.bm * (Z[0] - 1) - sympy.log(Z[0] - B) - A / (2 * (2 ** (1/2))
+                    * B) * (2 * self.psi / self.aalpha - self.b / self.bm) * sympy.log((Z[0] + (1 +
+                    2 ** (1/2)) * B) / (Z[0] + (1 - 2 ** (1/2)) * B)))
+        lnphi2 =  self.b / self.bm * (Z[1] - 1) - sympy.log(Z[1] - B) - A / (2 * (2 ** (1/2))
+                    * B) * (2 * self.psi / self.aalpha - self.b / self.bm) * sympy.log((Z[1] + (1 +
+                    2 ** (1/2)) * B) / (Z[1] + (1 - 2 ** (1/2)) * B))
+        lnphi3 =  self.b / self.bm * (Z[2] - 1) - sympy.log(Z[2] - B) - A / (2 * (2 ** (1/2))
+                    * B) * (2 * self.psi / self.aalpha - self.b / self.bm) * sympy.log((Z[2] + (1 +
+                    2 ** (1/2)) * B) / (Z[2] + (1 - 2 ** (1/2)) * B))
+        lnphi = np.array([lnphi1,lnphi2,lnphi3])
+
+
+        return lnphi
+
+
     def run(self, z, Mw):
-        l = sympy.Symbol('l')
-        self._lnphi(l,1)
         self.equilibrium_ratio_Wilson()
-        # if any(z <= 0):
-        #     self.molar_properties(z)
-        # else:
-        #     sp1,sp2 = self.Stability(z)
-        #     if sp1 > 1 or sp2 > 1:
-        #         self.molar_properties(z)
-        #     else: #tiny manipulation
-        #         self.x = np.ones(self.Nc); self.y = np.copy(self.x)
-        #         self.bubble_point_pressure()
-        #         if self.P > self.Pbubble: self.L = 1; self.V = 0
-        #         else: self.L = 0; self.V = 1
-        #         lnphil = self.lnphi_based_on_deltaG(self.x, 1)
-        #         lnphiv = self.lnphi_based_on_deltaG(self.y, 0)
-        #         self.fv = np.exp(lnphiv) * (self.y * self.P)
-        #         self.fl = np.exp(lnphil) * (self.x * self.P)
-        #         self.K = self.y/self.x
-        #
-        # import pdb; pdb.set_trace()
-        # self.Mw_L, self.eta_L, self.rho_L = self.other_properties(self.x,Mw)
-        # self.Mw_V, self.eta_V, self.rho_V = self.other_properties(self.y,Mw)
+        if any(z <= 0):
+            self.molar_properties(z)
+        else:
+            sp1,sp2 = self.Stability(z)
+            if sp1 > 1 or sp2 > 1:
+                self.molar_properties(z)
+            else: #tiny manipulation
+                self.x = np.ones(self.Nc); self.y = np.copy(self.x)
+                self.bubble_point_pressure()
+                if self.P > self.Pbubble: self.L = 1; self.V = 0
+                else: self.L = 0; self.V = 1
+                lnphil = self.lnphi_based_on_deltaG(self.x, 1)
+                lnphiv = self.lnphi_based_on_deltaG(self.y, 0)
+                self.fv = np.exp(lnphiv) * (self.y * self.P)
+                self.fl = np.exp(lnphil) * (self.x * self.P)
+                self.K = self.y/self.x
+        self.dlnphi_dn()
+        self.Mw_L, self.eta_L, self.rho_L = self.other_properties(self.x,Mw)
+        self.Mw_V, self.eta_V, self.rho_V = self.other_properties(self.y,Mw)
         '''if sp1<1 and sp2<1:
                 TPD = obj.TPD(z)
                 if TPD.any()<0: #checar se isso iria funcionar
@@ -75,8 +127,8 @@ class StabilityCheck:
                         * (1 - self.Bin)
         self.bm = sum(l * self.b)
         B = self.bm * self.P / (self.R * self.T)
-        l_reshape = np.ones((aalpha_ij).shape) * l #[:, np.newaxis]
-        self.aalpha = (l_reshape.T * l * aalpha_ij).sum()
+        l_reshape = np.ones((aalpha_ij).shape) * l[:, np.newaxis]
+        self.aalpha = (l_reshape.T * l[:,np.newaxis] * aalpha_ij).sum()
         A = self.aalpha * self.P / (self.R * self.T) ** 2
         self.psi = (l_reshape * aalpha_ij).sum(axis = 0)
 
@@ -85,37 +137,29 @@ class StabilityCheck:
     def Z_PR(B, A, ph):
         # PR cubic EOS: Z**3 - (1-B)*Z**2 + (A-2*B-3*B**2)*Z-(A*B-B**2-B**3)
         coef = [1, -(1 - B), (A - 2*B - 3*B**2), -(A*B - B**2 - B**3)]
-        # Z = polyroots(coef)
-        a,b,c,d = coef
-        x1 = (3*a*c - b**2)/3/a**2
-        x2 = (2*b**3 - 9*a*b*c + 27*a**2*d)/(27*a**3)
-        x3 = 18*a*b*c*d - 4*b**3*d + b**2*c**2 - 4*a*c**3 - 27*a**2*d**2
-        x = np.array([x1,x2,x3])
-        reais = any((x**3 - (1-B)*x**2 + (A-2*B-3*B**2)*x-(A*B-B**2-B**3))**2 < 1E-7)
-        Z = x[reais]
+        Z = np.roots(coef)
+        root = np.isreal(Z) # return True for real roots
+        #position where the real roots are - crated for organization only
+        real_roots_position = np.where(root == True)
+        Z_reais = np.real(Z[real_roots_position[:]]) #Saving the real roots
+        Z_ans = min(Z_reais) * ph + max(Z_reais) * (1 - ph)
 
-        return Z
+        ''' This last line, considers that the phase is composed by a pure
+         component, so the EOS model can return more than one real root.
+            If liquid, Zl = min(Z) and gas, Zv = max(Z).
+            You can notice that, if there's only one real root,
+        it works as well.'''
+        return Z_ans
 
     def lnphi(self, l, ph):
         #l - any phase molar composition
-        A, B = self.coefficientsPR(l)
-        Z_reais = StabilityCheck.Z_PR(B, A, ph)
-        Z = min(Z_reais) * ph + max(Z_reais) * (1 - ph)
-        lnphi = self.b / self.bm * (Z - 1) - np.log(Z - B) - A / (2 * (2 ** (1/2))
-                * B) * (2 * self.psi / self.aalpha - self.b / self.bm) * np.log((Z + (1 +
-                2 ** (1/2)) * B) / (Z + (1 - 2 ** (1/2)) * B))
-        return lnphi
-
-    def _lnphi(self, l, ph ):
         A, B = self.coefficientsPR(l)
         Z = StabilityCheck.Z_PR(B, A, ph)
         lnphi = self.b / self.bm * (Z - 1) - np.log(Z - B) - A / (2 * (2 ** (1/2))
                 * B) * (2 * self.psi / self.aalpha - self.b / self.bm) * np.log((Z + (1 +
                 2 ** (1/2)) * B) / (Z + (1 - 2 ** (1/2)) * B))
-        dlndl = sympy.diff(lnphi,l)
-        print(dlndl)
-        return lnphi[i]
 
+        return lnphi
 
     """-------------Below starts stability test calculation -----------------"""
 

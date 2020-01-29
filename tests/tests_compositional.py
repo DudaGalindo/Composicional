@@ -119,27 +119,28 @@ import unittest
 #                 self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
 
 class testes_casos_Schmall(unittest.TestCase):
-    # def teste_caso5(self):
-    #     R = 8.3144598
-    #     z = np.array([1.]) #exemplo aleatório
-    #     P = np.array([13.79e6])
-    #     T = np.array([366.33])
-    #     Tc = np.array([617.7])
-    #     Pc =np.array([2103000.0])
-    #     w = np.array([0.4884])
-    #     Bin = np.array([0])
-    #     Mw = np.array([142.28e-3],dtype = np.double)
-    #     C7 = np.array([0])
-    #     print('\ncaso5:')
-    #
-    #     obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,C7)
-    #     obj.run(z,Mw)
-    #
-    #     print('x: ',obj.x,'y: ',obj.y)
-    #     print('K: ',obj.K)
-    #     print('L: ',obj.L,'V: ',obj.V)
-    #     print('fl: ',obj.fl,'fv: ',obj.fv)
 
+    def teste_caso5(self):
+        R = 8.3144598
+        z = np.array([1.]) #exemplo aleatório
+        P = np.array([13.79e6])
+        T = np.array([366.33])
+        Tc = np.array([617.7])
+        Pc =np.array([2103000.0])
+        w = np.array([0.4884])
+        Bin = np.array([0])
+        Mw = np.array([142.28e-3])
+        C7 = np.array([0])
+        print('\ncaso5:')
+
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,C7)
+        obj.run(z,Mw)
+
+        print('x: ',obj.x,'y: ',obj.y)
+        print('K: ',obj.K)
+        print('L: ',obj.L,'V: ',obj.V)
+        print('fl: ',obj.fl,'fv: ',obj.fv)
+    @unittest.skip("skip")
     def test_caso1(self):
         #Units: T[Rankine];P[psia]
         R = 10.73159

@@ -119,7 +119,7 @@ import unittest
 #                 self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
 
 class testes_casos_Schmall(unittest.TestCase):
-
+    @unittest.skip("skip")
     def teste_caso5(self):
         R = 8.3144598
         z = np.array([1.]) #exemplo aleatório
@@ -140,7 +140,7 @@ class testes_casos_Schmall(unittest.TestCase):
         print('K: ',obj.K)
         print('L: ',obj.L,'V: ',obj.V)
         print('fl: ',obj.fl,'fv: ',obj.fv)
-    @unittest.skip("skip")
+
     def test_caso1(self):
         #Units: T[Rankine];P[psia]
         R = 10.73159

@@ -56,14 +56,18 @@ class StabilityCheck:
         nkphase = z * self.Nphase[ph]
         delta = 0.001
         dlnphi_dnk = np.zeros([self.Nc,self.Nc])
-        for i in range(self.Nc):
-            nkphase_plus = np.copy(nkphase)
-            nkphase_minus = np.copy(nkphase)
-            nkphase_plus[i] = nkphase[i] + delta/2
-            nkphase_minus[i] = nkphase[i] - delta/2
-            dlnphi_dnk[:,i] = (self.lnphi_numerically(nkphase_plus, self.Nphase[ph], ph)
-             - self.lnphi_numerically(nkphase_minus, self.Nphase[ph], ph))/delta
+        if self.Nphase[ph] != 0:
+            for i in range(self.Nc):
+                nkphase_plus = np.copy(nkphase)
+                nkphase_minus = np.copy(nkphase)
+                nkphase_plus[i] = nkphase[i] + delta/2
+                nkphase_minus[i] = nkphase[i] - delta/2
+                dlnphi_dnk[:,i] = (self.lnphi_(nkphase_plus, self.Nphase[ph], ph)
+                 - self.lnphi_(nkphase_minus, self.Nphase[ph], ph))/delta
         return dlnphi_dnk
+    def lnphi_(self, nkphase, Nphase, ph):
+        l = nkphase / Nphase
+        return self.lnphi(l,ph)
 
     def dlnphi_dn_sym(self):
         dlnphil_dnk = self.run_sym(self.x, 1)
@@ -105,18 +109,6 @@ class StabilityCheck:
 
         return lnphi
 
-    def lnphi_numerically(self, nkphase, Nphase, ph):
-        if Nphase == 0:
-            lnphi = np.zeros(self.Nc)
-        else:
-            l = nkphase/Nphase
-            A, B = self.coefficientsPR(l)
-            Z = StabilityCheck.Z_PR(B, A, ph)
-
-            lnphi = self.b / self.bm * (Z - 1) - np.log(Z - B) - A / (2 * (2 ** (1/2))
-                    * B) * (2 * self.psi / self.aalpha - self.b / self.bm) * np.log((Z + (1 +
-                    2 ** (1/2)) * B) / (Z + (1 - 2 ** (1/2)) * B))
-        return lnphi
 
     def run(self, z, Mw):
 
@@ -147,7 +139,7 @@ class StabilityCheck:
         eta = np.zeros(2)
         eta[0] = self.eta_V; eta[1] = self.eta_L
         self.Nphase = eta * V
-        self.dlnphi_dn_sym()
+        # self.dlnphi_dn_sym()
         self.dlnphi_dn_numerically()
 
         '''if sp1<1 and sp2<1:

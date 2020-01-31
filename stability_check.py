@@ -1,8 +1,9 @@
 """Check stability of a thermodynamic equilibrium."""
 import numpy as np
 import math
-import sympy
+from scipy.misc import derivative
 from sympy import *
+import sympy
 from mpmath import *
 import matplotlib.pyplot as plt
 
@@ -26,45 +27,55 @@ class StabilityCheck:
         #StabilityCheck.TPD(self)
 
     def run_sym(self, z, ph):
-        # nkphase = sympy.symarray('nkphase', len(z))
-        # Nphase = self.Nphase[ph]
-        #
-        # if Nphase!=0:
-        #     lnphi_all = self.lnphi_sym(nkphase, Nphase, ph)
-        #     A, B = self.coefficientsPR(z)
-        #     Z = np.array(StabilityCheck.Z_PR_sym(B, A, ph))
-        #
-        #     reais = np.full(len(Z), False, dtype=bool)
-        #     for r in range(0,len(Z)):
-        #         reais[r] = sympify(Z[r,0]).is_real
-        #
-        #     Z_reais = Z[reais]
-        #     Z_ans = min(Z_reais) * ph + max(Z_reais) * (1 - ph)
-        #     import pdb; pdb.set_trace()
-        #     a = np.argwhere(Z == Z_ans)
-        #     lnphi = lnphi_all[a,:]
-        #     dlnphi_dnk = np.zeros([self.Nc,self.Nc])
-        #     nkphase_value = z * Nphase
-        #     for i in range(0,self.Nc):
-        #         dlnphi_dn = sympy.diff(lnphi,nkphase[i])
-        #         func = lambdify(nkphase, dlnphi_dn,'numpy')
-        #         dlnphi_dnk[:,i] = np.array(func(*nkphase_value)[0][0])
-        # else: dlnphi_dnk = np.zeros([self.Nc,self.Nc])
-        nkphase = z * self.Nphase[ph]
-        delta = 0.0001
-        dlnphi_dnk = np.zeros([self.Nc,self.Nc])
-        nkphase = z * self.Nphase[ph]
-        for i in range(0,self.Nc):
-            nkphased = np.copy(nkphase)
-            nkphased[i] = nkphase[i] + delta
-            dlnphi_dnk[:,i] = (self.lnphi_sym2(nkphased, self.Nphase[ph], ph) - self.lnphi_sym2(nkphase, self.Nphase[ph], ph))/delta
+        nkphase = sympy.symarray('nkphase', len(z))
+        Nphase = self.Nphase[ph]
+
+        if Nphase!=0:
+            lnphi_all = self.lnphi_sym(nkphase, Nphase, ph)
+            A, B = self.coefficientsPR(z)
+            Z = np.array(StabilityCheck.Z_PR_sym(B, A, ph))
+            reais = np.full(len(Z), False, dtype=bool)
+            for r in range(0,len(Z)):
+                reais[r] = sympify(Z[r]).is_real
+
+            Z_reais = Z[reais]
+            Z_ans = min(Z_reais) * ph + max(Z_reais) * (1 - ph)
+            a = np.argwhere(Z == Z_ans)
+            lnphi = lnphi_all[a,:]
+            dlnphi_dnk = np.zeros([self.Nc,self.Nc])
+            nkphase_value = z * Nphase
+            for i in range(0,self.Nc):
+                dlnphi_dn = sympy.diff(lnphi,nkphase[i])
+                func1 = lambdify(nkphase, dlnphi_dn,'numpy')
+                dlnphi_dnk[:,i] = np.array(func1(*nkphase_value)[0][0])
+        else: dlnphi_dnk = np.zeros([self.Nc,self.Nc])
+
         return dlnphi_dnk
 
-    def dlnphi_dn(self):
+    def run_numerically(self, z, ph):
+        nkphase = z * self.Nphase[ph]
+        delta = 0.001
+        dlnphi_dnk = np.zeros([self.Nc,self.Nc])
+        for i in range(self.Nc):
+            nkphase_plus = np.copy(nkphase)
+            nkphase_minus = np.copy(nkphase)
+            nkphase_plus[i] = nkphase[i] + delta/2
+            nkphase_minus[i] = nkphase[i] - delta/2
+            dlnphi_dnk[:,i] = (self.lnphi_numerically(nkphase_plus, self.Nphase[ph], ph)
+             - self.lnphi_numerically(nkphase_minus, self.Nphase[ph], ph))/delta
+        return dlnphi_dnk
+
+    def dlnphi_dn_sym(self):
         dlnphil_dnk = self.run_sym(self.x, 1)
         dlnphiv_dnk = self.run_sym(self.y, 0)
         matriz = dlnphil_dnk + dlnphiv_dnk
-        print(matriz)
+        print('solução analítica: \n ' , matriz)
+
+    def dlnphi_dn_numerically(self):
+        dlnphil_dnk = self.run_numerically(self.x, 1)
+        dlnphiv_dnk = self.run_numerically(self.y, 0)
+        matriz = dlnphil_dnk + dlnphiv_dnk
+        print('solução numérica: \n ' , matriz)
 
     def Z_PR_sym(B, A, ph):
         Z = symbols('Z')
@@ -72,7 +83,6 @@ class StabilityCheck:
         coef = [1, -(1 - B), (A - 2*B - 3*B**2), -(A*B - B**2 - B**3)]
         Za = solve(a,Z)
         return Za
-
 
     def lnphi_sym(self, nkphase, Nphase, ph):
         if Nphase == 0:
@@ -82,10 +92,10 @@ class StabilityCheck:
             A, B = self.coefficientsPR(l)
             Z = StabilityCheck.Z_PR_sym(B, A, ph)
 
-            lnphi1 =  (self.b / self.bm * (Z[0] - 1) - sympy.log(Z[0] - B) - A / (2 * (2 ** (1/2))
+            lnphi1 =  self.b / self.bm * (Z[0] - 1) - sympy.log(Z[0] - B) - A / (2 * (2 ** (1/2))
                         * B) * (2 * self.psi / self.aalpha - self.b / self.bm) * sympy.log((Z[0] + (1 +
-                        2 ** (1/2)) * B) / (Z[0] + (1 - 2 ** (1/2)) * B)))
-            lnphi2 =  self.b / self.bm * (Z[1] - 1) - sympy.log(Z[1] - B) - A / (2 * (2 ** (1/2))
+                        2 ** (1/2)) * B) / (Z[0] + (1 - 2 ** (1/2)) * B))
+            lnphi2 = self.b / self.bm * (Z[1] - 1) - sympy.log(Z[1] - B) - A / (2 * (2 ** (1/2))
                         * B) * (2 * self.psi / self.aalpha - self.b / self.bm) * sympy.log((Z[1] + (1 +
                         2 ** (1/2)) * B) / (Z[1] + (1 - 2 ** (1/2)) * B))
             lnphi3 =  self.b / self.bm * (Z[2] - 1) - sympy.log(Z[2] - B) - A / (2 * (2 ** (1/2))
@@ -95,7 +105,7 @@ class StabilityCheck:
 
         return lnphi
 
-    def lnphi_sym2(self, nkphase, Nphase, ph):
+    def lnphi_numerically(self, nkphase, Nphase, ph):
         if Nphase == 0:
             lnphi = np.zeros(self.Nc)
         else:
@@ -107,7 +117,6 @@ class StabilityCheck:
                     * B) * (2 * self.psi / self.aalpha - self.b / self.bm) * np.log((Z + (1 +
                     2 ** (1/2)) * B) / (Z + (1 - 2 ** (1/2)) * B))
         return lnphi
-
 
     def run(self, z, Mw):
 
@@ -138,7 +147,8 @@ class StabilityCheck:
         eta = np.zeros(2)
         eta[0] = self.eta_V; eta[1] = self.eta_L
         self.Nphase = eta * V
-        self.dlnphi_dn()
+        self.dlnphi_dn_sym()
+        self.dlnphi_dn_numerically()
 
         '''if sp1<1 and sp2<1:
                 TPD = obj.TPD(z)

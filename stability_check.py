@@ -24,63 +24,123 @@ class StabilityCheck:
         self.P = P
         self.Nc = len(w)
         self.C7 = C7
+        self.n_phases = 2 #number of phases
         #StabilityCheck.TPD(self)
 
-    def run_sym(self, z, ph):
-        nkphase = sympy.symarray('nkphase', len(z))
-        Nphase = self.Nphase[ph]
+    def d_dn_all_derivatives(self, Nphase):
+        l = np.zeros([self.Nc, self.n_phases])
+        l[:,0] = self.y; l[:,1] = self.x # if the number of phase changes, this would change as well
+        nkphase = l * Nphase
+        delta = 0.0001
+        dlnphi_dn = np.zeros([self.Nc, self.Nc, self.n_phases])
+        # matrix = np.copy(dlnphi_dn)
+        dZ_dn = np.zeros([self.Nc, self.n_phases])
+        for ph in range(self.n_phases):
+            if Nphase[ph] != 0:
+                for i in range(0,self.Nc):
+                    l_plus = np.copy(l[:,ph]); l_minus = np.copy(l[:,ph])
+                    l_plus[i] = (nkphase[i,ph] + delta/2)/Nphase[ph]
+                    l_minus[i] = (nkphase[i,ph] - delta/2)/Nphase[ph]
+                    dlnphi_dn[:,i,ph] = (self.lnphi(l_plus, ph)
+                     - self.lnphi(l_minus, ph))/delta
+                    dZ_dn[i,ph] = (self.Z(l_plus, ph)
+                     - self.Z(l_minus, ph))/delta
+        return dlnphi_dn, dZ_dn
 
-        if Nphase!=0:
-            lnphi_all = self.lnphi_sym(nkphase, Nphase, ph)
-            A, B = self.coefficientsPR(z)
-            Z = np.array(StabilityCheck.Z_PR_sym(B, A, ph))
-            reais = np.full(len(Z), False, dtype=bool)
-            for r in range(0,len(Z)):
-                reais[r] = sympify(Z[r]).is_real
+    def d_dP_all_derivatives(self, Nphase):
+        l = np.zeros([self.Nc, self.n_phases])
+        l[:,0] = self.y; l[:,1] = self.x
+        delta = 0.0001
 
-            Z_reais = Z[reais]
-            Z_ans = min(Z_reais) * ph + max(Z_reais) * (1 - ph)
-            a = np.argwhere(Z == Z_ans)
-            lnphi = lnphi_all[a,:]
-            dlnphi_dnk = np.zeros([self.Nc,self.Nc])
-            nkphase_value = z * Nphase
-            for i in range(0,self.Nc):
-                dlnphi_dn = sympy.diff(lnphi,nkphase[i])
-                func1 = lambdify(nkphase, dlnphi_dn,'numpy')
-                dlnphi_dnk[:,i] = np.array(func1(*nkphase_value)[0][0])
-        else: dlnphi_dnk = np.zeros([self.Nc,self.Nc])
+        P = np.copy(self.P); P_plus = np.copy(P); P_minus = np.copy(P)
+        dZ_dP = np.zeros(self.n_phases)
+        dlnphi_dP = np.zeros([self.Nc, self.n_phases])
+        for ph in range(0, self.n_phases):
+            if Nphase[ph] != 0:
+                self.P = P + delta/2
+                Z_plus = self.Z(l[:,ph], ph)
+                lnphi_plus = self.lnphi(l[:,ph], ph)
+                self.P = P - delta/2
+                dZ_dP[ph] = (Z_plus - self.Z(l[:,ph], ph))/delta
+                dlnphi_dP[:,ph] = (lnphi_plus - self.lnphi(l[:,ph], ph)) / delta
+        self.P = P #voltando ao original
+        return dlnphi_dP, dZ_dP
 
-        return dlnphi_dnk
+    def Z(self, l, ph):
+        A, B = self.coefficientsPR(l)
+        return StabilityCheck.Z_PR(B, A, ph)
 
-    def run_numerically(self, z, ph):
-        nkphase = z * self.Nphase[ph]
-        delta = 0.001
-        dlnphi_dnk = np.zeros([self.Nc,self.Nc])
-        if self.Nphase[ph] != 0:
-            for i in range(self.Nc):
-                nkphase_plus = np.copy(nkphase)
-                nkphase_minus = np.copy(nkphase)
-                nkphase_plus[i] = nkphase[i] + delta/2
-                nkphase_minus[i] = nkphase[i] - delta/2
-                dlnphi_dnk[:,i] = (self.lnphi_(nkphase_plus, self.Nphase[ph], ph)
-                 - self.lnphi_(nkphase_minus, self.Nphase[ph], ph))/delta
-        return dlnphi_dnk
-    def lnphi_(self, nkphase, Nphase, ph):
-        l = nkphase / Nphase
-        return self.lnphi(l,ph)
+    def dVt_derivatives(self, Nphase_allvolumes, eta_j):
+        n_vols = len(Nphase_allvolumes[0,0,:])
+        """ Initializing dN derivatives """
+        dnij_dNk = np.zeros([self.Nc, self.Nc, self.n_phases, n_vols])
+        dZj_dnij = np.zeros([self.Nc, self.n_phases, n_vols])
 
-    def dlnphi_dn_sym(self):
-        dlnphil_dnk = self.run_sym(self.x, 1)
-        dlnphiv_dnk = self.run_sym(self.y, 0)
-        matriz = dlnphil_dnk + dlnphiv_dnk
-        print('solução analítica: \n ' , matriz)
+        """ Initializing dP derivatives """
+        dnij_dP = np.zeros([self.Nc, self.n_phases, n_vols])
+        dZj_dP = np.zeros([1, self.n_phases, n_vols])
+        Zj = np.zeros([1,self.n_phases, n_vols])
 
-    def dlnphi_dn_numerically(self):
-        dlnphil_dnk = self.run_numerically(self.x, 1)
-        dlnphiv_dnk = self.run_numerically(self.y, 0)
-        matriz = dlnphil_dnk + dlnphiv_dnk
-        print('solução numérica: \n ' , matriz)
+        for b in range(n_vols):
+            Nphase = Nphase_allvolumes[0,:,b]
+            dlnphiij_dnij, dZj_dnij[:,:,b] = self.d_dn_all_derivatives(Nphase)
+            dlnphij_dP, dZj_dP[0,:,b] = self.d_dP_all_derivatives(Nphase)
+            Zj[0,:,b] = np.array([self.Z(self.y,0), self.Z(self.x,1)])
+            matrix = np.sum(dlnphiij_dnij, axis = 2)
 
+            dlnphi_dP_vector = dlnphij_dP[:,0] - dlnphij_dP[:,1]
+            dnij_dP[:,1,b] =  np.linalg.inv(matrix)@dlnphi_dP_vector
+            dnij_dP[:,0,b] = - dnij_dP[:,1,b]
+            for k in range(self.Nc):
+                dlnphil_dnk = dlnphiij_dnij[:,k,1]
+                dnij_dNk[:,k,1,b] = np.linalg.inv(matrix)@dlnphil_dnk
+                dnij_dNk[:,k,0,b] = - dnij_dNk[:,k,1,b]
+                dnij_dNk[k,k,0,b] = 1 - dnij_dNk[k,k,1,b]
+
+        dvj_dnij = self.R * self.T / self.P * dZj_dnij
+        dVj_dNk = np.sum(dnij_dNk * (1/eta_j + Nphase[:,np.newaxis] * dvj_dnij)[np.newaxis,:,:,:], axis = 0)
+        dVt_dNk = np.sum(dVj_dNk, axis = 1)
+
+        dvj_dP = self.R * self.T / self.P * (dZj_dP - Zj / self.P)
+        dVj_dP = np.sum(Nphase_allvolumes * dvj_dP + np.sum(dnij_dP * (1/eta_j + Nphase[:,np.newaxis] * dvj_dnij), axis = 0),axis = 0)
+        dVt_dP = np.sum(dVj_dP,axis = 0)
+        return dVt_dNk, dVt_dP
+
+    def run(self, z, Mw):
+
+        self.equilibrium_ratio_Wilson()
+        if any(z <= 0):
+            self.molar_properties(z)
+        else:
+            sp1,sp2 = self.Stability(z)
+            if sp1 > 1 or sp2 > 1:
+                self.molar_properties(z)
+            else: #tiny manipulation
+                self.x = np.ones(self.Nc); self.y = np.copy(self.x)
+                self.bubble_point_pressure()
+                if self.P > self.Pbubble: self.L = 1; self.V = 0
+                else: self.L = 0; self.V = 1
+                lnphil = self.lnphi_based_on_deltaG(self.x, 1)
+                lnphiv = self.lnphi_based_on_deltaG(self.y, 0)
+                self.fv = np.exp(lnphiv) * (self.y * self.P)
+                self.fl = np.exp(lnphil) * (self.x * self.P)
+                self.K = self.y/self.x
+                self.z = self.x*self.L + self.y*self.V
+
+        self.Mw_L, self.eta_L, self.rho_L = self.other_properties(self.x,Mw)
+        self.Mw_V, self.eta_V, self.rho_V = self.other_properties(self.y,Mw)
+
+        V = np.zeros([1,2,99])
+        V[:,1,:] = np.ones(99)*11.33
+        eta = np.zeros([1,2,99])
+        eta[:,0,:] = self.eta_V; eta[:,1,:] = self.eta_L
+        self.Nphase = eta * V
+        self.dVt_derivatives(self.Nphase, eta)
+
+        '''if sp1<1 and sp2<1:
+                TPD = obj.TPD(z)
+                if TPD.any()<0: #checar se isso iria funcionar
+                    obj.molar_properties(z,Mw)'''
     def Z_PR_sym(B, A, ph):
         Z = symbols('Z')
         a = Z**3 - (1-B)*Z**2 + (A-2*B-3*B**2)*Z-(A*B-B**2-B**3)
@@ -109,43 +169,31 @@ class StabilityCheck:
 
         return lnphi
 
+    def run_sym(self, z, ph):
+        nkphase = sympy.symarray('nkphase', len(z))
+        Nphase = self.Nphase[ph]
 
-    def run(self, z, Mw):
+        if Nphase!=0:
+            lnphi_all = self.lnphi_sym(nkphase, Nphase, ph)
+            A, B = self.coefficientsPR(z)
+            Z = np.array(StabilityCheck.Z_PR_sym(B, A, ph))
+            reais = np.full(len(Z), False, dtype=bool)
+            for r in range(0,len(Z)):
+                reais[r] = sympify(Z[r]).is_real
 
-        self.equilibrium_ratio_Wilson()
-        if any(z <= 0):
-            self.molar_properties(z)
-        else:
-            sp1,sp2 = self.Stability(z)
-            if sp1 > 1 or sp2 > 1:
-                self.molar_properties(z)
-            else: #tiny manipulation
-                self.x = np.ones(self.Nc); self.y = np.copy(self.x)
-                self.bubble_point_pressure()
-                if self.P > self.Pbubble: self.L = 1; self.V = 0
-                else: self.L = 0; self.V = 1
-                lnphil = self.lnphi_based_on_deltaG(self.x, 1)
-                lnphiv = self.lnphi_based_on_deltaG(self.y, 0)
-                self.fv = np.exp(lnphiv) * (self.y * self.P)
-                self.fl = np.exp(lnphil) * (self.x * self.P)
-                self.K = self.y/self.x
-                self.z = self.x*self.L + self.y*self.V
-        # Nk = self.z*Ntotal
+            Z_reais = Z[reais]
+            Z_ans = min(Z_reais) * ph + max(Z_reais) * (1 - ph)
+            a = np.argwhere(Z == Z_ans)
+            lnphi = lnphi_all[a,:]
+            dlnphi_dnk = np.zeros([self.Nc,self.Nc])
+            nkphase_value = z * Nphase
+            for i in range(0,self.Nc):
+                dlnphi_dn = sympy.diff(lnphi,nkphase[i])
+                func1 = lambdify(nkphase, dlnphi_dn,'numpy')
+                dlnphi_dnk[:,i] = np.array(func1(*nkphase_value)[0][0])
+        else: dlnphi_dnk = np.zeros([self.Nc,self.Nc])
 
-        self.Mw_L, self.eta_L, self.rho_L = self.other_properties(self.x,Mw)
-        self.Mw_V, self.eta_V, self.rho_V = self.other_properties(self.y,Mw)
-        V_V = 0; V_L = 11.33;
-        V = np.array([V_V,V_L])
-        eta = np.zeros(2)
-        eta[0] = self.eta_V; eta[1] = self.eta_L
-        self.Nphase = eta * V
-        # self.dlnphi_dn_sym()
-        self.dlnphi_dn_numerically()
-
-        '''if sp1<1 and sp2<1:
-                TPD = obj.TPD(z)
-                if TPD.any()<0: #checar se isso iria funcionar
-                    obj.molar_properties(z,Mw)'''
+        return dlnphi_dnk
 
     def equilibrium_ratio_Wilson(self):
         self.K = np.exp(5.37 * (1 + self.w) * (1 - self.Tc / self.T)) * \

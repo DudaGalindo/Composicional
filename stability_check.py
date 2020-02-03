@@ -136,7 +136,8 @@ class StabilityCheck:
         eta[:,0,:] = self.eta_V; eta[:,1,:] = self.eta_L
         self.Nphase = eta * V
         self.dVt_derivatives(self.Nphase, eta)
-
+        # import pdb; pdb.set_trace()
+        # self.run_sym(z,1)
         '''if sp1<1 and sp2<1:
                 TPD = obj.TPD(z)
                 if TPD.any()<0: #checar se isso iria funcionar
@@ -171,8 +172,8 @@ class StabilityCheck:
 
     def run_sym(self, z, ph):
         nkphase = sympy.symarray('nkphase', len(z))
-        Nphase = self.Nphase[ph]
-
+        Nphaseaa = self.Nphase[0,:,0]
+        Nphase = Nphaseaa[ph]
         if Nphase!=0:
             lnphi_all = self.lnphi_sym(nkphase, Nphase, ph)
             A, B = self.coefficientsPR(z)
@@ -184,11 +185,14 @@ class StabilityCheck:
             Z_reais = Z[reais]
             Z_ans = min(Z_reais) * ph + max(Z_reais) * (1 - ph)
             a = np.argwhere(Z == Z_ans)
+
             lnphi = lnphi_all[a,:]
+            lnphi = sympy.simplify(lnphi)
             dlnphi_dnk = np.zeros([self.Nc,self.Nc])
             nkphase_value = z * Nphase
             for i in range(0,self.Nc):
                 dlnphi_dn = sympy.diff(lnphi,nkphase[i])
+                import pdb; pdb.set_trace()
                 func1 = lambdify(nkphase, dlnphi_dn,'numpy')
                 dlnphi_dnk[:,i] = np.array(func1(*nkphase_value)[0][0])
         else: dlnphi_dnk = np.zeros([self.Nc,self.Nc])
@@ -243,7 +247,7 @@ class StabilityCheck:
         #l - any phase molar composition
         A, B = self.coefficientsPR(l)
         Z = StabilityCheck.Z_PR(B, A, ph)
-        lnphi = self.b / self.bm * (Z - 1) - np.log(Z - B) - A / (2 * (2 ** (1/2))
+        lnphi = (self.b / self.bm )* (Z - 1) - np.log(Z - B) - A / (2 * (2 ** (1/2))
                 * B) * (2 * self.psi / self.aalpha - self.b / self.bm) * np.log((Z + (1 +
                 2 ** (1/2)) * B) / (Z + (1 - 2 ** (1/2)) * B))
 

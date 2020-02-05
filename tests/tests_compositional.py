@@ -4,119 +4,119 @@ import thermo
 import unittest
 
 
-# class Li_et_al_table4:
-#     def __init__(self):
-#         self.R = 10.73159
-#         self.Tc = np.array([-116.59, 305.69, 453.65, 652.01])
-#         self.Tc = (self.Tc + 459.67)
-#         self.Pc = np.array([667.2,551.1,430.59,305.68])
-#         self.w = np.array([0.008,0.193,0.296,0.49])
-#         self.Mw = np.array([16.043,58.124,86.16,142.29])
-#         self.P = 600
-#         self.T = 160 + 459.67
-#         self.Bin = np.zeros([len(self.w),len(self.w)])
-#         self.C7 = np.array([0,0,0,1])
-#
-#
-# class testes_Li_et_al_table4(unittest.TestCase):
-#
-#     #Units: English system
-#     # methane n-butane n-hexane n-decane
-#
-#     def test5(self):
-#         prop = Li_et_al_table4()
-#         z = np.array([-0.58,0.38,0.6,0.6])
-#
-#         '''Run:'''
-#         obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
-#         obj.run(z,prop.Mw)
-#
-#         '''Verify Results'''
-#         x = [0.1676,0.2239,0.3088,0.2997]
-#         y = [0.9115,0.0686,0.0190,0.0009]
-#         K = [5.4393,0.3062,0.0616,0.0031]
-#
-#         for i in range(obj.Nc):
-#             self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
-#             self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
-#             if obj.x[i] != 0 and obj.y[i] != 0:
-#                 self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
-#
-#     def test4(self):
-#         prop = Li_et_al_table4()
-#         z = np.array([0,0,0,1])
-#
-#         '''Run:'''
-#         obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
-#         obj.run(z,prop.Mw)
-#
-#         '''Verify Results'''
-#         x = [0.1724,0.0000,0.0000,0.8276]
-#         y = [0.9980,0.0000,0.0000,0.0020]
-#         K = [5.7895,0.2867,0.0538,0.0024]
-#
-#         for i in range(obj.Nc):
-#             self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
-#             self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
-#             if obj.x[i] != 0 and obj.y[i] != 0:
-#                 self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
-#
-#     def test3(self):
-#         prop = Li_et_al_table4()
-#         z = np.array([0,0,1,0])
-#
-#         '''Run:'''
-#         obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
-#         obj.run(z,prop.Mw)
-#
-#         '''Verify Results'''
-#         x = [0.1789,0.0000,0.8211,0.0000]
-#         y = [0.9507,0.0000,0.0493,0.0000]
-#         K = [5.3130,0.2999,0.0600,0.0030]
-#
-#         for i in range(obj.Nc):
-#             self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
-#             self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
-#             if obj.x[i] != 0 and obj.y[i] != 0:
-#                 self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
-#
-#     def test2(self):
-#         prop = Li_et_al_table4()
-#         z = np.array([0,1,0,0])
-#
-#         '''Run:'''
-#         obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
-#         obj.run(z,prop.Mw)
-#
-#         '''Verify Results'''
-#         x = [0.1639,0.8361,0.0000,0.0000]
-#         y = [0.6960,0.3040,0.0000,0.0000]
-#         K = [4.2473,0.3636,0.0905,0.0066]
-#
-#         for i in range(obj.Nc):
-#             self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
-#             self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
-#             if obj.x[i] != 0 and obj.y[i] != 0:
-#                 self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
-#
-#     def test1(self):
-#         prop = Li_et_al_table4()
-#         z = np.array([1,0,0,0])
-#
-#         '''Run:'''
-#         obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
-#         obj.run(z,prop.Mw)
-#
-#         '''Verify Results'''
-#         x = [0.1724,0.0000,0.0000,0.8276]
-#         y = [0.9980,0.0000,0.0000,0.0020]
-#         K = [5.7895,0.2867,0.0538,0.0024]
-#
-#         for i in range(obj.Nc):
-#             self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
-#             self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
-#             if obj.x[i] != 0 and obj.y[i] != 0:
-#                 self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
+class Li_et_al_table4:
+    def __init__(self):
+        self.R = 10.73159
+        self.Tc = np.array([-116.59, 305.69, 453.65, 652.01])
+        self.Tc = (self.Tc + 459.67)
+        self.Pc = np.array([667.2,551.1,430.59,305.68])
+        self.w = np.array([0.008,0.193,0.296,0.49])
+        self.Mw = np.array([16.043,58.124,86.16,142.29])
+        self.P = 600
+        self.T = 160 + 459.67
+        self.Bin = np.zeros([len(self.w),len(self.w)])
+        self.C7 = np.array([0,0,0,1])
+
+
+class testes_Li_et_al_table4(unittest.TestCase):
+
+    #Units: English system
+    # methane n-butane n-hexane n-decane
+
+    def test5(self):
+        prop = Li_et_al_table4()
+        z = np.array([-0.58,0.38,0.6,0.6])
+
+        '''Run:'''
+        obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
+        obj.run(z,prop.Mw)
+
+        '''Verify Results'''
+        x = [0.1676,0.2239,0.3088,0.2997]
+        y = [0.9115,0.0686,0.0190,0.0009]
+        K = [5.4393,0.3062,0.0616,0.0031]
+
+        for i in range(obj.Nc):
+            self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
+            self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
+            if obj.x[i] != 0 and obj.y[i] != 0:
+                self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
+
+    def test4(self):
+        prop = Li_et_al_table4()
+        z = np.array([0,0,0,1])
+
+        '''Run:'''
+        obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
+        obj.run(z,prop.Mw)
+
+        '''Verify Results'''
+        x = [0.1724,0.0000,0.0000,0.8276]
+        y = [0.9980,0.0000,0.0000,0.0020]
+        K = [5.7895,0.2867,0.0538,0.0024]
+
+        for i in range(obj.Nc):
+            self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
+            self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
+            if obj.x[i] != 0 and obj.y[i] != 0:
+                self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
+
+    def test3(self):
+        prop = Li_et_al_table4()
+        z = np.array([0,0,1,0])
+
+        '''Run:'''
+        obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
+        obj.run(z,prop.Mw)
+
+        '''Verify Results'''
+        x = [0.1789,0.0000,0.8211,0.0000]
+        y = [0.9507,0.0000,0.0493,0.0000]
+        K = [5.3130,0.2999,0.0600,0.0030]
+
+        for i in range(obj.Nc):
+            self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
+            self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
+            if obj.x[i] != 0 and obj.y[i] != 0:
+                self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
+
+    def test2(self):
+        prop = Li_et_al_table4()
+        z = np.array([0,1,0,0])
+
+        '''Run:'''
+        obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
+        obj.run(z,prop.Mw)
+
+        '''Verify Results'''
+        x = [0.1639,0.8361,0.0000,0.0000]
+        y = [0.6960,0.3040,0.0000,0.0000]
+        K = [4.2473,0.3636,0.0905,0.0066]
+
+        for i in range(obj.Nc):
+            self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
+            self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
+            if obj.x[i] != 0 and obj.y[i] != 0:
+                self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
+
+    def test1(self):
+        prop = Li_et_al_table4()
+        z = np.array([1,0,0,0])
+
+        '''Run:'''
+        obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
+        obj.run(z,prop.Mw)
+
+        '''Verify Results'''
+        x = [0.1724,0.0000,0.0000,0.8276]
+        y = [0.9980,0.0000,0.0000,0.0020]
+        K = [5.7895,0.2867,0.0538,0.0024]
+
+        for i in range(obj.Nc):
+            self.assertAlmostEqual(obj.x[i],x[i],4,'ValueError:Failed')
+            self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
+            if obj.x[i] != 0 and obj.y[i] != 0:
+                self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
 
 class testes_casos_Schmall(unittest.TestCase):
     @unittest.skip("skip")

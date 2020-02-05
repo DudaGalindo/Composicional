@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 ## Todas as equações foram confirmadas pelo livro do Dandekar e a biblioteca do thermo
 
 class StabilityCheck:
-    """Check for stability of a thermodynamic equilibrium and returns the
-    equilibrium phase compositions (perform the flash calculation)."""
+    """ Check for stability of a thermodynamic equilibrium and returns the
+    equilibrium phase compositions (perform the flash calculation). """
 
     def __init__(self, w, Bin, R, Tc, Pc, T, P, C7):
         self.w = w

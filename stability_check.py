@@ -4,7 +4,7 @@ import math
 from scipy.misc import derivative
 from sympy import *
 import sympy
-from mpmath import *
+from sympy.utilities import lambdify
 import matplotlib.pyplot as plt
 
 ## Encontrar os pontos estacionarios. Estes correspondem aos pontos nos quais a derivada de g com respeito a Y é 0
@@ -126,7 +126,6 @@ class StabilityCheck:
                 self.fl = np.exp(lnphil) * (self.x * self.P)
                 self.K = self.y/self.x
                 self.z = self.x*self.L + self.y*self.V
-
         self.Mw_L, self.eta_L, self.rho_L = self.other_properties(self.x,Mw)
         self.Mw_V, self.eta_V, self.rho_V = self.other_properties(self.y,Mw)
 
@@ -137,11 +136,12 @@ class StabilityCheck:
         self.Nphase = eta * V
         self.dVt_derivatives(self.Nphase, eta)
         # import pdb; pdb.set_trace()
-        # self.run_sym(z,1)
+        self.run_sym(z,1)
         '''if sp1<1 and sp2<1:
                 TPD = obj.TPD(z)
                 if TPD.any()<0: #checar se isso iria funcionar
                     obj.molar_properties(z,Mw)'''
+
     def Z_PR_sym(B, A, ph):
         Z = symbols('Z')
         a = Z**3 - (1-B)*Z**2 + (A-2*B-3*B**2)*Z-(A*B-B**2-B**3)
@@ -176,6 +176,7 @@ class StabilityCheck:
         Nphase = Nphaseaa[ph]
         if Nphase!=0:
             lnphi_all = self.lnphi_sym(nkphase, Nphase, ph)
+            import pdb; pdb.set_trace()
             A, B = self.coefficientsPR(z)
             Z = np.array(StabilityCheck.Z_PR_sym(B, A, ph))
             reais = np.full(len(Z), False, dtype=bool)
@@ -187,17 +188,17 @@ class StabilityCheck:
             a = np.argwhere(Z == Z_ans)
 
             lnphi = lnphi_all[a,:]
-            lnphi = sympy.simplify(lnphi)
-            dlnphi_dnk = np.zeros([self.Nc,self.Nc])
+            # lnphi = sympy.simplify(lnphi)
             nkphase_value = z * Nphase
-            for i in range(0,self.Nc):
-                dlnphi_dn = sympy.diff(lnphi,nkphase[i])
-                import pdb; pdb.set_trace()
-                func1 = lambdify(nkphase, dlnphi_dn,'numpy')
-                dlnphi_dnk[:,i] = np.array(func1(*nkphase_value)[0][0])
-        else: dlnphi_dnk = np.zeros([self.Nc,self.Nc])
 
-        return dlnphi_dnk
+            dlnphi_dn = sympy.diff(lnphi,nkphase[i])
+            func1 = lambdify(nkphase, dlnphi_dn,'numpy')
+            dlnphi_dnk = np.array(func1(*nkphase_value))
+            dlnphi_dnk_resh = dlnphi_dnk.T[:,0,0,:]
+
+        else: dlnphi_dnk_resh = np.zeros([self.Nc,self.Nc])
+
+        return dlnphi_dnk_resh
 
     def equilibrium_ratio_Wilson(self):
         self.K = np.exp(5.37 * (1 + self.w) * (1 - self.Tc / self.T)) * \

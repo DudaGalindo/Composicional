@@ -2,7 +2,6 @@
 import numpy as np
 import math
 from scipy.misc import derivative
-from sympy import *
 import sympy
 from sympy.utilities import lambdify
 import matplotlib.pyplot as plt

@@ -42,12 +42,17 @@ class StabilityCheck:
                 self.fl = np.exp(lnphil) * (self.x * self.P)
                 self.K = self.y/self.x
 
-        self.Mw_L, self.eta_L, self.rho_L = self.other_properties(self.x,Mw)
-        self.Mw_V, self.eta_V, self.rho_V = self.other_properties(self.y,Mw)
+        self.Mw_L, self.ksi_L, self.rho_L = self.other_properties(self.x,Mw)
+        self.Mw_V, self.ksi_V, self.rho_V = self.other_properties(self.y,Mw)
         '''if sp1<1 and sp2<1:
                 TPD = obj.TPD(z)
                 if TPD.any()<0: #checar se isso iria funcionar
                     obj.molar_properties(z,Mw)'''
+
+    def run_other_properties(self, z, L, V, Mw):
+        self.L = L
+        self.V = V
+        self.Mw_L, self.ksi_L, self.rho_L = self.other_properties(z,Mw)
 
     def equilibrium_ratio_Wilson(self):
         self.K = np.exp(5.37 * (1 + self.w) * (1 - self.Tc / self.T)) * \
@@ -336,9 +341,9 @@ class StabilityCheck:
         A, B = self.coefficientsPR(l)
         ph = self.deltaG_molar(l, 1)
         Z = StabilityCheck.Z_PR(B, A, ph)
-        eta_phase = self.P / (Z * self.R * self.T)
+        ksi_phase = self.P / (Z * self.R * self.T)
         Mw_phase = sum(l * Mw)
-        rho_phase = eta_phase * sum(l * Mw)
+        rho_phase = ksi_phase * sum(l * Mw)
         """
         Legenda:
             rho: phase mass density
@@ -346,7 +351,7 @@ class StabilityCheck:
             eta: phase molar density
         """
         # se precisar retornar mais coisa, entra aqui
-        return Mw_phase, eta_phase, rho_phase
+        return Mw_phase, ksi_phase, rho_phase
 
     def bubble_point_pressure(self):
         #Isso vem de uma junção da Lei de Dalton com a Lei de Raoult

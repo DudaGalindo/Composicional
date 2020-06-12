@@ -12,24 +12,23 @@ class Li_et_al_table4:
         self.Pc = np.array([667.2,551.1,430.59,305.68])
         self.w = np.array([0.008,0.193,0.296,0.49])
         self.Mw = np.array([16.043,58.124,86.16,142.29])
-        self.P = 600
+        self.P = 600 * np.ones(10)
         self.T = 160 + 459.67
         self.Bin = np.zeros([len(self.w),len(self.w)])
-        self.C7 = np.array([0,0,0,1])
 
 
-class testes_Li_et_al_table4:
+class testes_Li_et_al_table4(unittest.TestCase):
 
     #Units: English system
     # methane n-butane n-hexane n-decane
-    @unittest.skip("no need")
+    @unittest.skip("lal")
     def test5(self):
         prop = Li_et_al_table4()
-        z = np.array([-0.58,0.38,0.6,0.6])
+        z = np.array([-0.58,0.38,0.6,0.6])[:,np.newaxis]*np.ones([len(prop.w),len(prop.P)])
 
         '''Run:'''
-        obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
-        obj.run(z,prop.Mw)
+        obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P)
+        obj.run(z.T,prop.Mw)
 
         '''Verify Results'''
         x = [0.1676,0.2239,0.3088,0.2997]
@@ -41,13 +40,14 @@ class testes_Li_et_al_table4:
             self.assertAlmostEqual(obj.y[i],y[i],4,'ValueError:Failed')
             if obj.x[i] != 0 and obj.y[i] != 0:
                 self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
-    @unittest.skip("no need")
+
+    @unittest.skip("lal")
     def test4(self):
         prop = Li_et_al_table4()
         z = np.array([0,0,0,1])
 
         '''Run:'''
-        obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
+        obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P)
         obj.run(z,prop.Mw)
 
         '''Verify Results'''
@@ -66,7 +66,7 @@ class testes_Li_et_al_table4:
         z = np.array([0,0,1,0])
 
         '''Run:'''
-        obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
+        obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P)
         obj.run(z,prop.Mw)
 
         '''Verify Results'''
@@ -85,7 +85,7 @@ class testes_Li_et_al_table4:
         z = np.array([0,1,0,0])
 
         '''Run:'''
-        obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
+        obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P)
         obj.run(z,prop.Mw)
 
         '''Verify Results'''
@@ -104,7 +104,7 @@ class testes_Li_et_al_table4:
         z = np.array([1,0,0,0])
 
         '''Run:'''
-        obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P,prop.C7)
+        obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P)
         obj.run(z,prop.Mw)
 
         '''Verify Results'''
@@ -118,29 +118,50 @@ class testes_Li_et_al_table4:
             if obj.x[i] != 0 and obj.y[i] != 0:
                 self.assertAlmostEqual(obj.K[i],K[i],4,'ValueError:Failed')
 
-class testes_casos_Schmall:
+class testes_casos_Schmall(unittest.TestCase):
 
-    @unittest.skip("not the focus")
+    @unittest.skip("no need")
     def teste_caso5(self):
         R = 8.3144598
-        z = np.array([1.])*np.ones([1,10]) #exemplo aleatório
-        P = np.array([13.79e6])*np.ones([1,10])
-        T = np.array([366.33])*np.ones([1,10])
-        Tc = np.array([617.7])*np.ones([1,10])
-        Pc =np.array([2103000.0])*np.ones([1,10])
-        w = np.array([0.4884])*np.ones([1,10])
-        Bin = np.array([0])*np.ones([1,10])
-        Mw = np.array([142.28e-3],dtype = np.double)*np.ones([1,10])
-        C7 = np.array([0])*np.ones([1,10])
+        z = np.array([1.])[:,np.newaxis]*np.ones([1,10]) #exemplo aleatório
+        P = np.array([13.78951458e6])*np.ones(10)
+        T = np.array([366.4833])
+        Tc = np.array([619.277778])*np.ones([1])
+        Pc =np.array([2109795.731])*np.ones([1])
+        w = np.array([0.489])*np.ones([1])
+        Bin = np.array([0])*np.zeros([1,1])
+        Mw = np.array([142.276e-3],dtype = np.double)*np.ones([1])
+        C7 = np.array([0])#*np.ones([1,10])
         print('\ncaso5:')
 
-        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,C7)
-        obj.run(z,Mw)
-
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
+        obj.run(z.T,Mw)
+        import pdb; pdb.set_trace()
         print('x: ',obj.x,'y: ',obj.y)
         print('K: ',obj.K)
         print('L: ',obj.L,'V: ',obj.V)
         print('fl: ',obj.fl,'fv: ',obj.fv)
+
+    @unittest.skip("no need")
+    def teste_inj_fluid_brb(self):
+        R = 8.3144598
+        z = np.array([0.95, 0.05])
+        Tc = np.array([304.21, 190.6])
+        Pc = np.array([7.39e6, 4.6e6])
+        P = 20.65e6
+        T = 299.82
+        Mw = np.array([44.01e-3,16.04e-3])
+        w = np.array([0.225,0.022])
+        Bin = np.array([[0.0,0.12],[0.12,0.0]])
+        print('\nExemplo BRB:')
+
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
+        obj.run(z,Mw)
+        print('x: ',obj.x,'y: ',obj.y)
+        print('K: ',obj.K)
+        print('L: ',obj.L,'V: ',obj.V)
+        print('fl: ',obj.fl,'fv: ',obj.fv)
+        print('ksi_L', obj.ksi_L, 'ksi_V', obj.ksi_V)
 
     @unittest.skip("no need")
     def test_caso1(self):
@@ -155,11 +176,11 @@ class testes_casos_Schmall:
         Mw = np.array([16.043,44.097,58.124,86,134]) #molecular weight
         Bin  = np.array([[0,0,0,0.01,0.02], [0,0,0,0.01,0.01], [0,0,0,0,0.01], [0.01,0.01,0,0,0.01], [0.02,0.01,0.01,0.01,0]])
         z = np.array([0.6,0.1,0.1,0.1,0.1])
-        C7 = 0
+
 
         print('\ncaso1:')
 
-        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,C7)
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
         obj.run(z,Mw)
 
         print('x: ',obj.x,'y: ',obj.y)
@@ -167,7 +188,7 @@ class testes_casos_Schmall:
         print('L: ',obj.L,'V: ',obj.V)
         print('fl: ',obj.fl,'fv: ',obj.fv)
 
-    @unittest.skip("no need")
+
     def test_caso2(self):
         R = 8.3144598
         Bin = np.array([[0, 0.033],[0.033, 0]])
@@ -175,36 +196,36 @@ class testes_casos_Schmall:
         Pc = 14.7*np.array([41.9, 37.5])
         w = np.array([0.152, 0.193])
         Mw = np.array([44.097, 58.124])
-        z = np.array([0.5, 0.5])
+        z = np.array([0.5, 0.5]) [:,np.newaxis]*np.ones([2,10])
         T = 9/5*396
-        P = 14.7*(3.86e6/101325)
-        C7 = 0
+        P = 14.7*(3.86e6/101325) * np.ones(10)
+
 
         print('\ncaso2:')
-        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,C7)
-        obj.run(z,Mw)
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
+        obj.run(z.T,Mw)
 
         print('x: ',obj.x,'y: ',obj.y)
         print('K: ',obj.K)
         print('L: ',obj.L,'V: ',obj.V)
         print('fl: ',obj.fl,'fv: ',obj.fv)
 
-    @unittest.skip("no need")
+    @unittest.skip("lal")
     def test_caso3(self):
         R = 8.3144598
-        z = np.array([0.5,0.5]) #exemplo aleatório
-        P = (100*1E5)/101325*14.7# pressão de 100bar e ele converte para atm e depois psi
+        z = np.array([0.5,0.5])[:,np.newaxis]*np.ones([2,10]) #exemplo aleatório
+        P = (100*1E5)/101325*14.7 * np.ones(10)# pressão de 100bar e ele converte para atm e depois psi
         T = 350*9/5 #- T em K to R
         Tc = np.array([190.6, 460.4])*9/5;
         Pc =np.array([45.4,33.4])*14.7; # 14.7*
         w = np.array([0.008,0.227])
         Bin = np.array([[0,0.0236],[0.0236,0]])
         Mw = np.array([44.097,58.124])
-        C7 = 0
+
 
         print('\ncaso3:')
-        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,C7)
-        obj.run(z,Mw)
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
+        obj.run(z.T,Mw)
 
         print('x: ',obj.x,'y: ',obj.y)
         print('K: ',obj.K)
@@ -250,7 +271,7 @@ class testes_casos_Schmall:
     #     P = 13.8
     #     T = 283.15
     #     Mw = np.array([16.04,30.07,44.1])
-    #     C7 = 0
+    #
     #     w = np.array([0.011,0.099,0.153])
     #     Bin = np.zeros([3,3])
     #     print('\nExemplo 10.5:')

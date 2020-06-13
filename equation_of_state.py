@@ -21,12 +21,12 @@ class PengRobinson:
         self.aalpha_ij = np.sqrt(aalpha_i_reshape.T * aalpha_i[:,np.newaxis]) \
                         * (1 - kprop.Bin)
 
-    def coefficients_cubic_EOS_all(self, kprop, l):
+    def coefficients_cubic_EOS_all(self, kprop, l, P):
         self.bm = np.sum(l * self.b[:,np.newaxis], axis=0)
         l_reshape = np.ones((self.aalpha_ij).shape)[:,:,np.newaxis] * l[:,np.newaxis,:]
         self.aalpha = (l_reshape * l[np.newaxis,:,:] * self.aalpha_ij[:,:,np.newaxis]).sum(axis=0).sum(axis=0)
-        B = self.bm * kprop.P / (kprop.R* kprop.T)
-        A = self.aalpha * kprop.P / (kprop.R* kprop.T) ** 2
+        B = self.bm * P / (kprop.R* kprop.T)
+        A = self.aalpha * P / (kprop.R* kprop.T) ** 2
         self.psi = (l_reshape * self.aalpha_ij[:,:,np.newaxis]).sum(axis = 0).T
         return A, B
 
@@ -52,12 +52,12 @@ class PengRobinson:
         return Z_ans
         #Z = np.linalg.lstsq(coef, np.zeros(len(A[:])))
 
-    def coefficients_cubic_EOS(self, kprop, l):
+    def coefficients_cubic_EOS(self, kprop, l, P):
         self.bm = sum(l * self.b)
         l_reshape = np.ones((self.aalpha_ij).shape) * l[:, np.newaxis]
         self.aalpha = (l_reshape.T * l[:,np.newaxis] * self.aalpha_ij).sum()
-        B = self.bm * kprop.P / (kprop.R* kprop.T)
-        A = self.aalpha * kprop.P / (kprop.R* kprop.T) ** 2
+        B = self.bm * P / (kprop.R* kprop.T)
+        A = self.aalpha * P / (kprop.R* kprop.T) ** 2
         self.psi = (l_reshape * self.aalpha_ij).sum(axis = 0)
         return A, B
 
@@ -80,11 +80,11 @@ class PengRobinson:
 
         return Z_ans
 
-    def lnphi(self, kprop, l, ph):
+    def lnphi(self, kprop, l, P, ph):
         #l - any phase molar composition
-        if l.shape == (len(kprop.P), len(kprop.w)): l = l.T
+        if l.shape[1] == len(kprop.w): l = l.T
 
-        A, B = self.coefficients_cubic_EOS_all(kprop,l)
+        A, B = self.coefficients_cubic_EOS_all(kprop,l, P)
         Zfunc = np.vectorize(PengRobinson.Z)
         Z =Zfunc(B, A, ph)
         #Z = PengRobinson.Z_all(B, A, ph)

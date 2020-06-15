@@ -130,7 +130,7 @@ class testes_Li_et_al_table4(unittest.TestCase):
 
 class testes_casos_Schmall(unittest.TestCase):
 
-    @unittest.skip("not now")
+    
     def teste_caso5(self):
         R = 8.3144598
         z = np.array([[1.]])#[:,np.newaxis]#*np.ones([1]) #exemplo aleatório

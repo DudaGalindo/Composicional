@@ -38,7 +38,9 @@ class StabilityCheck:
         ponteiro_flash[dir_flash[:,0]] = True
         if any(~ponteiro_flash):
             sp1,sp2 = self.Stability(PR, z, np.copy(~ponteiro_flash))
-            ponteiro_flash[(sp1 > 1) + (sp1 > 1)] = True #os que em TESE deveriam passar para o cálculo de flash
+            ponteiro_aux = ponteiro_flash[~ponteiro_flash]
+            ponteiro_aux[(sp1 > 1) + (sp1 > 1)] = True #os que devem passar para o calculo de flash
+            ponteiro_flash[~ponteiro_flash] = ponteiro_aux
         self.molar_properties(PR, z, np.copy(ponteiro_flash))
         self.vapor_pressure(PR, z, ~ponteiro_flash) #ajeitar a função ainda
 
@@ -377,7 +379,7 @@ class StabilityCheck:
         Vmin = 1. - Lmax
         #Vmin = ((K1-KNc)*z[self.K==K1]-(1-KNc))/((1-KNc)*(K1-1))
         #proposed by Li et al for Whitson method
-        self.V = (Vmin + Vmax) * 0.5 + 1e-15 #manipulação
+        self.V[ponteiro] = (Vmin + Vmax) * 0.5
         razao = np.ones(z[ponteiro].shape)/2
         #self.solve_objective_function_Whitson(z, ponteiro)
         #ponteiro_aux = ponteiro[ponteiro]
@@ -424,7 +426,7 @@ class StabilityCheck:
         self.Pv = np.empty(len(self.P))
         self.Pv[ponteiro] = (self.K[ponteiro] * self.P[ponteiro][:,np.newaxis]).ravel()
         self.x[ponteiro] = z[ponteiro]; self.y[ponteiro] = z[ponteiro]
-        razao = np.empty(z.T.shape)/2
+        razao = np.empty(z.shape)/2
         while any(ponteiro):
             lnphil = self.lnphi_based_on_deltaG(PR, self.x[ponteiro], self.Pv[ponteiro], self.ph_L[ponteiro])
             lnphiv = self.lnphi_based_on_deltaG(PR, self.y[ponteiro], self.Pv[ponteiro], self.ph_V[ponteiro])
@@ -437,7 +439,7 @@ class StabilityCheck:
             ponteiro_aux = ponteiro[ponteiro]
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
-
+        self.K = self.y/self.x
         L = self.L[ponteiro_save]
         V = self.V[ponteiro_save]
         L[self.P[ponteiro_save] > self.Pv[ponteiro_save]] = 1

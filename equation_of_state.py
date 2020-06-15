@@ -86,9 +86,11 @@ class PengRobinson:
 
         A, B = self.coefficients_cubic_EOS_all(kprop,l, P)
         Zfunc = np.vectorize(PengRobinson.Z)
-        Z =Zfunc(B, A, ph)
+        Z = Zfunc(B, A, ph)
+        #if Z==B: Z +=1e-20
         #Z = PengRobinson.Z_all(B, A, ph)
-        lnphi = self.b / self.bm[:,np.newaxis] * (Z[:,np.newaxis] - 1) - np.log(Z[:,np.newaxis] - B[:,np.newaxis]) - A[:,np.newaxis] / (2 * (2 ** (1/2))
+
+        lnphi = self.b / self.bm[:,np.newaxis] * (Z[:,np.newaxis] - 1) - np.log(abs(Z[:,np.newaxis] - B[:,np.newaxis])) - A[:,np.newaxis] / (2 * (2 ** (1/2))
                 * B[:,np.newaxis]) * (2 * self.psi / self.aalpha[:,np.newaxis] - self.b / self.bm[:,np.newaxis]) * np.log((Z[:,np.newaxis] + (1 +
                 2 ** (1/2)) * B[:,np.newaxis]) / (Z[:, np.newaxis] + (1 - 2 ** (1/2)) * B[:,np.newaxis]))
 

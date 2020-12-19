@@ -1,10 +1,10 @@
 import numpy as np
 from stability_check import StabilityCheck
-import thermo
 import unittest
 
 
 class Li_et_al_table4:
+    @unittest.skip("ok")
     def __init__(self):
         self.R = 10.73159
         self.Tc = np.array([-116.59, 305.69, 453.65, 652.01])
@@ -21,12 +21,12 @@ class testes_Li_et_al_table4(unittest.TestCase):
 
     #Units: English system
     # methane n-butane n-hexane n-decane
-
+    @unittest.skip("ok")
     def test_all(self):
         prop = Li_et_al_table4()
         z = np.array([[-0.58,0.38,0.6,0.6], [0,0,0,1], [0,1,0,0], [0,0,1,0], [1,0,0,0]])
         obj = StabilityCheck(prop.w,prop.Bin,prop.R,prop.Tc,prop.Pc,prop.T,prop.P)
-        obj.run(z,prop.Mw)
+        obj.run(z.T,prop.Mw)
         print('x: ', 'y: ', obj.x, obj.y)
         print('L: ','V: ', obj.L, obj.V)
         import pdb; pdb.set_trace()
@@ -108,6 +108,7 @@ class testes_Li_et_al_table4(unittest.TestCase):
             self.assertAlmostEqual(obj.y[0,i],y[i],4,'ValueError:Failed')
             if obj.x[0,i] != 0 and obj.y[0,i] != 0:
                 self.assertAlmostEqual(obj.K[0,i],K[i],4,'ValueError:Failed')
+
     @unittest.skip("ok")
     def test1(self):
         prop = Li_et_al_table4()
@@ -130,11 +131,13 @@ class testes_Li_et_al_table4(unittest.TestCase):
 
 class testes_casos_Schmall(unittest.TestCase):
 
-    
+    @unittest.skip("ok")
     def teste_caso5(self):
         R = 8.3144598
-        z = np.array([[1.]])#[:,np.newaxis]#*np.ones([1]) #exemplo aleatório
-        P = np.array([13.79e6])#*np.ones(10)
+        z = np.array([1.])[:,np.newaxis]#*np.ones([10]) #exemplo aleatório
+        P = np.array([ 13.78951458E6])
+        #P = np.array([14619094.696946101])*np.ones(10)
+        #T = np.array([15 + 273.15])
         T = np.array([366.4833])
         Tc = np.array([619.28])
         Pc =np.array([2109795.64])
@@ -144,34 +147,148 @@ class testes_casos_Schmall(unittest.TestCase):
         C7 = np.array([0])#*np.ones([1,10])
         print('\ncaso5:')
         import pdb; pdb.set_trace()
-        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
-        obj.run(z.T,Mw)
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pv=0)
+        obj.run(z,Mw)
 
         print('x: ',obj.x,'y: ',obj.y)
         print('K: ',obj.K)
         print('L: ',obj.L,'V: ',obj.V)
         #print('fl: ',obj.fl,'fv: ',obj.fv)
 
-    @unittest.skip("no need")
+    @unittest.skip("ok")
+    def test1_Firoozabadi(self):
+        #methane and propane
+        R = 8.3144598
+        z = np.array([0.3, 0.7])[:,np.newaxis] * np.ones((2,100))
+        Tc = np.array([190.55, 369.522])
+        Pc = np.array([4599200, 42.6e5])
+        P = np.linspace(200,1200,100) * 6894.757
+        T = np.array([54.4 + 273.15])
+        Mw = np.array([16.04, 44.1])*1e-3
+        w = np.array([0.022, 0.153])
+        Bin = np.array([[0, 0.], [0., 0.]])
+        #Pv = np.array([4.e6,18.97e5])
+        Pv = np.array([41368542,18.97e5])
+        print('\nExemplo Firoozabadi:')
+        import pdb; pdb.set_trace()
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pv)
+        obj.run(z,Mw)
+
+    @unittest.skip("?")
+    def test_Firoozabadi(self):
+        #methane, n-butane and n-decane
+        R = 8.3144598
+        z = np.array([0.7, 0.235, 0.065])[:,np.newaxis] * np.ones((3,100))
+        Tc = np.array([190.55, 425.5, 619.28])
+        Pc = np.array([4599200, 3.8e6, 2109795.64])
+        P = np.linspace(1000,6000,100) * 6894.757
+        T = np.array([71.1 + 273.15])
+        Mw = np.array([16.04, 58.12, 142.28])*1e-3
+        w = np.array([0.022, 0.199, 0.489])
+        Bin = np.zeros((3,3))
+        #Pv = np.array([4.e6,18.97e5])
+        Pv = np.array([0,41368542,18.97e5])
+        print('\nExemplo Firoozabadi:')
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pv)
+        obj.run(z,Mw)
+
+    @unittest.skip('ok')
+    def teste_res_fluid_brb(self):
+        R = 8.3144598
+        #z = np.array([0.63840871, 0.09640664, 0.265184659])[:,np.newaxis]#*np.ones([3,100])
+        z = np.array([0.01, 0.19, 0.8])[:,np.newaxis]*np.ones([3,100])
+        Tc = np.array([304.21, 190.6, 734.68])
+        Pc = np.array([7.39e6, 4.6e6, 1.74e6])
+        P = np.linspace(20650000, 24700000, 100)
+        #P = np.array([21279410.17965427])
+        T = np.array([299.82])
+        Mw = np.array([44.01e-3,16.04e-3, 222e-3])
+        w = np.array([0.225, 0.0225, 0.684])
+        Bin = np.array([[0, 0.12, 0.12], [0.12, 0, 0.], [0.12, 0., 0.]])
+        Pv = np.array([0, 341.4e3, 0])
+        Pb_guess = 9.65e6
+        print('\nExemplo BRB:')
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pv)
+        obj.run(z,Mw)
+        import pdb; pdb.set_trace()
+
+    @unittest.skip('ok')
     def teste_inj_fluid_brb(self):
         R = 8.3144598
-        z = np.array([0.95, 0.05])
+        z = np.array([0.95, 0.05])[:,np.newaxis]
         Tc = np.array([304.21, 190.6])
         Pc = np.array([7.39e6, 4.6e6])
-        P = 20.65e6
-        T = 299.82
+        P = np.array([101325])
+        #P = np.array([20.65e6])
+        Pv = np.array([0,341.4e3])
+        #T = np.array([273.15])
+        T = np.array([288.7])
         Mw = np.array([44.01e-3,16.04e-3])
-        w = np.array([0.225,0.022])
+        w = np.array([0.225,0.0225])
         Bin = np.array([[0.0,0.12],[0.12,0.0]])
         print('\nExemplo BRB:')
 
-        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pv)
         obj.run(z,Mw)
+        import pdb; pdb.set_trace()
         print('x: ',obj.x,'y: ',obj.y)
         print('K: ',obj.K)
         print('L: ',obj.L,'V: ',obj.V)
         print('fl: ',obj.fl,'fv: ',obj.fv)
         print('ksi_L', obj.ksi_L, 'ksi_V', obj.ksi_V)
+
+    @unittest.skip('ok')
+    def test_inj_agua(self):
+        R = 8.3144598
+        z = np.array([0.1, 0.4, 0.4, 0.1])[:,np.newaxis]*np.ones((4,100))
+        Tc = np.array([190.6, 305.4, 425.2, 543.2])
+        Pc = np.array([313021.9678, 332327.2874, 258553.3874999999, 213530.62428999998])
+        Mw =np.array([16.04e-3, 30.07e-3, 58.12e-3, 96e-3])
+        w = np.array([0.008, 0.098, 0.193, 0.308])
+        Bin = np.array([[0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]])
+        Pv = np.array([0.0, 0.0, 0.0, 0.0])
+        P = np.linspace(10e5, 15e6, 100)
+        #P = np.array([101325])
+        T = np.array([288.7])
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pv)
+        obj.run(z,Mw)
+
+    @unittest.skip('ok')
+    def test_water_inj_schmall3d(self):
+        R = 8.3144598
+        z = np.array([0.49947493593730447, 0.030015800353206768, 0.07007056389862372, 0.20021841113835698, 0.15016518896172965, 0.050055099710778636])[:,np.newaxis]
+        #z = np.array([0.5, 0.03, 0.07, 0.2, 0.15, 0.05])[:,np.newaxis] #* np.ones((6,100))
+        Tc = np.array([190.6, 369.8, 507.4, 617.6, 708, 768])
+        Pc = np.array([4600155, 4245517.5, 2968822.5, 2107560.0, 1.47e6, 1.17e6])
+        vc = np.array([0.000099, 0.000203, 0.00037, 0.000603, 0.000895, 0.00169])
+        Mw = np.array([16.043e-3, 44.097e-3, 86.178e-3, 142.286e-3, 212.41e-3, 282.5e-3])
+        w = np.array([0.008, 0.152, 0.299, 0.489, 0.685, 0.912])
+        Bin = np.array([[0.,0.,.0,0.,0.,0.], [0.,0.,.0,0.,0.,0.], [0.,0.,.0,0.,0.,0.], [0.,0.,.0,0.,0.,0.],
+                        [0.,0.,.0,0.,0.,0.], [0.,0.,.0,0.,0.,0.]])
+        Pv = np.array([8e6, 0., 0., 0., 0., 0.])
+        #P = np.linspace(8.46e6, 62e6, 100)
+        P = np.array([206832942.5900688])
+        T = np.array([344.25])
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pv)
+        obj.run(z,Mw)
+        import pdb; pdb.set_trace()
+
+
+    def testeeeee(self):
+        R = 8.3144598
+        z = np.array([0.684, 0.316])[:,np.newaxis]
+        Tc = np.array([190.56, 425.16])
+        Pc = np.array([4605697.676, 3799011.107])
+        P = np.array([101325])
+        Pv = np.array([0.0,0.0])
+        T = np.array([288.7])
+        Mw = np.array([16.042e-3, 58.12e-3])
+        w = np.array([0.008, 0.193])
+        Bin = np.array([[0., 0.03], [0.03, 0.]])
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj.run(z,Mw)
+        import pdb; pdb.set_trace()
 
     @unittest.skip("ok")
     def test_caso1(self):
@@ -296,3 +413,21 @@ class testes_casos_Schmall(unittest.TestCase):
     #     print('K: ',obj.K)
     #     print('L: ',obj.L[1],'V: ',obj.V[1])
     #     print('fl: ',obj.fl,'fv: ',obj.fv)
+
+class testes_IGOR(unittest.TestCase):
+    @unittest.skip("not now")
+    def test_1(self):
+        # C, C2
+        R = 8.3144598
+        z = np.array([[0.3, 0.7]])
+        Tc = np.array([190.55, 369.522])
+        Pc = np.array([4599200, 42.6e5])
+        P = np.array([1000])
+        T = np.array([54.4 + 273.15])
+        Mw = np.array([16.04, 44.1])*1e-3
+        w = np.array([0.022, 0.153]) #fator acentrico
+        Bin = np.array([[0, 0.], [0., 0.]])
+
+        Pb_guess = 9e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj.run(z,Mw)

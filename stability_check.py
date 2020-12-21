@@ -53,17 +53,19 @@ class StabilityCheck:
 
         ponteiro_flash[self.L<0] = False
         ponteiro_flash[self.L>1] = False
-        import pdb; pdb.set_trace()
+
         self.x[:,~ponteiro_flash] = z[:,~ponteiro_flash]
         self.y[:,~ponteiro_flash] = z[:,~ponteiro_flash]
         self.bubble_point_pressure(PR, z, Mw, np.copy(~ponteiro_flash))
         #self.x = z
         #self.y = z
-        #self.L = 1
+        self.L[0:26] = 1
+        self.V[0:26] = 0
+
         #self.V = 0
         self.get_other_properties(PR, Mw)
         import pdb; pdb.set_trace()
-        #PR.get_all_derivatives(self, self.x, self.y, self.L, self.V, self.P)
+        dVtdNk, self.dVtdP = PR.get_all_derivatives(self, self.x, self.y, self.L, self.V, self.P)
 
     def get_other_properties(self, PR, Mw):
         self.Mw_L, self.ksi_L, self.rho_L = self.other_properties(PR, self.x, Mw, self.ph_L)
@@ -423,8 +425,7 @@ class StabilityCheck:
 
         A, B = PR.coefficients_cubic_EOS_all(self, l, self.P)
         ph = self.deltaG_molar_vectorized(PR, l, self.P, ph)
-        Zfunc = np.vectorize(PengRobinson.Z)
-        Z = Zfunc(B, A, ph)
+        Z = PR.Z_vectorized(A, B, ph)
         ksi_phase = self.P / (Z * self.R * self.T)
         Mw_phase = np.sum(l * Mw[:,np.newaxis], axis=0)
         rho_phase = ksi_phase * Mw_phase

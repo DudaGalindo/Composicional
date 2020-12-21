@@ -1,6 +1,7 @@
 import numpy as np
 from stability_check import StabilityCheck
 import unittest
+import matplotlib.pyplot as plt
 
 
 class Li_et_al_table4:
@@ -135,7 +136,7 @@ class testes_casos_Schmall(unittest.TestCase):
     def teste_caso5(self):
         R = 8.3144598
         z = np.array([1.])[:,np.newaxis]#*np.ones([10]) #exemplo aleatório
-        P = np.array([ 13.78951458E6])
+        P = np.array([13.78951458E6])
         #P = np.array([14619094.696946101])*np.ones(10)
         #T = np.array([15 + 273.15])
         T = np.array([366.4833])
@@ -146,8 +147,7 @@ class testes_casos_Schmall(unittest.TestCase):
         Mw = np.array([142.28e-3])
         C7 = np.array([0])#*np.ones([1,10])
         print('\ncaso5:')
-        import pdb; pdb.set_trace()
-        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pv=0)
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, 9e6)
         obj.run(z,Mw)
 
         print('x: ',obj.x,'y: ',obj.y)
@@ -155,7 +155,7 @@ class testes_casos_Schmall(unittest.TestCase):
         print('L: ',obj.L,'V: ',obj.V)
         #print('fl: ',obj.fl,'fv: ',obj.fv)
 
-    @unittest.skip("ok")
+
     def test1_Firoozabadi(self):
         #methane and propane
         R = 8.3144598
@@ -170,9 +170,12 @@ class testes_casos_Schmall(unittest.TestCase):
         #Pv = np.array([4.e6,18.97e5])
         Pv = np.array([41368542,18.97e5])
         print('\nExemplo Firoozabadi:')
-        import pdb; pdb.set_trace()
-        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pv)
+
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, 9e6)
         obj.run(z,Mw)
+        plt.plot(P/6894.757, -obj.dVtdP * 6894.757)
+        plt.savefig('teste.png')
+        import pdb; pdb.set_trace()
 
     @unittest.skip("?")
     def test_Firoozabadi(self):
@@ -273,7 +276,7 @@ class testes_casos_Schmall(unittest.TestCase):
         obj.run(z,Mw)
         import pdb; pdb.set_trace()
 
-
+    @unittest.skip("?")
     def testeeeee(self):
         R = 8.3144598
         z = np.array([0.684, 0.316])[:,np.newaxis]
@@ -413,21 +416,3 @@ class testes_casos_Schmall(unittest.TestCase):
     #     print('K: ',obj.K)
     #     print('L: ',obj.L[1],'V: ',obj.V[1])
     #     print('fl: ',obj.fl,'fv: ',obj.fv)
-
-class testes_IGOR(unittest.TestCase):
-    @unittest.skip("not now")
-    def test_1(self):
-        # C, C2
-        R = 8.3144598
-        z = np.array([[0.3, 0.7]])
-        Tc = np.array([190.55, 369.522])
-        Pc = np.array([4599200, 42.6e5])
-        P = np.array([1000])
-        T = np.array([54.4 + 273.15])
-        Mw = np.array([16.04, 44.1])*1e-3
-        w = np.array([0.022, 0.153]) #fator acentrico
-        Bin = np.array([[0, 0.], [0., 0.]])
-
-        Pb_guess = 9e6
-        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
-        obj.run(z,Mw)

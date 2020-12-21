@@ -134,15 +134,15 @@ class PengRobinson:
         #Nv = fprop.phase_mole_numbers[0,1,:]
         #L[L>1] = 1
         #V[V<0] = 0
-        Sw = 0.2
+        Sw = 0.
         Sg = (1. - Sw) * (V / kprop.ksi_V) / (V / kprop.ksi_V + L / kprop.ksi_L)
         So = 1 - Sg - Sw
-        So = So/(So+Sg)
-        Sg = Sg/(So+Sg)
-        Vt = 11.32673864 #anything
+        #So = So/(So+Sg)
+        #Sg = Sg/(So+Sg)
+        Vt = 1 #anything
         Nl = kprop.ksi_L * Vt * So
         Nv = kprop.ksi_V * Vt * Sg
-        import pdb; pdb.set_trace()
+
         # REVER CONTAS
         dfildP, dfildnij, dZldP_parcial, dZldnij_parcial, Zl = \
                 self.get_phase_derivatives(kprop, P, x, Nl, 1)
@@ -158,7 +158,7 @@ class PengRobinson:
         #dVt_dNk = self.get_dVt_dNk_analytically(P, Vt, So, l, Nk)
         #No = fprop.phase_mole_numbers[0,0,:]
         #dVt_dP = self.get_dVt_dP_analytically(P, Vt, No, l)
-        return dVt_dNk, dVt_dP
+        return dVtdNk, dVtdP
 
     def dZ_dP_dNk(self, dZldP, dZvdP, dZldnij, dZvdnij, dnildP, dnivdP, dnildNk, dnivdNk):
         dZldP = dZldP + np.sum(dZldnij.sum(axis=0) * dnildP, axis = 0)
@@ -171,7 +171,7 @@ class PengRobinson:
         coef = (kprop.R * kprop.T / P)
         dVtdP = coef * (Nl * dZldP + Nv * dZvdP + Zl * dnldP + Zv * dnvdP - (Zl * Nl / P + Zv * Nv / P))
         dVtdNk = coef * (Nl * dZldNk + Nv * dZvdNk + Zl * dnldNk + Zv * dnvdNk)
-        import pdb; pdb.set_trace()
+
         #rever isso daqui e talvez as equações novamente
         '''plt.figure(1)
         plt.plot(P / 6894.757, -dVtdP * 6894.757)

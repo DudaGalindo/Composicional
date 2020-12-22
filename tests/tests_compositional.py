@@ -170,9 +170,10 @@ class testes_casos_Schmall(unittest.TestCase):
         #Pv = np.array([4.e6,18.97e5])
         Pv = np.array([41368542,18.97e5])
         print('\nExemplo Firoozabadi:')
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pv)
         obj.run(z,Mw)
+        import pdb; pdb.set_trace()
 
     @unittest.skip("?")
     def test_Firoozabadi(self):
@@ -273,7 +274,7 @@ class testes_casos_Schmall(unittest.TestCase):
         obj.run(z,Mw)
         import pdb; pdb.set_trace()
 
-
+    @unittest.skip("ok")
     def testeeeee(self):
         R = 8.3144598
         z = np.array([0.684, 0.316])[:,np.newaxis]
@@ -315,6 +316,7 @@ class testes_casos_Schmall(unittest.TestCase):
         print('K: ',obj.K)
         print('L: ',obj.L,'V: ',obj.V)
         print('fl: ',obj.fl,'fv: ',obj.fv)
+        import pdb; pdb.set_trace()
 
     @unittest.skip("ok")
     def test_caso2(self):
@@ -352,6 +354,7 @@ class testes_casos_Schmall(unittest.TestCase):
 
 
         print('\ncaso3:')
+
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
         obj.run(z.T,Mw)
 
@@ -415,19 +418,57 @@ class testes_casos_Schmall(unittest.TestCase):
     #     print('fl: ',obj.fl,'fv: ',obj.fv)
 
 class testes_IGOR(unittest.TestCase):
-    @unittest.skip("not now")
-    def test_1(self):
-        # C, C2
-        R = 8.3144598
-        z = np.array([[0.3, 0.7]])
-        Tc = np.array([190.55, 369.522])
-        Pc = np.array([4599200, 42.6e5])
-        P = np.array([1000])
-        T = np.array([54.4 + 273.15])
-        Mw = np.array([16.04, 44.1])*1e-3
-        w = np.array([0.022, 0.153]) #fator acentrico
-        Bin = np.array([[0, 0.], [0., 0.]])
 
-        Pb_guess = 9e6
+    def test_Y8(self):
+        R = 10.73159
+        # C1, C2, C3, n-C5, n-C7, n-C10
+        z = np.array([0.8097, 0.0566, 0.0306, 0.0457, 0.0330, 0.0244])[:,np.newaxis]
+        Tc = np.array([190.6, 305.4, 369.8, 469.6, 540.3, 617.9])*1.8 # Rankine
+        Pc = np.array([45.4, 48.2, 41.9, 33.3, 27.4, 21.0])*14.5038 # psia
+        P = np.array([100])*14.5038
+        Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        T = np.array([200])*1.8
+        Mw = np.array([16.043, 30.070, 44.097, 72.15, 100.205, 142.29])
+        w = np.array([0.008, 0.098, 0.152, 0.251, 0.305, 0.484])
+
+        Bin = np.zeros([len(z), len(z)])
+
+        Pb_guess = 8e6
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
         obj.run(z,Mw)
+        import pdb; pdb.set_trace()
+
+    @unittest.skip("not now")
+    def test_MY10(self):
+        R = 10.73159
+        # C1, C2, C3, n-C4, n-C5, n-C6, n-C7, n-C8, n-C10, n-C14
+        z = np.array([0.35, 0.03, 0.04, 0.06, 0.04, 0.03, 0.05, 0.05, 0.3, 0.05])[:,np.newaxis]
+        Tc = np.array([190.6, 305.4, 369.8, 425.2, 469.6, 507.5, 540.3, 568.8, 617.9, 691.9])*1.8 # Rankine
+        Pc = np.array([45.4, 48.2, 41.9, 37.5, 33.3, 30.1, 27.4, 24.9, 21.0, 15.2])*14.5038 # psia
+        P = np.array([104.9])*14.5038
+        Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        T = np.array([509.1])*1.8
+        Mw = np.array([16.043, 30.070, 44.097, 58.124, 72.15, 86.178, 100.205, 114.232, 142.29, 198.39])
+        w = np.array([0.008, 0.098, 0.152, 0.193, 0.251, 0.305, 0.305, 0.396, 0.484, 0.747])
+
+        #Bin = np.array([[0., 0.03], [0.03, 0.]])
+        Bin = np.zeros([len(z), len(z)])
+        Bin[0][3] = 0.02
+        Bin[0][4] = 0.02
+        Bin[0][5] = 0.025
+        Bin[0][6] = 0.025
+        Bin[0][7] = 0.035
+        Bin[0][8] = 0.045
+        Bin[0][9] = 0.045
+        Bin[3][0] = 0.02
+        Bin[4][0] = 0.02
+        Bin[5][0] = 0.025
+        Bin[6][0] = 0.025
+        Bin[7][0] = 0.035
+        Bin[8][0] = 0.045
+        Bin[9][0] = 0.045
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj.run(z,Mw)
+        import pdb; pdb.set_trace()

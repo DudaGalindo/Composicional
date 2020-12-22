@@ -1,7 +1,7 @@
 """Check stability of a thermodynamic equilibrium."""
 import numpy as np
 import math
-import thermo
+#import thermo
 from scipy.misc import derivative
 from equation_of_state import PengRobinson
 import matplotlib.pyplot as plt

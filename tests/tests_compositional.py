@@ -146,7 +146,7 @@ class testes_casos_Schmall(unittest.TestCase):
         Mw = np.array([142.28e-3])
         C7 = np.array([0])#*np.ones([1,10])
         print('\ncaso5:')
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()#
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pv=0)
         obj.run(z,Mw)
 
@@ -376,11 +376,12 @@ class testes_casos_Schmall(unittest.TestCase):
                          [0.08,0.039,0.022,0.004,0]])
          w = np.array([0.008,0.152,0.251,0.490,0.742])
          Mw = np.array([16.043,44.097,72.15,142.29,226.41])
-         T = 100+459.67#Fahrenheit
-         P = 1500 #psia
+         T = np.array([100+459.67])#Fahrenheit
+         P = np.array([1500]) #psia
          C7 = np.array([0,0,0,1,1])
 
          print('\ncasoN:')
+         #import pdb; pdb.set_trace()
 
          obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,C7)
          sp1,sp2 = obj.Stability(z)
@@ -419,15 +420,16 @@ class testes_casos_Schmall(unittest.TestCase):
 
 class testes_IGOR(unittest.TestCase):
 
+    @unittest.skip("ok")
     def test_Y8(self):
         R = 10.73159
         # C1, C2, C3, n-C5, n-C7, n-C10
         z = np.array([0.8097, 0.0566, 0.0306, 0.0457, 0.0330, 0.0244])[:,np.newaxis]
         Tc = np.array([190.6, 305.4, 369.8, 469.6, 540.3, 617.9])*1.8 # Rankine
         Pc = np.array([45.4, 48.2, 41.9, 33.3, 27.4, 21.0])*14.5038 # psia
-        P = np.array([100])*14.5038
+        P = np.array([194.8])*14.5038
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([200])*1.8
+        T = np.array([375.3])*1.8
         Mw = np.array([16.043, 30.070, 44.097, 72.15, 100.205, 142.29])
         w = np.array([0.008, 0.098, 0.152, 0.251, 0.305, 0.484])
 
@@ -436,9 +438,10 @@ class testes_IGOR(unittest.TestCase):
         Pb_guess = 8e6
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
         obj.run(z,Mw)
+
         import pdb; pdb.set_trace()
 
-    @unittest.skip("not now")
+    @unittest.skip("not ok - resultados diferentes, e alguns casos não converge")
     def test_MY10(self):
         R = 10.73159
         # C1, C2, C3, n-C4, n-C5, n-C6, n-C7, n-C8, n-C10, n-C14
@@ -448,11 +451,13 @@ class testes_IGOR(unittest.TestCase):
         P = np.array([104.9])*14.5038
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         T = np.array([509.1])*1.8
-        Mw = np.array([16.043, 30.070, 44.097, 58.124, 72.15, 86.178, 100.205, 114.232, 142.29, 198.39])
+        # Mw = np.array([16.04, 30.07, 44.1, 58.12, 72.15, 86.178, 100.205, 114.232, 142.29, 198.39])
+        Mw = np.array([16.04, 30.07, 44.1, 58.12, 72.15, 84, 107, 107, 147, 190])
         w = np.array([0.008, 0.098, 0.152, 0.193, 0.251, 0.305, 0.305, 0.396, 0.484, 0.747])
 
         #Bin = np.array([[0., 0.03], [0.03, 0.]])
         Bin = np.zeros([len(z), len(z)])
+
         Bin[0][3] = 0.02
         Bin[0][4] = 0.02
         Bin[0][5] = 0.025
@@ -469,6 +474,76 @@ class testes_IGOR(unittest.TestCase):
         Bin[9][0] = 0.045
 
         Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,Pb_guess)
+        obj.run(z,Mw)
+        import pdb; pdb.set_trace()
+
+    @unittest.skip("ok")
+    def test_Dandekar(self):
+
+        R = 10.73159
+        z = np.array([0.8232,0.0871,0.0505,0.0198,0.0194])[:,np.newaxis]
+        # C1, C3, n-C5, n-C10, n-C16
+        Tc = np.array([343,666,845,1112,1291])#Rankine
+        Pc = np.array([667.2,615.8,489.4,305.7,205.7]) #psia
+        Bin = np.array([[0,0.009,0.021,0.052,0.080],\
+                     [0.009,0,0.003,0.019,0.039],\
+                     [0.021,0.003,0,0.008,0.022],\
+                     [0.052,0.019,0.008,0,0.004],\
+                     [0.08,0.039,0.022,0.004,0]])
+        w = np.array([0.008,0.152,0.251,0.490,0.742])
+        Mw = np.array([16.043,44.097,72.15,142.29,226.41])
+        T = np.array([100+459.67]) #Fahrenheit
+        P = np.array([1500]) #psia
+
+        Pb_guess = 8e6
+
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,Pb_guess)
+        obj.run(z,Mw)
+        import pdb; pdb.set_trace()
+
+    @unittest.skip("not ok - solução trivial x=y=z")
+    def test_Varavei(self):
+        R = 10.73159
+        z = np.array([0.1, 0.2, 0.3, 0.4])[:,np.newaxis]
+        # C6, C10, C15, H2O
+        T = np.array([140+459.67]) #Fahrenheit
+        P = np.array([500]) #psia
+
+        Tc = np.array([913.4, 1111.8, 1270, 647.3*1.8])#Rankine
+        Pc = np.array([439.9, 304, 200, 3208.24]) #psia
+
+        Bin = np.zeros([len(z), len(z)])
+
+        w = np.array([0.301, 0.488, 0.65, 0.344])
+        Mw = np.array([86.2, 142.3, 206, 18])
+
+        Pb_guess = 8e6
+
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
         obj.run(z,Mw)
+        import pdb; pdb.set_trace()
+
+
+    @unittest.skip("not ok - caso voltado para o flash trifásico, não acho que seja o caso de testar agr")
+    def test_Connolly332(self):
+        R = 10.73159
+        # H20, C8, C13, C24, C61+
+        z = np.array([0.5, 0.2227, 0.1402, 0.1016, 0.0355])[:,np.newaxis]
+        Tc = np.array([647.37, 575.78, 698, 821.3, 1010.056])*1.8 # Rankine
+        Pc = np.array([221.2, 34.82, 23.37, 12.07, 7.79])*14.5038 # psia
+        P = np.array([100])*14.5038
+        Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+        T = np.array([600])*1.8
+        Mw = np.array([18.015, 116, 183, 337, 858])
+        w = np.array([0.344, 0.4, 0.84, 1.07, 1.33])
+
+        Bin = np.array([[0, 0.5, 0.5, 0.5, 0.5], \
+                        [0.5, 0, 0, 0, 0], [0.5, 0, 0, 0, 0], \
+                        [0.5, 0, 0, 0, 0], [0.5, 0, 0, 0, 0]])
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj.run(z,Mw)
+
         import pdb; pdb.set_trace()

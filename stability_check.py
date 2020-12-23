@@ -159,8 +159,7 @@ class StabilityCheck:
 
     """-------------Below starts biphasic flash calculations-----------------"""
     def molar_properties(self, PR, z, ponteiro):
-        if self.Nc <= 7: ponteiro = self.molar_properties_Whitson(PR, z, ponteiro)
-        else: ponteiro = self.molar_properties_Yinghui(PR, z, ponteiro)
+        ponteiro = self.molar_properties_Whitson(PR, z, ponteiro)
         return ponteiro
 
     def deltaG_molar_vectorized(self, PR, l, P, ph):

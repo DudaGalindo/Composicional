@@ -441,18 +441,20 @@ class testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    @unittest.skip("not ok - resultados diferentes, e alguns casos não converge")
+    #@unittest.skip("not ok - resultados diferentes, e alguns casos não converge")
     def test_MY10(self):
-        R = 10.73159
+        R = 8.3144598
         # C1, C2, C3, n-C4, n-C5, n-C6, n-C7, n-C8, n-C10, n-C14
         z = np.array([0.35, 0.03, 0.04, 0.06, 0.04, 0.03, 0.05, 0.05, 0.3, 0.05])[:,np.newaxis]
-        Tc = np.array([190.6, 305.4, 369.8, 425.2, 469.6, 507.5, 540.3, 568.8, 617.9, 691.9])*1.8 # Rankine
-        Pc = np.array([45.4, 48.2, 41.9, 37.5, 33.3, 30.1, 27.4, 24.9, 21.0, 15.2])*14.5038 # psia
-        P = np.array([104.9])*14.5038
+        Tc = np.array([190.6, 305.4, 369.8, 425.2, 469.6, 507.5, 540.3, 568.8, 617.9, 691.9]) # Kelvin
+        Pc = np.array([45.4, 48.2, 41.9, 37.5, 33.3, 30.1, 27.4, 24.9, 21.0, 15.2])*100000 # pascal
+        P = np.array([50])*100000
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([509.1])*1.8
-        # Mw = np.array([16.04, 30.07, 44.1, 58.12, 72.15, 86.178, 100.205, 114.232, 142.29, 198.39])
-        Mw = np.array([16.04, 30.07, 44.1, 58.12, 72.15, 84, 107, 107, 147, 190])
+        T = np.array([200])
+
+        Mw = np.array([16.04, 30.07, 44.1, 58.12, 72.15, 86.178, 100.205, 114.232, 142.29, 198.39])*1e-3
+        # Mw = np.array([16.04, 30.07, 44.1, 58.12, 72.15, 84, 107, 107, 147, 190])
+
         w = np.array([0.008, 0.098, 0.152, 0.193, 0.251, 0.305, 0.305, 0.396, 0.484, 0.747])
 
         #Bin = np.array([[0., 0.03], [0.03, 0.]])
@@ -502,21 +504,21 @@ class testes_IGOR(unittest.TestCase):
         obj.run(z,Mw)
         import pdb; pdb.set_trace()
 
-    @unittest.skip("not ok - solução trivial x=y=z")
+    @unittest.skip("not ok - solução trivial x=y=z - caso voltado para o flash trifásico, não acho que seja o caso de testar agr")
     def test_Varavei(self):
-        R = 10.73159
+        R = 8.3144598
         z = np.array([0.1, 0.2, 0.3, 0.4])[:,np.newaxis]
         # C6, C10, C15, H2O
-        T = np.array([140+459.67]) #Fahrenheit
-        P = np.array([500]) #psia
+        T = np.array([333.15]) # Kelvin
+        P = np.array([3.447e6]) # Pascal
 
-        Tc = np.array([913.4, 1111.8, 1270, 647.3*1.8])#Rankine
-        Pc = np.array([439.9, 304, 200, 3208.24]) #psia
+        Tc = np.array([507.4, 594.906, 676.266, 647.3]) # Kelvin
+        Pc = np.array([2969.00, 2439.00, 1824.00, 22089.00])*1000 # Pascal
 
         Bin = np.zeros([len(z), len(z)])
 
-        w = np.array([0.301, 0.488, 0.65, 0.344])
-        Mw = np.array([86.2, 142.3, 206, 18])
+        w = np.array([0.296, 0.5764, 0.7678, 0.344])
+        Mw = np.array([86.2, 142.3, 206, 18])*1e-3
 
         Pb_guess = 8e6
 

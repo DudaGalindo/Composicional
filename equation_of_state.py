@@ -16,8 +16,8 @@ class PengRobinson:
         PR_k = np.array([0.37464, 1.54226, 0.26992])
 
         k = (PR_kC7[0] + PR_kC7[1] * kprop.w - PR_kC7[2] * kprop.w ** 2 + \
-            PR_kC7[3] * kprop.w ** 3) * (1*(kprop.w >= 0.4884)) + (PR_k[0] + PR_k[1] * kprop.w - \
-            PR_k[2] * kprop.w ** 2) * (1*(kprop.w < 0.4884))
+            PR_kC7[3] * kprop.w ** 3) * (1*(kprop.w >= 0.5)) + (PR_k[0] + PR_k[1] * kprop.w - \
+            PR_k[2] * kprop.w ** 2) * (1*(kprop.w < 0.5))  # FUnção com o fator acentrico - 2 possibilidades, varia com o w
         alpha = (1 + k * (1 - (kprop.T / kprop.Tc) ** (1 / 2))) ** 2
         aalpha_i = 0.45724 * (kprop.R * kprop.Tc) ** 2 / kprop.Pc * alpha
         self.b = 0.07780 * kprop.R * kprop.Tc / kprop.Pc

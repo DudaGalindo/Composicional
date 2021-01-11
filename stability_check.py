@@ -157,6 +157,98 @@ class StabilityCheck:
         #if stationary_point2 == 1: return stationary_point1,stationary_point2, Pb2
         return stationary_point1,stationary_point2
 
+
+
+
+
+
+
+    """ -------------- First test for 3 phase stability check ---------------"""
+    def Stability_3phase(self, PR, z, ponteiro_stab_check):
+        ''' In the lnphi function: 0 stands for vapor phase and 1 for liquid '''
+    #****************************INITIAL GUESS******************************#
+    ## Both approaches bellow should be used in case the phase is in the critical region
+
+    #*****************************Test one**********************************#
+        #Used alone when the phase investigated (z) is clearly vapor like (ph = 0)
+        Y = np.empty(z.shape)
+        lnphiz = np.empty(z.shape)
+        ponteiro = np.copy(ponteiro_stab_check)
+        Y[:,ponteiro] = z[:,ponteiro] / self.K[:,ponteiro]
+        y = Y / np.sum(Y, axis = 0)[np.newaxis,:]
+        lnphiz[:,ponteiro] = PR.lnphi(self, z[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
+
+        while any(ponteiro):
+            Y_old = np.copy(Y[:,ponteiro])
+            lnphiy = PR.lnphi(self, y[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+            Y[:,ponteiro] = np.exp(np.log(z[:,ponteiro]) + lnphiz[:,ponteiro] - lnphiy)
+            y[:,ponteiro] = Y[:,ponteiro] / np.sum(Y[:,ponteiro], axis = 0)[np.newaxis,:]
+            stop_criteria = np.max(abs(Y[:,ponteiro] / Y_old - 1), axis = 0)
+            ponteiro_aux = ponteiro[ponteiro]
+            ponteiro_aux[stop_criteria < 1e-9] = False
+            ponteiro[ponteiro] = ponteiro_aux
+
+        stationary_point1 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
+
+
+        # print(sum(Y))
+        # if sum(Y) <= 1: print('estavel')
+        # else: print('instavel') #estavel2 = 0
+
+        ''' If this first test returns stable: There might be a chance that the
+        Gibbs free energy is at its global minimum. However, as will be
+        explaned later, this alone doesn't guarantee the phase stability.
+         If it returns unstable: There is another composition that makes the
+        Gibbs free energy at its global minimum indicated by sum(Y)>1'''
+    #*****************************Test two**********************************#
+        #Used alone when the phase investigated (z) is clearly liquid like (ph == 1)
+        ponteiro = np.copy(ponteiro_stab_check)
+
+        Y[:,ponteiro] = self.K[:,ponteiro] * z[:,ponteiro]
+        y = Y / np.sum(Y, axis = 0)[np.newaxis,:]
+        lnphiz[:,ponteiro] = PR.lnphi(self, z[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+        while any(ponteiro):
+            Y_old = np.copy(Y[:,ponteiro])
+            lnphiy = PR.lnphi(self, y[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
+            Y[:,ponteiro] = np.exp(np.log(z[:,ponteiro]) + lnphiz[:,ponteiro] - lnphiy)
+            y[:,ponteiro] = Y[:,ponteiro] / np.sum(Y[:,ponteiro], axis = 0)[np.newaxis,:]
+            stop_criteria = np.max(abs(Y[:,ponteiro] / Y_old - 1), axis = 0)
+            ponteiro_aux = ponteiro[ponteiro]
+            ponteiro_aux[stop_criteria < 1e-9] = False
+            ponteiro[ponteiro] = ponteiro_aux
+
+        stationary_point2 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
+
+        L = self.L[ponteiro_stab_check]
+        L[(np.round(stationary_point1,4)==1) * (np.round(stationary_point2,4)<=1)] = 1.
+        L[(np.round(stationary_point1,4)<1) * (np.round(stationary_point2,4)==1)] = 0.
+        self.L[ponteiro_stab_check] = L
+        self.V[ponteiro_stab_check] = 1 - self.L[ponteiro_stab_check]
+        self.x[:,ponteiro_stab_check] = z[:,ponteiro_stab_check]
+        self.y[:,ponteiro_stab_check] = z[:,ponteiro_stab_check]
+        return stationary_point1, stationary_point2
+
+        """
+        The same thing happens here. The difference is that, the original
+        phase is gas, and then the "new" phase is supposed to be liquid.
+        In cases that the compressibility equation returns only one root,
+        both tests work like two different initial guess for the same problem,
+        being more likely to find a stationary point that makes the phase
+        unstable.
+        """
+
+        ''' If one of these approaches returns unstable the system is unstable.
+        The stability of the phase is something a little bit more complex
+        to guarantee. '''
+        #if stationary_point1 == 1: return stationary_point1,stationary_point2, Pb1
+        #if stationary_point2 == 1: return stationary_point1,stationary_point2, Pb2
+        return stationary_point1,stationary_point2
+
+
+
+
+
+
     """-------------Below starts biphasic flash calculations-----------------"""
     def molar_properties(self, PR, z, ponteiro):
         ponteiro = self.molar_properties_Whitson(PR, z, ponteiro)

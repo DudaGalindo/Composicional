@@ -35,8 +35,12 @@ class StabilityCheck:
         self.equilibrium_ratio_Wilson()
         self.L = np.empty(len(self.P))
         self.V = np.empty(len(self.P))
+
+        self.A = np.empty(len(self.P))     # 3 phases
+
         self.x = np.empty(z.shape)
         self.y = np.empty(z.shape)
+        self.a = np.empty(z.shape)         # 3 phases
 
         ponteiro_flash = np.zeros(len(self.P), dtype = bool)
         dir_flash = np.argwhere(z <= 0)
@@ -53,7 +57,11 @@ class StabilityCheck:
 
         ponteiro_flash[self.L<0] = False
         ponteiro_flash[self.L>1] = False
+
+
+        sp3 = self.Stability_3phase(PR, self.x, np.copy(~ponteiro_flash))
         import pdb; pdb.set_trace()
+
         self.x[:,~ponteiro_flash] = z[:,~ponteiro_flash]
         self.y[:,~ponteiro_flash] = z[:,~ponteiro_flash]
         self.bubble_point_pressure(PR, z, Mw, np.copy(~ponteiro_flash))
@@ -164,31 +172,32 @@ class StabilityCheck:
 
 
     """ -------------- First test for 3 phase stability check ---------------"""
-    def Stability_3phase(self, PR, z, ponteiro_stab_check):
-        ''' In the lnphi function: 0 stands for vapor phase and 1 for liquid '''
-    #****************************INITIAL GUESS******************************#
-    ## Both approaches bellow should be used in case the phase is in the critical region
-
+    def Stability_3phase(self, PR, x, ponteiro_stab_check=True):
     #*****************************Test one**********************************#
-        #Used alone when the phase investigated (z) is clearly vapor like (ph = 0)
-        Y = np.empty(z.shape)
-        lnphiz = np.empty(z.shape)
+        Y = np.empty(x.shape)
+        lnphix = np.empty(x.shape)
         ponteiro = np.copy(ponteiro_stab_check)
-        Y[:,ponteiro] = z[:,ponteiro] / self.K[:,ponteiro]
+
+        'Chutes de Y'
+        Y[:,ponteiro] = 0.001/(len(self.x) - 1)
+        #Y[0, ponteiro] = 0.999
+        Y[-1, ponteiro] = 0.999
+
         y = Y / np.sum(Y, axis = 0)[np.newaxis,:]
-        lnphiz[:,ponteiro] = PR.lnphi(self, z[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
+        lnphix[:,ponteiro] = PR.lnphi(self, x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
 
         while any(ponteiro):
             Y_old = np.copy(Y[:,ponteiro])
             lnphiy = PR.lnphi(self, y[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
-            Y[:,ponteiro] = np.exp(np.log(z[:,ponteiro]) + lnphiz[:,ponteiro] - lnphiy)
+            Y[:,ponteiro] = np.exp(np.log(x[:,ponteiro]) + lnphix[:,ponteiro] - lnphiy)
             y[:,ponteiro] = Y[:,ponteiro] / np.sum(Y[:,ponteiro], axis = 0)[np.newaxis,:]
             stop_criteria = np.max(abs(Y[:,ponteiro] / Y_old - 1), axis = 0)
             ponteiro_aux = ponteiro[ponteiro]
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
 
-        stationary_point1 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
+        stationary_point3 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
+        return stationary_point3
 
 
         # print(sum(Y))

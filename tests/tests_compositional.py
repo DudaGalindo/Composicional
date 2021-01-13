@@ -441,7 +441,7 @@ class testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    #@unittest.skip("ok")
+    @unittest.skip("ok")
     def test_MY10(self):
         R = 8.3144598
         # C1, C2, C3, n-C4, n-C5, n-C6, n-C7, n-C8, n-C10, n-C14
@@ -529,15 +529,15 @@ class testes_IGOR(unittest.TestCase):
 
     @unittest.skip("not ok - caso voltado para o flash trifásico, não acho que seja o caso de testar agr")
     def test_Connolly332(self):
-        R = 10.73159
+        R = 8.3144598
         # H20, C8, C13, C24, C61+
         z = np.array([0.5, 0.2227, 0.1402, 0.1016, 0.0355])[:,np.newaxis]
-        Tc = np.array([647.37, 575.78, 698, 821.3, 1010.056])*1.8 # Rankine
-        Pc = np.array([221.2, 34.82, 23.37, 12.07, 7.79])*14.5038 # psia
-        P = np.array([100])*14.5038
+        Tc = np.array([647.37, 575.78, 698, 821.3, 1010.056]) # Kelvin
+        Pc = np.array([221.2, 34.82, 23.37, 12.07, 7.79])*100000 # pascal
+        P = np.array([20])*100000
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([600])*1.8
-        Mw = np.array([18.015, 116, 183, 337, 858])
+        T = np.array([550])
+        Mw = np.array([18.015, 116, 183, 337, 858])*1e-3
         w = np.array([0.344, 0.4, 0.84, 1.07, 1.33])
 
         Bin = np.array([[0, 0.5, 0.5, 0.5, 0.5], \
@@ -548,4 +548,28 @@ class testes_IGOR(unittest.TestCase):
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
         obj.run(z,Mw)
 
+        import pdb; pdb.set_trace()
+
+
+    #@unittest.skip("teste basico para implementar o trifasico")
+    def test_Connolly431(self):
+        R = 8.3144598
+        # H2O, PC1, PC2, PC3, PC4
+        z = np.array([0.5, 0.15, 0.1, 0.1, 0.15])[:,np.newaxis]
+        Tc = np.array([647.3, 305.556, 638.889, 788.889, 838.889]) # Kelvin
+        Pc = np.array([220.8900, 48.82, 19.65, 10.20, 7.72])*100000 # pascal
+        P = np.array([60])*100000
+        Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        T = np.array([550])
+
+        Mw = np.array([18.015, 30.00, 156.00, 310.00, 400.00])*1e-3
+        w = np.array([0.344, 0.098, 0.535, 0.891, 1.085])
+
+        Bin = np.array([[0, 0.71918, 0.45996, 0.26773, 0.24166], \
+                        [0.71918, 0, 0, 0, 0], [0.45996, 0, 0, 0, 0], \
+                        [0.26773, 0, 0, 0, 0], [0.24166, 0, 0, 0, 0]])
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,Pb_guess)
+        obj.run(z,Mw)
         import pdb; pdb.set_trace()

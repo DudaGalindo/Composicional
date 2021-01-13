@@ -104,9 +104,12 @@ class PengRobinson:
         Z[~root[n_reais==1]] = np.repeat(Z[root[n_reais == 1]], 2)
         aux_neg = np.zeros(Z.shape,dtype=bool)
         aux_neg[Z<0] = True
+
         Z[aux_neg] = Z[~aux_neg][0]
+        
         Zz = np.min(Z, axis = 1) * ph + np.max(Z, axis = 1) * (1 - ph)
         Z_ = np.real(Zz)
+        #import pdb; pdb.set_trace()
         return Z_
 
     def lnphi(self, kprop, l, P, ph):

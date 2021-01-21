@@ -527,7 +527,7 @@ class testes_IGOR(unittest.TestCase):
         import pdb; pdb.set_trace()
 
 
-    @unittest.skip("not ok - caso voltado para o flash trifásico, não acho que seja o caso de testar agr")
+    #@unittest.skip("not ok - caso voltado para o flash trifásico, não acho que seja o caso de testar agr")
     def test_Connolly332(self):
         R = 8.3144598
         # H20, C8, C13, C24, C61+
@@ -536,7 +536,7 @@ class testes_IGOR(unittest.TestCase):
         Pc = np.array([221.2, 34.82, 23.37, 12.07, 7.79])*100000 # pascal
         P = np.array([20])*100000
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([550])
+        T = np.array([400])
         Mw = np.array([18.015, 116, 183, 337, 858])*1e-3
         w = np.array([0.344, 0.4, 0.84, 1.07, 1.33])
 
@@ -551,16 +551,16 @@ class testes_IGOR(unittest.TestCase):
         import pdb; pdb.set_trace()
 
 
-    #@unittest.skip("teste basico para implementar o trifasico")
+    @unittest.skip("teste basico para implementar o trifasico")
     def test_Connolly431(self):
         R = 8.3144598
         # H2O, PC1, PC2, PC3, PC4
         z = np.array([0.5, 0.15, 0.1, 0.1, 0.15])[:,np.newaxis]
         Tc = np.array([647.3, 305.556, 638.889, 788.889, 838.889]) # Kelvin
         Pc = np.array([220.8900, 48.82, 19.65, 10.20, 7.72])*100000 # pascal
-        P = np.array([60])*100000
+        P = np.array([130])*100000
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([550])
+        T = np.array([650])
 
         Mw = np.array([18.015, 30.00, 156.00, 310.00, 400.00])*1e-3
         w = np.array([0.344, 0.098, 0.535, 0.891, 1.085])

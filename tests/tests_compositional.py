@@ -527,7 +527,7 @@ class testes_IGOR(unittest.TestCase):
         import pdb; pdb.set_trace()
 
 
-    #@unittest.skip("not ok - caso voltado para o flash trifásico, não acho que seja o caso de testar agr")
+    @unittest.skip("not ok - caso voltado para o flash trifásico, não acho que seja o caso de testar agr")
     def test_Connolly332(self):
         R = 8.3144598
         # H20, C8, C13, C24, C61+

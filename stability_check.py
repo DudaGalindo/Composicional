@@ -57,11 +57,16 @@ class StabilityCheck:
         self.molar_properties(PR, z, np.ones_like(ponteiro_flash, dtype=bool))
         #import pdb; pdb.set_trace()
 
-        ponteiro_flash[self.L<0] = False
-        ponteiro_flash[self.L>1] = False
+        self.x[:,self.L>1 or self.V>1] = z[:,self.L>1 or self.V>1]
+        self.y[:,self.L>1 or self.V>1] = z[:,self.L>1 or self.V>1]
+        self.L[self.L>1] = 1
+        self.L[self.L<0] = 0
+        self.V = 1 - self.L
+        #ponteiro_flash[self.L<0] = False
+        #ponteiro_flash[self.L>1] = False
 
-        self.x[:,~ponteiro_flash] = z[:,~ponteiro_flash]
-        self.y[:,~ponteiro_flash] = z[:,~ponteiro_flash]
+        #self.x[:,~ponteiro_flash] = z[:,~ponteiro_flash]
+        #self.y[:,~ponteiro_flash] = z[:,~ponteiro_flash]
         #self.bubble_point_pressure(PR, z, Mw, np.copy(~ponteiro_flash))
         #self.x = z
         #self.y = z

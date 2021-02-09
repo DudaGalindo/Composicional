@@ -53,16 +53,16 @@ class StabilityCheck:
             ponteiro_aux[(np.round(sp1,14) > 1) + (np.round(sp2,14) > 1)] = True #os que devem passar para o calculo de flash
             ponteiro_flash[~ponteiro_flash] = ponteiro_aux
 
-        import pdb; pdb.set_trace()
-        self.molar_properties(PR, z, np.copy(ponteiro_flash))
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
+        self.molar_properties(PR, z, np.ones_like(ponteiro_flash, dtype=bool))
+        #import pdb; pdb.set_trace()
 
         ponteiro_flash[self.L<0] = False
         ponteiro_flash[self.L>1] = False
 
         self.x[:,~ponteiro_flash] = z[:,~ponteiro_flash]
         self.y[:,~ponteiro_flash] = z[:,~ponteiro_flash]
-        self.bubble_point_pressure(PR, z, Mw, np.copy(~ponteiro_flash))
+        #self.bubble_point_pressure(PR, z, Mw, np.copy(~ponteiro_flash))
         #self.x = z
         #self.y = z
         #self.L = 1
@@ -538,7 +538,7 @@ class StabilityCheck:
             ponteiro_aux = ponteiro[ponteiro]
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
-            ponteiro[abs(self.L) > 2] = False
+            ponteiro[abs(self.L)>1 or abs(self.V)>1] = False
 
         return ponteiro_save
 

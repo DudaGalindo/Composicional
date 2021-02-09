@@ -418,18 +418,18 @@ class testes_casos_Schmall(unittest.TestCase):
     #     print('L: ',obj.L[1],'V: ',obj.V[1])
     #     print('fl: ',obj.fl,'fv: ',obj.fv)
 
-class testes_IGOR(unittest.TestCase):
+class Testes_IGOR(unittest.TestCase):
 
-    @unittest.skip("ok")
+    #@unittest.skip("ok")
     def test_Y8(self):
         R = 10.73159
         # C1, C2, C3, n-C5, n-C7, n-C10
         z = np.array([0.8097, 0.0566, 0.0306, 0.0457, 0.0330, 0.0244])[:,np.newaxis]
         Tc = np.array([190.6, 305.4, 369.8, 469.6, 540.3, 617.9])*1.8 # Rankine
         Pc = np.array([45.4, 48.2, 41.9, 33.3, 27.4, 21.0])*14.5038 # psia
-        P = np.array([100])*14.5038
+        P = np.array([250.0])*14.5038
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([200])*1.8
+        T = np.array([200.0])*1.8
         Mw = np.array([16.043, 30.070, 44.097, 72.15, 100.205, 142.29])
         w = np.array([0.008, 0.098, 0.152, 0.251, 0.305, 0.484])
 
@@ -448,9 +448,9 @@ class testes_IGOR(unittest.TestCase):
         z = np.array([0.35, 0.03, 0.04, 0.06, 0.04, 0.03, 0.05, 0.05, 0.3, 0.05])[:,np.newaxis]
         Tc = np.array([190.6, 305.4, 369.8, 425.2, 469.6, 507.5, 540.3, 568.8, 617.9, 691.9]) # Kelvin
         Pc = np.array([45.4, 48.2, 41.9, 37.5, 33.3, 30.1, 27.4, 24.9, 21.0, 15.2])*100000 # pascal
-        P = np.array([10])*100000
+        P = np.array([130.0])*100000
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([700])
+        T = np.array([520.0])
 
         Mw = np.array([16.04, 30.07, 44.1, 58.12, 72.15, 86.178, 100.205, 114.232, 142.29, 198.39])*1e-3
         # Mw = np.array([16.04, 30.07, 44.1, 58.12, 72.15, 84, 107, 107, 147, 190])
@@ -534,9 +534,9 @@ class testes_IGOR(unittest.TestCase):
         z = np.array([0.5, 0.2227, 0.1402, 0.1016, 0.0355])[:,np.newaxis]
         Tc = np.array([647.37, 575.78, 698, 821.3, 1010.056]) # Kelvin
         Pc = np.array([221.2, 34.82, 23.37, 12.07, 7.79])*100000 # pascal
-        P = np.array([20])*100000
+        P = np.array([4.5])*100000
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([400])
+        T = np.array([415])
         Mw = np.array([18.015, 116, 183, 337, 858])*1e-3
         w = np.array([0.344, 0.4, 0.84, 1.07, 1.33])
 
@@ -560,7 +560,7 @@ class testes_IGOR(unittest.TestCase):
         Pc = np.array([220.8900, 48.82, 19.65, 10.20, 7.72])*100000 # pascal
         P = np.array([130])*100000
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([650])
+        T = np.array([600])
 
         Mw = np.array([18.015, 30.00, 156.00, 310.00, 400.00])*1e-3
         w = np.array([0.344, 0.098, 0.535, 0.891, 1.085])

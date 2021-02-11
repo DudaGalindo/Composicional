@@ -33,6 +33,7 @@ class StabilityCheck:
         PR = PengRobinson(self)
         self.vapor_pressure_pure_substancies(PR)
         self.equilibrium_ratio_Wilson()
+        self.equilibrium_ratio_aqueous(z)
         self.L = np.empty(len(self.P))
         self.V = np.empty(len(self.P))
 
@@ -46,9 +47,16 @@ class StabilityCheck:
         dir_flash = np.argwhere(z <= 0)
         ponteiro_flash[dir_flash[:,1]] = True
 
+        sp = np.zeros(5) # In the case of 5 trial phases in stability analysis
 
         if any(~ponteiro_flash):
+            sp, Kv1, Kv2, Kv3, Kv4, Kv5 = self.Stability_3phase(PR, z, np.copy(~ponteiro_flash))
+            sp = np.round(sp, 14)
+            import pdb; pdb.set_trace()
+
             sp1,sp2 = self.Stability(PR, z, np.copy(~ponteiro_flash))
+            #import pdb; pdb.set_trace()
+
             ponteiro_aux = ponteiro_flash[~ponteiro_flash]
             ponteiro_aux[(np.round(sp1,14) > 1) + (np.round(sp2,14) > 1)] = True #os que devem passar para o calculo de flash
             ponteiro_flash[~ponteiro_flash] = ponteiro_aux
@@ -76,12 +84,6 @@ class StabilityCheck:
         import pdb; pdb.set_trace()
         #PR.get_all_derivatives(self, self.x, self.y, self.L, self.V, self.P)
 
-        sp3,sp4,sp5,sp6 = self.Stability_3phase(PR, self.x, self.y, np.copy(ponteiro_flash))
-        ponteiro_3 = (np.round(sp3,9) > 1) + (np.round(sp4,9) > 1) + (np.round(sp5,9) > 1) + (np.round(sp6,9) > 1)
-        print(f'{sp3}, {sp4}, {sp5}, {sp6}')
-        print(ponteiro_3)
-        import pdb; pdb.set_trace()
-
 
     def get_other_properties(self, PR, Mw):
         self.Mw_L, self.ksi_L, self.rho_L = self.other_properties(PR, self.x, Mw, self.ph_L)
@@ -92,6 +94,11 @@ class StabilityCheck:
         self.K = np.exp(5.37 * (1 + self.w) * (1 - 1 / (self.T / self.Tc)), dtype=np.double)[:,np.newaxis] / \
                 (self.P / self.Pc[:,np.newaxis])
 
+    def equilibrium_ratio_aqueous(self, z):
+
+        self.Kw = np.zeros_like(z)
+        self.Kw[0] = 0.999 / z[0]
+        self.Kw[1:] = 0.001 / (len(z) - 1) / z[1:]
 
     """-------------Below starts stability test calculation -----------------"""
 
@@ -181,107 +188,163 @@ class StabilityCheck:
 
 
 
-    """ -------------- First test for 3 phase stability check ---------------"""
-    def Stability_3phase(self, PR, x, y, ponteiro_stab_check=True):
+
+
+
+
+
+
+    """-------------Below starts 3 phase stability test calculation -----------------"""
+
+    def Stability_3phase(self, PR, z, ponteiro_stab_check):
+        # PRECISO RENOMEAR PARA 3 PHASE
+        ''' In the lnphi function: 0 stands for vapor phase and 1 for liquid '''
     #*****************************Test one**********************************#
-        A = np.empty(x.shape)
-        lnphix = np.empty(x.shape)
+        stationary_points = np.empty(5)
+        # Trial phase is liquid
+        Y = np.empty(z.shape)
+        lnphiz = np.empty(z.shape)
         ponteiro = np.copy(ponteiro_stab_check)
-
-        'Chutes de A'
-        A[:,ponteiro] = 0.001/(len(self.x) - 1)
-        A[0, ponteiro] = 0.999
-
-        a = A / np.sum(A, axis = 0)[np.newaxis,:]
-        lnphix[:,ponteiro] = PR.lnphi(self, x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+        Y[:,ponteiro] = z[:,ponteiro] / self.K[:,ponteiro]
+        y = Y / np.sum(Y, axis = 0)[np.newaxis,:]
+        lnphiz[:,ponteiro] = PR.lnphi(self, z[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
+        K_value1 = 1 / self.K[:,ponteiro]
 
         while any(ponteiro):
-            A_old = np.copy(A[:,ponteiro])
-            lnphia = PR.lnphi(self, a[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
-            A[:,ponteiro] = np.exp(np.log(x[:,ponteiro]) + lnphix[:,ponteiro] - lnphia)
-            a[:,ponteiro] = A[:,ponteiro] / np.sum(A[:,ponteiro], axis = 0)[np.newaxis,:]
-            stop_criteria = np.max(abs(A[:,ponteiro] / A_old - 1), axis = 0)
+            Y_old = np.copy(Y[:,ponteiro])
+            lnphiy = PR.lnphi(self, y[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+            Y[:,ponteiro] = np.exp(np.log(z[:,ponteiro]) + lnphiz[:,ponteiro] - lnphiy)
+            y[:,ponteiro] = Y[:,ponteiro] / np.sum(Y[:,ponteiro], axis = 0)[np.newaxis,:]
+            stop_criteria = np.max(abs(Y[:,ponteiro] / Y_old - 1), axis = 0)
             ponteiro_aux = ponteiro[ponteiro]
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
 
-        stationary_point3 = np.sum(A[:,ponteiro_stab_check], axis = 0)
+        lny = np.log(y)
+        TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphiz[:] - np.log(z)))
+        print(f'TPD do teste 1: {TPD}')
+
+        stationary_point1 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
+        stationary_points[0] = stationary_point1
 
     #*****************************Test two**********************************#
-        A = np.empty(x.shape)
-        lnphix = np.empty(x.shape)
+        # Trial phase is vapour
         ponteiro = np.copy(ponteiro_stab_check)
 
-        'Chutes de A'
-        A[:,ponteiro] = 0.001/(len(self.x) - 1)
-        A[-1, ponteiro] = 0.999
-
-        a = A / np.sum(A, axis = 0)[np.newaxis,:]
-        lnphix[:,ponteiro] = PR.lnphi(self, x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+        Y[:,ponteiro] = self.K[:,ponteiro] * z[:,ponteiro]
+        y = Y / np.sum(Y, axis = 0)[np.newaxis,:]
+        lnphiz[:,ponteiro] = PR.lnphi(self, z[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+        K_value2 = self.K[:,ponteiro]
 
         while any(ponteiro):
-            A_old = np.copy(A[:,ponteiro])
-            lnphia = PR.lnphi(self, a[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
-            A[:,ponteiro] = np.exp(np.log(x[:,ponteiro]) + lnphix[:,ponteiro] - lnphia)
-            a[:,ponteiro] = A[:,ponteiro] / np.sum(A[:,ponteiro], axis = 0)[np.newaxis,:]
-            stop_criteria = np.max(abs(A[:,ponteiro] / A_old - 1), axis = 0)
+            Y_old = np.copy(Y[:,ponteiro])
+            lnphiy = PR.lnphi(self, y[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
+            Y[:,ponteiro] = np.exp(np.log(z[:,ponteiro]) + lnphiz[:,ponteiro] - lnphiy)
+            y[:,ponteiro] = Y[:,ponteiro] / np.sum(Y[:,ponteiro], axis = 0)[np.newaxis,:]
+            stop_criteria = np.max(abs(Y[:,ponteiro] / Y_old - 1), axis = 0)
             ponteiro_aux = ponteiro[ponteiro]
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
 
-        stationary_point4 = np.sum(A[:,ponteiro_stab_check], axis = 0)
+        lny = np.log(y)
+        TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphiz[:] - np.log(z)))
+        print(f'TPD do teste 2: {TPD}')
+
+        stationary_point2 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
+        stationary_points[1] = stationary_point2
+
 
     #*****************************Test three**********************************#
-        A = np.empty(x.shape)
-        lnphix = np.empty(x.shape)
+        # Trial phase is liquid
         ponteiro = np.copy(ponteiro_stab_check)
 
-        'Chutes de A'
-        A = 0.5*(x + y)
-
-        A = np.exp(np.log(x[:,ponteiro]) + lnphix[:,ponteiro]) #vapor
-
-
-        a = A / np.sum(A, axis = 0)[np.newaxis,:]
-        lnphix[:,ponteiro] = PR.lnphi(self, x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+        Y[:,ponteiro] = z[:,ponteiro] / ((self.K[:,ponteiro])**(1/3))
+        y = Y / np.sum(Y, axis = 0)[np.newaxis,:]
+        lnphiz[:,ponteiro] = PR.lnphi(self, z[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
+        K_value3 = 1 / ((self.K[:,ponteiro])**(1/3))
 
         while any(ponteiro):
-            A_old = np.copy(A[:,ponteiro])
-            lnphia = PR.lnphi(self, a[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
-            A[:,ponteiro] = np.exp(np.log(x[:,ponteiro]) + lnphix[:,ponteiro] - lnphia)
-            a[:,ponteiro] = A[:,ponteiro] / np.sum(A[:,ponteiro], axis = 0)[np.newaxis,:]
-            stop_criteria = np.max(abs(A[:,ponteiro] / A_old - 1), axis = 0)
+            Y_old = np.copy(Y[:,ponteiro])
+            lnphiy = PR.lnphi(self, y[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+            Y[:,ponteiro] = np.exp(np.log(z[:,ponteiro]) + lnphiz[:,ponteiro] - lnphiy)
+            y[:,ponteiro] = Y[:,ponteiro] / np.sum(Y[:,ponteiro], axis = 0)[np.newaxis,:]
+            stop_criteria = np.max(abs(Y[:,ponteiro] / Y_old - 1), axis = 0)
             ponteiro_aux = ponteiro[ponteiro]
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
 
-        stationary_point5 = np.sum(A[:,ponteiro_stab_check], axis = 0)
+        lny = np.log(y)
+        TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphiz[:] - np.log(z)))
+        print(f'TPD do teste 3: {TPD}')
+
+        stationary_point3 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
+        stationary_points[2] = stationary_point3
+
 
 
     #*****************************Test four**********************************#
-        A = np.empty(x.shape)
-        lnphix = np.empty(x.shape)
+        # Trial phase is vapour
         ponteiro = np.copy(ponteiro_stab_check)
 
-        'Chutes de A'
-        A = np.exp(np.log(x[:,ponteiro]) + lnphix[:,ponteiro]) #vapor
-
-
-        a = A / np.sum(A, axis = 0)[np.newaxis,:]
-        lnphix[:,ponteiro] = PR.lnphi(self, x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+        Y[:,ponteiro] = z[:,ponteiro] * ((self.K[:,ponteiro])**(1/3))
+        y = Y / np.sum(Y, axis = 0)[np.newaxis,:]
+        lnphiz[:,ponteiro] = PR.lnphi(self, z[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+        K_value4 = (self.K[:,ponteiro])**(1/3)
 
         while any(ponteiro):
-            A_old = np.copy(A[:,ponteiro])
-            lnphia = PR.lnphi(self, a[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
-            A[:,ponteiro] = np.exp(np.log(x[:,ponteiro]) + lnphix[:,ponteiro] - lnphia)
-            a[:,ponteiro] = A[:,ponteiro] / np.sum(A[:,ponteiro], axis = 0)[np.newaxis,:]
-            stop_criteria = np.max(abs(A[:,ponteiro] / A_old - 1), axis = 0)
+            Y_old = np.copy(Y[:,ponteiro])
+            lnphiy = PR.lnphi(self, y[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
+            Y[:,ponteiro] = np.exp(np.log(z[:,ponteiro]) + lnphiz[:,ponteiro] - lnphiy)
+            y[:,ponteiro] = Y[:,ponteiro] / np.sum(Y[:,ponteiro], axis = 0)[np.newaxis,:]
+            stop_criteria = np.max(abs(Y[:,ponteiro] / Y_old - 1), axis = 0)
             ponteiro_aux = ponteiro[ponteiro]
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
 
-        stationary_point6 = np.sum(A[:,ponteiro_stab_check], axis = 0)
-        return stationary_point3,stationary_point4,stationary_point5,stationary_point6
+        lny = np.log(y)
+        TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphiz[:] - np.log(z)))
+        print(f'TPD do teste 4: {TPD}')
+
+        stationary_point4 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
+        stationary_points[3] = stationary_point4
+
+
+    #*****************************Test five**********************************#
+        # Trial phase is aqueous
+        ponteiro = np.copy(ponteiro_stab_check)
+        Y[:,ponteiro] = z[:,ponteiro] * self.Kw[:,ponteiro]
+        y = Y / np.sum(Y, axis = 0)[np.newaxis,:]
+
+        lnphiz[:,ponteiro] = PR.lnphi(self, z[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro]) # both ph_L ?
+        K_value5 = self.Kw[:,ponteiro]
+        
+        while any(ponteiro):
+            Y_old = np.copy(Y[:,ponteiro])
+            lnphiy = PR.lnphi(self, y[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro]) # both ph_L ?
+            Y[:,ponteiro] = np.exp(np.log(z[:,ponteiro]) + lnphiz[:,ponteiro] - lnphiy)
+            y[:,ponteiro] = Y[:,ponteiro] / np.sum(Y[:,ponteiro], axis = 0)[np.newaxis,:]
+            stop_criteria = np.max(abs(Y[:,ponteiro] / Y_old - 1), axis = 0)
+            ponteiro_aux = ponteiro[ponteiro]
+            ponteiro_aux[stop_criteria < 1e-9] = False
+            ponteiro[ponteiro] = ponteiro_aux
+
+        lny = np.log(y)
+        TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphiz[:] - np.log(z)))
+        print(f'TPD do teste 5: {TPD}')
+
+        stationary_point5 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
+        stationary_points[4] = stationary_point5
+
+        print(f'pontos estacionarios: {stationary_points}')
+
+        #return stationary_point1, stationary_point2, stationary_point3, stationary_point4, stationary_point5
+        return stationary_points, K_value1, K_value2, K_value3, K_value4, K_value5
+
+
+
+
+
+
 
 
 
@@ -468,6 +531,7 @@ class StabilityCheck:
 
     def solve_Whitson_for_L(self, z, ponteiro):
         K = self.K[:,ponteiro]
+        Kw = self.Kw[:,ponteiro]
         Lmax = np.max(K, axis = 0)/(np.max(K, axis = 0) - 1)
         Lmin = np.min(K, axis = 0)/(np.min(K, axis = 0) - 1)
         L = (Lmin + Lmax) / 2

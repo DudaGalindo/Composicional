@@ -50,19 +50,29 @@ class StabilityCheck:
         sp = np.zeros(5) # In the case of 5 trial phases in stability analysis
 
         if any(~ponteiro_flash):
-            sp, Kv1, Kv2, Kv3, Kv4, Kv5 = self.Stability_3phase(PR, z, np.copy(~ponteiro_flash))
+            #sp, Kv1, Kv2, Kv3, Kv4, Kv5 = self.Stability_3phase(PR, z, np.copy(~ponteiro_flash))
+            sp, Kvalue = self.Stability_3phase(PR, z, np.copy(~ponteiro_flash))
             sp = np.round(sp, 14)
-            import pdb; pdb.set_trace()
-
-            sp1,sp2 = self.Stability(PR, z, np.copy(~ponteiro_flash))
-            #import pdb; pdb.set_trace()
 
             ponteiro_aux = ponteiro_flash[~ponteiro_flash]
-            ponteiro_aux[(np.round(sp1,14) > 1) + (np.round(sp2,14) > 1)] = True #os que devem passar para o calculo de flash
+            ponteiro_aux[any(sp > 1)] = True #os que devem passar para o calculo de flash
             ponteiro_flash[~ponteiro_flash] = ponteiro_aux
+            index_spmax = np.argmax(sp)
+            self.equilibrium_ratio_2flash(Kvalue[index_spmax])
+            print(Kvalue)
+            #import pdb; pdb.set_trace()
+
+
+            #sp1,sp2 = self.Stability(PR, z, np.copy(~ponteiro_flash))
+            #import pdb; pdb.set_trace()
+
+            #ponteiro_aux = ponteiro_flash[~ponteiro_flash]
+            #ponteiro_aux[(np.round(sp1,14) > 1) + (np.round(sp2,14) > 1)] = True #os que devem passar para o calculo de flash
+            #ponteiro_flash[~ponteiro_flash] = ponteiro_aux
+            #import pdb; pdb.set_trace()
 
         #import pdb; pdb.set_trace()
-        self.molar_properties(PR, z, np.ones_like(ponteiro_flash, dtype=bool))
+        self.molar_properties(PR, z, np.ones_like(ponteiro_flash, dtype=bool)) # cálculo do flash bifásico
         #import pdb; pdb.set_trace()
 
         self.x[:,self.L>1 or self.V>1] = z[:,self.L>1 or self.V>1]
@@ -99,6 +109,9 @@ class StabilityCheck:
         self.Kw = np.zeros_like(z)
         self.Kw[0] = 0.999 / z[0]
         self.Kw[1:] = 0.001 / (len(z) - 1) / z[1:]
+
+    def equilibrium_ratio_2flash(self, K_2flash):
+        self.K = K_2flash.copy()
 
     """-------------Below starts stability test calculation -----------------"""
 
@@ -317,7 +330,7 @@ class StabilityCheck:
 
         lnphiz[:,ponteiro] = PR.lnphi(self, z[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro]) # both ph_L ?
         K_value5 = self.Kw[:,ponteiro]
-        
+
         while any(ponteiro):
             Y_old = np.copy(Y[:,ponteiro])
             lnphiy = PR.lnphi(self, y[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro]) # both ph_L ?
@@ -338,7 +351,7 @@ class StabilityCheck:
         print(f'pontos estacionarios: {stationary_points}')
 
         #return stationary_point1, stationary_point2, stationary_point3, stationary_point4, stationary_point5
-        return stationary_points, K_value1, K_value2, K_value3, K_value4, K_value5
+        return stationary_points, [K_value1, K_value2, K_value3, K_value4, K_value5]
 
 
 
@@ -584,6 +597,7 @@ class StabilityCheck:
 
 
     def molar_properties_Whitson(self, PR, z, ponteiro):
+
         Lmax = np.max(self.K, axis = 0)/(np.max(self.K, axis = 0) - 1)
         Lmin = np.min(self.K, axis = 0)/(np.min(self.K, axis = 0) - 1)
         Vmax = 1. - Lmin
@@ -610,6 +624,34 @@ class StabilityCheck:
             ponteiro[abs(self.L)>1 or abs(self.V)>1] = False
 
         return ponteiro_save
+        """
+        Lmax = np.max(self.K_2phase_flash, axis = 0)/(np.max(self.K_2phase_flash, axis = 0) - 1)
+        Lmin = np.min(self.K_2phase_flash, axis = 0)/(np.min(self.K_2phase_flash, axis = 0) - 1)
+        Vmax = 1. - Lmin
+        Vmin = 1. - Lmax
+        #Vmin = ((K1-KNc)*z[self.K==K1]-(1-KNc))/((1-KNc)*(K1-1))
+        #proposed by Li et al for Whitson method
+        self.V[ponteiro] = (Vmin[ponteiro] + Vmax[ponteiro]) * 0.5
+
+        razao = np.ones(z.shape)/2
+        ponteiro_save = np.copy(ponteiro)
+        while any(ponteiro):
+            self.solve_objective_function_Whitson_for_V(z, self.V, Vmax, Vmin, np.copy(ponteiro))
+            lnphil = self.lnphi_based_on_deltaG(PR, self.x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+            lnphiv = self.lnphi_based_on_deltaG(PR, self.y[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
+            self.fv = np.exp(lnphiv) * (self.y[:,ponteiro] * self.P[ponteiro][np.newaxis,:])
+            self.fl = np.exp(lnphil) * (self.x[:,ponteiro] * self.P[ponteiro][np.newaxis,:])
+            razao[:,ponteiro] = np.divide(self.fl, self.fv, out = razao[:,ponteiro] / razao[:,ponteiro] * (1 + 1e-10),
+                              where = self.fv != 0)
+            self.K_2phase_flash[:,ponteiro] = razao[:,ponteiro] * self.K_2phase_flash[:,ponteiro]
+            stop_criteria = np.max(abs(self.fv/self.fl - 1), axis = 0)
+            ponteiro_aux = ponteiro[ponteiro]
+            ponteiro_aux[stop_criteria < 1e-9] = False
+            ponteiro[ponteiro] = ponteiro_aux
+            ponteiro[abs(self.L)>1 or abs(self.V)>1] = False
+
+        return ponteiro_save
+        """
 
     def other_properties(self, PR, l, Mw, ph):
         #l - any phase molar composition

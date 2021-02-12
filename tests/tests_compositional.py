@@ -441,7 +441,7 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    #@unittest.skip("ok")
+    @unittest.skip("ok")
     def test_MY10(self):
         R = 8.3144598
         # C1, C2, C3, n-C4, n-C5, n-C6, n-C7, n-C8, n-C10, n-C14
@@ -504,26 +504,55 @@ class Testes_IGOR(unittest.TestCase):
         obj.run(z,Mw)
         import pdb; pdb.set_trace()
 
-    @unittest.skip("not ok - solução trivial x=y=z - caso voltado para o flash trifásico, não acho que seja o caso de testar agr")
-    def test_Varavei(self):
+    @unittest.skip("ok - poucos dados fornecidos, resultado aproximado")
+    def test_Varavei_3_1(self):
         R = 8.3144598
-        z = np.array([0.1, 0.2, 0.3, 0.4])[:,np.newaxis]
-        # C6, C10, C15, H2O
+        z = np.array([0.4, 0.1, 0.2, 0.3])[:,np.newaxis]
+                     # H2O, C6, C10, C15
         T = np.array([333.15]) # Kelvin
-        P = np.array([3.447e6]) # Pascal
+        P = np.array([500])*6895 # Pascal
 
-        Tc = np.array([507.4, 594.906, 676.266, 647.3]) # Kelvin
-        Pc = np.array([2969.00, 2439.00, 1824.00, 22089.00])*1000 # Pascal
+        Tc = np.array([647.3, 507.4, 594.906, 676.266]) # Kelvin
+        Pc = np.array([22089.00, 2969.00, 2439.00, 1824.00])*1000 # Pascal
 
         Bin = np.zeros([len(z), len(z)])
 
-        w = np.array([0.296, 0.5764, 0.7678, 0.344])
-        Mw = np.array([86.2, 142.3, 206, 18])*1e-3
+        w = np.array([0.344, 0.296, 0.5764, 0.7678])
+        Mw = np.array([18, 86.2, 142.3, 206])*1e-3
 
         Pb_guess = 8e6
 
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
         obj.run(z,Mw)
+        import pdb; pdb.set_trace()
+
+
+    #@unittest.skip("not ok - erro na simulação")
+    def test_Connolly_3_3_1(self):
+        R = 8.3144598
+                      # H20, C2-C11,   C12-C16,   C17-C21,   C22-C27,    C28-C35,   C36-C49,    C50+
+        z = np.array([0.99, 0.0001807, 0.0018070, 0.0015660, 0.0013850, 0.0011450, 0.0010240, 0.0028923])[:,np.newaxis]
+        Tc = np.array([647.37, 635.64, 701.24, 772.05, 826.30, 879.55, 936.97, 1260.0]) # Kelvin
+        Pc = np.array([221.2, 24.11, 19.25, 15.10, 12.29, 9.94, 7.79, 6.00])*100000 # pascal
+        P = np.array([90])*100000
+        Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        T = np.array([571])
+        Mw = np.array([18.015, 143.66, 193.82, 263.40, 336.29, 430.48, 573.05, 1033.96])*1e-3
+        w = np.array([0.344, 0.4645, 0.6087, 0.788, 0.9467, 1.1042, 1.273, 1.65])
+
+        Bin = np.array([[0, 0.0952, -0.48, -0.48, 0.45, 0.53, 0.5, 0.5], \
+                        [0.0952, 0, 0, 0, 0.13, 0.135, 0.1277, 0.1], \
+                        [-0.48, 0, 0, 0, 0.05, 0.08, 0.1002, 0.1], \
+                        [-0.48, 0, 0, 0, 0, 0, 0.09281, 0.130663], \
+                        [0.45, 0.13, 0.05, 0, 0, 0, 0, 0.006], \
+                        [0.53, 0.135, 0.08, 0, 0, 0, 0, 0.006], \
+                        [0.5, 0.1277, 0.1002, 0.09281, 0, 0, 0, 0], \
+                        [0.5, 0.1, 0.1, 0.130663, 0.006, 0.006, 0, 0]])
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj.run(z,Mw)
+
         import pdb; pdb.set_trace()
 
 

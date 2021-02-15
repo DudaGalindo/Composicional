@@ -57,9 +57,11 @@ class StabilityCheck:
             ponteiro_aux = ponteiro_flash[~ponteiro_flash]
             ponteiro_aux[any(sp > 1)] = True #os que devem passar para o calculo de flash
             ponteiro_flash[~ponteiro_flash] = ponteiro_aux
-            index_spmax = np.argmax(sp)
+            index_spmax = np.argmax(np.round(sp, 10))
             self.equilibrium_ratio_2flash(Kvalue[index_spmax])
             print(Kvalue)
+            #self.K = Kvalue[3].copy()
+            print(self.K)
             #import pdb; pdb.set_trace()
 
 
@@ -73,7 +75,7 @@ class StabilityCheck:
 
         #import pdb; pdb.set_trace()
         self.molar_properties(PR, z, np.ones_like(ponteiro_flash, dtype=bool)) # cálculo do flash bifásico
-        #import pdb; pdb.set_trace()
+        import pdb; pdb.set_trace()
 
         self.x[:,self.L>1 or self.V>1] = z[:,self.L>1 or self.V>1]
         self.y[:,self.L>1 or self.V>1] = z[:,self.L>1 or self.V>1]
@@ -371,8 +373,13 @@ class StabilityCheck:
     def deltaG_molar_vectorized(self, PR, l, P, ph):
         lnphi = np.empty([2, len(self.w), len(ph)])
 
-        lnphi[0,:] = PR.lnphi(self, l, P, 1 - ph)
+        try:
+            lnphi[0,:] = PR.lnphi(self, l, P, 1 - ph)
+        except: print('erro')#import pdb; pdb.set_trace()
+
+
         lnphi[1,:] = PR.lnphi(self, l, P, ph)
+
         deltaG_molar = np.sum(l * (lnphi[1 - ph,:, np.arange(len(ph))] - lnphi[1*ph,:, np.arange(len(ph))]).T, axis = 0)
         ph[deltaG_molar<0] = 1 - ph[deltaG_molar<0]
         """
@@ -576,6 +583,7 @@ class StabilityCheck:
     def solve_objective_function_Whitson_for_V(self, z, V, Vmax, Vmin, ponteiro):
 
         ponteiro_save = np.copy(ponteiro)
+        contador = 0
         while any(ponteiro):
             Vold = V[ponteiro]
             f = np.sum((self.K[:,ponteiro] - 1) * z[:,ponteiro] / (1 + V[ponteiro][np.newaxis,:] * (self.K[:,ponteiro] - 1)), axis = 0)
@@ -583,12 +591,15 @@ class StabilityCheck:
             self.V[ponteiro] = self.V[ponteiro] - f / df #Newton-Raphson iterative method
             V_aux = self.V[ponteiro]
             V_aux[V_aux > Vmax[ponteiro]] = 0.5 * (Vmax[ponteiro][V_aux > Vmax[ponteiro]] + Vold[V_aux > Vmax[ponteiro]]) #(Vmax + Vold)/2
-            V_aux[V_aux < Vmin[ponteiro]] = 0.5 * (Vmin[ponteiro][V_aux < Vmin[ponteiro]] + Vold[V_aux < Vmin[ponteiro]])#(Vmax + Vold)/2
+            V_aux[V_aux < Vmin[ponteiro]] = 0.5 * (Vmin[ponteiro][V_aux < Vmin[ponteiro]] + Vold[V_aux < Vmin[ponteiro]])#(Vmin + Vold)/2
             self.V[ponteiro] = V_aux
             stop_criteria = abs(V[ponteiro] / Vold - 1)
             ponteiro_aux = ponteiro[ponteiro]
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
+            contador += 1
+            if contador > 100:
+                import pdb; pdb.set_trace()
             #import pdb; pdb.set_trace()
         #self.V[ponteiro_save] = V[ponteiro_save] + 1e-15 #manipulação
         self.x[:,ponteiro_save] = z[:,ponteiro_save] / (1 + self.V[ponteiro_save][np.newaxis,:] * (self.K[:,ponteiro_save] - 1))
@@ -608,10 +619,14 @@ class StabilityCheck:
 
         razao = np.ones(z.shape)/2
         ponteiro_save = np.copy(ponteiro)
+        contador = 0
         while any(ponteiro):
             self.solve_objective_function_Whitson_for_V(z, self.V, Vmax, Vmin, np.copy(ponteiro))
             lnphil = self.lnphi_based_on_deltaG(PR, self.x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
             lnphiv = self.lnphi_based_on_deltaG(PR, self.y[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
+            #lnphil = PR.lnphi(self, self.x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+            #lnphiv = PR.lnphi(self, self.y[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
+            #import pdb; pdb.set_trace()
             self.fv = np.exp(lnphiv) * (self.y[:,ponteiro] * self.P[ponteiro][np.newaxis,:])
             self.fl = np.exp(lnphil) * (self.x[:,ponteiro] * self.P[ponteiro][np.newaxis,:])
             razao[:,ponteiro] = np.divide(self.fl, self.fv, out = razao[:,ponteiro] / razao[:,ponteiro] * (1 + 1e-10),
@@ -622,36 +637,12 @@ class StabilityCheck:
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
             ponteiro[abs(self.L)>1 or abs(self.V)>1] = False
+            contador += 1
+            if contador > 100:
+                import pdb; pdb.set_trace()
 
         return ponteiro_save
-        """
-        Lmax = np.max(self.K_2phase_flash, axis = 0)/(np.max(self.K_2phase_flash, axis = 0) - 1)
-        Lmin = np.min(self.K_2phase_flash, axis = 0)/(np.min(self.K_2phase_flash, axis = 0) - 1)
-        Vmax = 1. - Lmin
-        Vmin = 1. - Lmax
-        #Vmin = ((K1-KNc)*z[self.K==K1]-(1-KNc))/((1-KNc)*(K1-1))
-        #proposed by Li et al for Whitson method
-        self.V[ponteiro] = (Vmin[ponteiro] + Vmax[ponteiro]) * 0.5
 
-        razao = np.ones(z.shape)/2
-        ponteiro_save = np.copy(ponteiro)
-        while any(ponteiro):
-            self.solve_objective_function_Whitson_for_V(z, self.V, Vmax, Vmin, np.copy(ponteiro))
-            lnphil = self.lnphi_based_on_deltaG(PR, self.x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
-            lnphiv = self.lnphi_based_on_deltaG(PR, self.y[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
-            self.fv = np.exp(lnphiv) * (self.y[:,ponteiro] * self.P[ponteiro][np.newaxis,:])
-            self.fl = np.exp(lnphil) * (self.x[:,ponteiro] * self.P[ponteiro][np.newaxis,:])
-            razao[:,ponteiro] = np.divide(self.fl, self.fv, out = razao[:,ponteiro] / razao[:,ponteiro] * (1 + 1e-10),
-                              where = self.fv != 0)
-            self.K_2phase_flash[:,ponteiro] = razao[:,ponteiro] * self.K_2phase_flash[:,ponteiro]
-            stop_criteria = np.max(abs(self.fv/self.fl - 1), axis = 0)
-            ponteiro_aux = ponteiro[ponteiro]
-            ponteiro_aux[stop_criteria < 1e-9] = False
-            ponteiro[ponteiro] = ponteiro_aux
-            ponteiro[abs(self.L)>1 or abs(self.V)>1] = False
-
-        return ponteiro_save
-        """
 
     def other_properties(self, PR, l, Mw, ph):
         #l - any phase molar composition

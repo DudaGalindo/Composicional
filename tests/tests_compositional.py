@@ -527,16 +527,16 @@ class Testes_IGOR(unittest.TestCase):
         import pdb; pdb.set_trace()
 
 
-    #@unittest.skip("not ok - erro na simulação")
+    @unittest.skip("not ok - erro na simulação")
     def test_Connolly_3_3_1(self):
         R = 8.3144598
                       # H20, C2-C11,   C12-C16,   C17-C21,   C22-C27,    C28-C35,   C36-C49,    C50+
-        z = np.array([0.99, 0.0001807, 0.0018070, 0.0015660, 0.0013850, 0.0011450, 0.0010240, 0.0028923])[:,np.newaxis]
+        z = np.array([0.983415, 0.000325, 0.003012, 0.002570, 0.002252, 0.001912, 0.001676, 0.004838])[:,np.newaxis]
         Tc = np.array([647.37, 635.64, 701.24, 772.05, 826.30, 879.55, 936.97, 1260.0]) # Kelvin
-        Pc = np.array([221.2, 24.11, 19.25, 15.10, 12.29, 9.94, 7.79, 6.00])*100000 # pascal
-        P = np.array([90])*100000
+        Pc = np.array([221.2, 24.11, 19.25, 15.10, 12.29, 9.94, 7.79, 6.00])*101325 # pascal
+        P = np.array([7])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([571])
+        T = np.array([438.45])
         Mw = np.array([18.015, 143.66, 193.82, 263.40, 336.29, 430.48, 573.05, 1033.96])*1e-3
         w = np.array([0.344, 0.4645, 0.6087, 0.788, 0.9467, 1.1042, 1.273, 1.65])
 
@@ -601,4 +601,96 @@ class Testes_IGOR(unittest.TestCase):
         Pb_guess = 8e6
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,Pb_guess)
         obj.run(z,Mw)
+        import pdb; pdb.set_trace()
+
+    @unittest.skip("not ok")
+    def test_lapene_water_benzene_toluene(self):
+        R = 8.3144598
+                      # H20, benzeno  tolueno
+        z = np.array([0.29, 0.01, 0.7])[:,np.newaxis]
+        Tc = np.array([647, 593, 562]) # Kelvin
+        Pc = np.array([220.5, 41, 48.9])*101325 # pascal
+        P = np.array([1])*101325
+        Pv = np.array([0.0, 0.0, 0.0])
+        T = np.array([343])
+        Mw = np.array([18.02, 92.13, 78.11])*1e-3
+        w = np.array([0.344, 0.262, 0.212])
+
+        Bin = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj.run(z,Mw)
+
+        import pdb; pdb.set_trace()
+
+    @unittest.skip("aparentemente ok - não tem como certificar")
+    def test_li2019_water_C3_C16(self):
+        R = 8.3144598
+                      # H20, C3,   C16
+        z = np.array([0.75, 0.15, 0.1])[:,np.newaxis]
+        Tc = np.array([647.3, 369.8, 717]) # Kelvin
+        Pc = np.array([220.89, 42.46, 14.19])*101325 # pascal
+        P = np.array([40])*101325
+        Pv = np.array([0.0, 0.0, 0.0])
+        T = np.array([350])
+        Mw = np.array([18.02, 36.0321, 226.4412])*1e-3
+        w = np.array([0.344, 0.152, 0.742])
+
+        Bin = np.array([[0, 0.6841, 0.3583], [0.6841, 0, 0], [0.3583, 0, 0]])
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj.run(z,Mw)
+
+        import pdb; pdb.set_trace()
+
+    @unittest.skip("ok - Água/Vapor")
+    def test_Sofyan_case7(self):
+        R = 8.3144598
+                      # C1 / CO2 / H2S /H2O
+        z = np.array([0.05, 0.0498, 0.4006, 0.4996])[:,np.newaxis]
+        Tc = np.array([190.6, 304.2, 373.2, 647.3]) # Kelvin
+        Pc = np.array([46, 73.8, 89.4, 220.5])*101325 # pascal
+        P = np.array([130])*101325
+        Pv = np.array([0.0, 0.0, 0.0, 0.0])
+        T = np.array([310.95])
+        Mw = np.array([16.04, 44.01, 34.1, 18.01528])*1e-3
+        w = np.array([0.008, 0.225, 0.1,  0.344])
+
+        Bin = np.array([[0, 0,  0.0755, 0.4928], \
+                        [0, 0,  0.0999, 0], \
+                        [ 0.0755,  0.0999, 0, 0.04], \
+                        [0.4928, 0,  0.04, 0]])
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj.run(z,Mw)
+
+        import pdb; pdb.set_trace()
+
+    #@unittest.skip("not ok - Água/Vapor")
+    def test_Sabet(self):
+        R = 8.3144598
+                    # H2O/ C1 / nC5 / nC10 / CO2 / H2S
+        z = np.array([0.3, 0.45, 0.1, 0.05, 0.05, 0.05])[:,np.newaxis]
+        Tc = np.array([647.3, 190.6, 469.6, 617.9, 304.2, 373.2]) # Kelvin
+        Pc = np.array([220.5, 46, 33.3, 21, 73.8, 89.4])*101325 # pascal
+        P = np.array([18e6])
+        Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        T = np.array([473.15])
+        Mw = np.array([18.01528, 16.04, 60.05, 120.107, 44.01, 34.1])*1e-3
+        w = np.array([0.344, 0.008, 0.251, 0.484, 0.225, 0.1])
+
+        Bin = np.array([[0, 0.4907, 0.5, 0.45, 0.2, 0.275], \
+                        [0.4907, 0, 0.0206, 0.0522, 0.103, 0.031], \
+                        [0.5, 0.0206, 0, 0.0078, 0.125, 0.095], \
+                        [0.45, 0.0522, 0.0078, 0, 0.11, 0.1], \
+                        [0.2, 0.103, 0.125, 0.11, 0, 0.096], \
+                        [0.275, 0.031, 0.095, 0.1, 0.096, 0]])
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj.run(z,Mw)
+
         import pdb; pdb.set_trace()

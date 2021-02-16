@@ -527,7 +527,7 @@ class Testes_IGOR(unittest.TestCase):
         import pdb; pdb.set_trace()
 
 
-    @unittest.skip("not ok - erro na simulação")
+    @unittest.skip("not ok - erro na simulação - Z negativos (dados suspeitos)")
     def test_Connolly_3_3_1(self):
         R = 8.3144598
                       # H20, C2-C11,   C12-C16,   C17-C21,   C22-C27,    C28-C35,   C36-C49,    C50+
@@ -536,7 +536,7 @@ class Testes_IGOR(unittest.TestCase):
         Pc = np.array([221.2, 24.11, 19.25, 15.10, 12.29, 9.94, 7.79, 6.00])*101325 # pascal
         P = np.array([7])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([438.45])
+        T = np.array([438.0])
         Mw = np.array([18.015, 143.66, 193.82, 263.40, 336.29, 430.48, 573.05, 1033.96])*1e-3
         w = np.array([0.344, 0.4645, 0.6087, 0.788, 0.9467, 1.1042, 1.273, 1.65])
 
@@ -563,9 +563,9 @@ class Testes_IGOR(unittest.TestCase):
         z = np.array([0.5, 0.2227, 0.1402, 0.1016, 0.0355])[:,np.newaxis]
         Tc = np.array([647.37, 575.78, 698, 821.3, 1010.056]) # Kelvin
         Pc = np.array([221.2, 34.82, 23.37, 12.07, 7.79])*100000 # pascal
-        P = np.array([4.5])*100000
+        P = np.array([40])*100000
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([415])
+        T = np.array([600])
         Mw = np.array([18.015, 116, 183, 337, 858])*1e-3
         w = np.array([0.344, 0.4, 0.84, 1.07, 1.33])
 
@@ -587,7 +587,7 @@ class Testes_IGOR(unittest.TestCase):
         z = np.array([0.5, 0.15, 0.1, 0.1, 0.15])[:,np.newaxis]
         Tc = np.array([647.3, 305.556, 638.889, 788.889, 838.889]) # Kelvin
         Pc = np.array([220.8900, 48.82, 19.65, 10.20, 7.72])*100000 # pascal
-        P = np.array([130])*100000
+        P = np.array([40])*100000
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         T = np.array([600])
 
@@ -603,16 +603,16 @@ class Testes_IGOR(unittest.TestCase):
         obj.run(z,Mw)
         import pdb; pdb.set_trace()
 
-    @unittest.skip("not ok")
+    @unittest.skip("not ok - Water/Oil")
     def test_lapene_water_benzene_toluene(self):
         R = 8.3144598
-                      # H20, benzeno  tolueno
+                      # H20 / tolueno / benzeno
         z = np.array([0.29, 0.01, 0.7])[:,np.newaxis]
         Tc = np.array([647, 593, 562]) # Kelvin
         Pc = np.array([220.5, 41, 48.9])*101325 # pascal
         P = np.array([1])*101325
         Pv = np.array([0.0, 0.0, 0.0])
-        T = np.array([343])
+        T = np.array([342])
         Mw = np.array([18.02, 92.13, 78.11])*1e-3
         w = np.array([0.344, 0.262, 0.212])
 
@@ -649,12 +649,14 @@ class Testes_IGOR(unittest.TestCase):
     def test_Sofyan_case7(self):
         R = 8.3144598
                       # C1 / CO2 / H2S /H2O
-        z = np.array([0.05, 0.0498, 0.4006, 0.4996])[:,np.newaxis]
+        #z = np.array([0.1488, 0.2991, 0.0494, 0.5027])[:,np.newaxis]
+        #z = np.array([0.1496, 0.3009, 0.0498, 0.4997])[:,np.newaxis]
+        z = np.array([0.0496, 0.0494, 0.4, 0.5])[:,np.newaxis]
         Tc = np.array([190.6, 304.2, 373.2, 647.3]) # Kelvin
         Pc = np.array([46, 73.8, 89.4, 220.5])*101325 # pascal
-        P = np.array([130])*101325
+        P = np.array([181.7])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0])
-        T = np.array([310.95])
+        T = np.array([449.85])
         Mw = np.array([16.04, 44.01, 34.1, 18.01528])*1e-3
         w = np.array([0.008, 0.225, 0.1,  0.344])
 
@@ -669,8 +671,8 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    #@unittest.skip("not ok - Água/Vapor")
-    def test_Sabet(self):
+    #@unittest.skip("ok - Água/Vapor - only L")
+    def test_Sabet_case1(self):
         R = 8.3144598
                     # H2O/ C1 / nC5 / nC10 / CO2 / H2S
         z = np.array([0.3, 0.45, 0.1, 0.05, 0.05, 0.05])[:,np.newaxis]
@@ -688,6 +690,52 @@ class Testes_IGOR(unittest.TestCase):
                         [0.45, 0.0522, 0.0078, 0, 0.11, 0.1], \
                         [0.2, 0.103, 0.125, 0.11, 0, 0.096], \
                         [0.275, 0.031, 0.095, 0.1, 0.096, 0]])
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj.run(z,Mw)
+
+        import pdb; pdb.set_trace()
+
+    @unittest.skip("ok - Água/Óleo - only L")
+    def test_Sabet_case2(self):
+        R = 8.3144598
+                    # H2O/ CO2 / H2S
+        z = np.array([0.5, 0.45, 0.05])[:,np.newaxis]
+        Tc = np.array([647.3, 304.2, 373.2]) # Kelvin
+        Pc = np.array([220.5, 73.8, 89.4])*101325 # pascal
+        P = np.array([15e6])
+        Pv = np.array([0.0, 0.0, 0.0])
+        T = np.array([333.15])
+        Mw = np.array([18.01528, 44.01, 34.1])*1e-3
+        w = np.array([0.344, 0.225, 0.1])
+
+        Bin = np.array([[0, 0.2, 0.275], [0.2, 0, 0.096], [0.275, 0.096, 0]])
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj.run(z,Mw)
+
+        import pdb; pdb.set_trace()
+
+    @unittest.skip("ok - Água/Óleo - only L")
+    def test_Sabet_case3(self):
+        R = 8.3144598
+                    # H2O / nC5 / nC10 / CO2 / H2S
+        z = np.array([0.31, 0.03, 0.09, 0.42, 0.15])[:,np.newaxis]
+        Tc = np.array([647.3, 469.6, 617.9, 304.2, 373.2]) # Kelvin
+        Pc = np.array([220.5, 33.3, 21, 73.8, 89.4])*101325 # pascal
+        P = np.array([13.5e6])
+        Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
+        T = np.array([373.15])
+        Mw = np.array([18.01528, 60.05, 120.107, 44.01, 34.1])*1e-3
+        w = np.array([0.344, 0.251, 0.484, 0.225, 0.1])
+
+        Bin = np.array([[0, 0.5, 0.45, 0.2, 0.275], \
+                        [0.5, 0, 0.0078, 0.125, 0.095], \
+                        [0.45, 0.0078, 0, 0.11, 0.1], \
+                        [0.2, 0.125, 0.11, 0, 0.096], \
+                        [0.275, 0.095, 0.1, 0.096, 0]])
 
         Pb_guess = 8e6
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)

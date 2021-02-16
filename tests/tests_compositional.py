@@ -448,9 +448,9 @@ class Testes_IGOR(unittest.TestCase):
         z = np.array([0.35, 0.03, 0.04, 0.06, 0.04, 0.03, 0.05, 0.05, 0.3, 0.05])[:,np.newaxis]
         Tc = np.array([190.6, 305.4, 369.8, 425.2, 469.6, 507.5, 540.3, 568.8, 617.9, 691.9]) # Kelvin
         Pc = np.array([45.4, 48.2, 41.9, 37.5, 33.3, 30.1, 27.4, 24.9, 21.0, 15.2])*100000 # pascal
-        P = np.array([104.9])*100000
+        P = np.array([50])*100000
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([509.1])
+        T = np.array([650])
 
         Mw = np.array([16.04, 30.07, 44.1, 58.12, 72.15, 86.178, 100.205, 114.232, 142.29, 198.39])*1e-3
         # Mw = np.array([16.04, 30.07, 44.1, 58.12, 72.15, 84, 107, 107, 147, 190])
@@ -645,18 +645,18 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    @unittest.skip("ok - Água/Vapor")
+    #@unittest.skip("ok - Água/Vapor")
     def test_Sofyan_case7(self):
         R = 8.3144598
                       # C1 / CO2 / H2S /H2O
-        #z = np.array([0.1488, 0.2991, 0.0494, 0.5027])[:,np.newaxis]
+        z = np.array([0.1488, 0.2991, 0.0494, 0.5027])[:,np.newaxis]
         #z = np.array([0.1496, 0.3009, 0.0498, 0.4997])[:,np.newaxis]
-        z = np.array([0.0496, 0.0494, 0.4, 0.5])[:,np.newaxis]
+        #z = np.array([0.0496, 0.0494, 0.4, 0.5])[:,np.newaxis]
         Tc = np.array([190.6, 304.2, 373.2, 647.3]) # Kelvin
         Pc = np.array([46, 73.8, 89.4, 220.5])*101325 # pascal
-        P = np.array([181.7])*101325
+        P = np.array([76])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0])
-        T = np.array([449.85])
+        T = np.array([310.95])
         Mw = np.array([16.04, 44.01, 34.1, 18.01528])*1e-3
         w = np.array([0.008, 0.225, 0.1,  0.344])
 
@@ -671,7 +671,7 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    #@unittest.skip("ok - Água/Vapor - only L")
+    @unittest.skip("ok - Água/Vapor - only L")
     def test_Sabet_case1(self):
         R = 8.3144598
                     # H2O/ C1 / nC5 / nC10 / CO2 / H2S

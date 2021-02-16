@@ -60,7 +60,7 @@ class StabilityCheck:
             index_spmax = np.argmax(np.round(sp, 10))
             self.equilibrium_ratio_2flash(Kvalue[index_spmax])
             print(Kvalue)
-            self.K = Kvalue[4].copy()
+            #self.K = Kvalue[4].copy()
             print(self.K)
             #import pdb; pdb.set_trace()
 
@@ -109,8 +109,10 @@ class StabilityCheck:
     def equilibrium_ratio_aqueous(self, z):
 
         self.Kw = np.zeros_like(z)
-        self.Kw[0] = 0.999 / z[0]
-        self.Kw[1:] = 0.001 / (len(z) - 1) / z[1:]
+        #self.Kw[0] = 0.999 / z[0]
+        #self.Kw[1:] = 0.001 / (len(z) - 1) / z[1:]
+        self.Kw[-1] = 0.999 / z[-1]
+        self.Kw[0:-1] = 0.001 / (len(z) - 1) / z[0:-1]
 
     def equilibrium_ratio_2flash(self, K_2flash):
         self.K = K_2flash.copy()
@@ -722,8 +724,8 @@ class StabilityCheck:
             #try_V = self.solve_objective_function_Whitson_for_V(z, self.V, Vmax, Vmin, np.copy(ponteiro))
             #if not try_V:
                 #print('Entrou no L')
-            self.solve_objective_function_Whitson_for_V(z, self.V, Vmax, Vmin, np.copy(ponteiro))
-            #self.solve_objective_function_Whitson_for_L(z, self.L, Lmax, Lmin, np.copy(ponteiro))
+            #self.solve_objective_function_Whitson_for_V(z, self.V, Vmax, Vmin, np.copy(ponteiro))
+            self.solve_objective_function_Whitson_for_L(z, self.L, Lmax, Lmin, np.copy(ponteiro))
             #else: self.L[ponteiro] = 1. - self.V[ponteiro]
             lnphil = self.lnphi_based_on_deltaG(PR, self.x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
             lnphiv = self.lnphi_based_on_deltaG(PR, self.y[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])

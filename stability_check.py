@@ -385,7 +385,7 @@ class StabilityCheck:
 
 
     def lnphi_based_on_deltaG(self, PR, l, P, ph):
-        ph = self.deltaG_molar_vectorized(PR, l, P, ph)
+        ph = self.deltaG_molar_vectorized(PR, l, P, ph) 
         return PR.lnphi(self, l, P, ph)
 
     def solve_objective_function_Yinghui(self, z1, zi, K1, KNc, Ki, K, x):

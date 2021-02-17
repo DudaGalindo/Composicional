@@ -61,7 +61,7 @@ class StabilityCheck:
             index_spmax = np.argmax(np.round(sp, 10))
             self.equilibrium_ratio_2flash(Kvalue[index_spmax])
             print(Kvalue)
-            self.K = Kvalue[4].copy()
+            #self.K = Kvalue[4].copy()
             print(self.K)
             #import pdb; pdb.set_trace()
 
@@ -72,7 +72,7 @@ class StabilityCheck:
             #ponteiro_aux = ponteiro_flash[~ponteiro_flash]
             #ponteiro_aux[(np.round(sp1,14) > 1) + (np.round(sp2,14) > 1)] = True #os que devem passar para o calculo de flash
             #ponteiro_flash[~ponteiro_flash] = ponteiro_aux
-            #import pdb; pdb.set_trace()
+            import pdb; pdb.set_trace()
 
 
 
@@ -432,7 +432,6 @@ class StabilityCheck:
         ponteiro = np.ones(len(x1), dtype = bool)
 
         while any(ponteiro):
-
             x1[ponteiro] = np.copy(x1_new[ponteiro])
             f = 1 + ((K1[ponteiro] - KNc[ponteiro]) / (KNc[ponteiro] - 1)) * x1[ponteiro] + np.sum(((Ki[:,ponteiro] - KNc[ponteiro][np.newaxis,:]) /
                 (KNc[ponteiro][np.newaxis,:] - 1)) * zi[:,ponteiro] * (K1[ponteiro][np.newaxis,:] - 1) * x1[ponteiro][np.newaxis,:]
@@ -443,10 +442,10 @@ class StabilityCheck:
                 (Ki[:,ponteiro] - 1) / ((Ki[:,ponteiro] - 1) * z1[ponteiro][np.newaxis,:] + (K1[ponteiro][np.newaxis,:] - Ki[:,ponteiro]) *
                 x1[ponteiro][np.newaxis,:]) ** 2, axis = 0)
             x1_new[ponteiro] = x1[ponteiro] - f/df #Newton-Raphson iterative method
-            x1_aux = x1[ponteiro]
+            x1_aux = x1_new[ponteiro]
             x1_aux[x1_aux > x1_max] = (x1_min[x1_aux > x1_max] + x1_max[x1_aux > x1_max])/2
             x1_aux[x1_aux < x1_min] = (x1_min[x1_aux < x1_min] + x1_max[x1_aux < x1_min])/2
-            x1[ponteiro] = x1_aux
+            x1_new[ponteiro] = x1_aux
             ponteiro_aux = ponteiro[ponteiro] #o que muda de tamanho
             ponteiro_aux[abs(f) < 1e-10] = False
             ponteiro[ponteiro] = ponteiro_aux
@@ -454,7 +453,7 @@ class StabilityCheck:
             x1_min = x1_min[ponteiro_aux]
             x1_max[f[ponteiro_aux] * df[ponteiro_aux] > 0] = x1[ponteiro][f[ponteiro_aux] * df[ponteiro_aux] > 0]
             x1_min[f[ponteiro_aux] * df[ponteiro_aux] < 0] = x1[ponteiro][f[ponteiro_aux] * df[ponteiro_aux] < 0]
-            #import pdb; pdb.set_trace()
+
 
         xi = (K1[np.newaxis,:] - 1) * zi * x1[np.newaxis,:] / ((Ki - 1) * z1[np.newaxis,:] +
             (K1[np.newaxis,:] - Ki) * x1[np.newaxis,:])
@@ -466,6 +465,7 @@ class StabilityCheck:
         aux_xi[K == K1[np.newaxis,:]] = False
         aux_xi[K == KNc[np.newaxis,:]] = False
         x_not_z1_zero[aux_xi] = xi.ravel()
+
         return x_not_z1_zero
 
     def Yinghui_method(self, z, ponteiro):
@@ -483,13 +483,11 @@ class StabilityCheck:
         Ki = K[aux]
         zi = z[aux]
 
-
         vols_ponteiro = np.sum(ponteiro*1) + 1 - np.sign(np.sum(ponteiro*1))
         Ki = Ki.reshape(int(len(Ki)/vols_ponteiro), vols_ponteiro)
         zi = zi.reshape(int(len(zi)/vols_ponteiro), vols_ponteiro)
 
         #starting x
-
         x[:,~(z1 == 0)] = self.solve_objective_function_Yinghui(z1[~(z1 == 0)], zi[:,~(z1 == 0)], K1[~(z1 == 0)], KNc[~(z1 == 0)], Ki[:,~(z1 == 0)],
                                             K[:,~(z1 == 0)], x[:,~(z1 == 0)])
 
@@ -531,6 +529,7 @@ class StabilityCheck:
             ponteiro_aux = ponteiro[ponteiro]
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
+            #import pdb; pdb.set_trace()
 
         V = (z[:,ponteiro_save][self.x[:,ponteiro_save] != 0] - self.x[:,ponteiro_save][self.x[:,ponteiro_save] != 0]) / \
                           (self.y[:,ponteiro_save][self.x[:,ponteiro_save] != 0] - self.x[:,ponteiro_save][self.x[:,ponteiro_save] != 0])

@@ -108,7 +108,6 @@ class StabilityCheck:
                 (self.P / self.Pc[:,np.newaxis])
 
     def equilibrium_ratio_aqueous(self, z):
-
         self.Kw = np.zeros_like(z)
         self.Kw[0] = 0.9/z[0]
         self.Kw[1:] = 0.1 / (self.Nc - 1) / z[1:]
@@ -348,10 +347,6 @@ class StabilityCheck:
 
         #return stationary_point1, stationary_point2, stationary_point3, stationary_point4, stationary_point5
         return stationary_points, [K_value1, K_value2, K_value3, K_value4, K_value5]
-
-
-
-
 
 
 

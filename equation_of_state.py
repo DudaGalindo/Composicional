@@ -54,7 +54,7 @@ class PengRobinson:
         reais = np.isreal(X)
         r_pos = np.where(reais==True)
         Xreais = np.real(X[r_pos[:]])
-        Z = Xreais -coef[1]/3
+        Z = Xreais - coef[1]/3
         Z_ans = np.min(Z, axis=0) * ph + np.max(Z, axis=0) * (1 - ph)
         return Z_ans
         #Z = np.linalg.lstsq(coef, np.zeros(len(A[:])))
@@ -104,7 +104,9 @@ class PengRobinson:
         Z[~root[n_reais==1]] = np.repeat(Z[root[n_reais == 1]], 2)
         aux_neg = np.zeros(Z.shape,dtype=bool)
         aux_neg[Z<0] = True
-        Z[aux_neg] = Z[~aux_neg][0]
+        try:
+            Z[aux_neg] = Z[~aux_neg][0]
+        except: import pdb; pdb.set_trace()
         Zz = np.min(Z, axis = 1) * ph + np.max(Z, axis = 1) * (1 - ph)
         Z_ = np.real(Zz)
         return Z_

@@ -441,16 +441,16 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    @unittest.skip("ok")
+    #@unittest.skip("ok")
     def test_MY10(self):
         R = 8.3144598
         # C1, C2, C3, n-C4, n-C5, n-C6, n-C7, n-C8, n-C10, n-C14
         z = np.array([0.35, 0.03, 0.04, 0.06, 0.04, 0.03, 0.05, 0.05, 0.3, 0.05])[:,np.newaxis]
         Tc = np.array([190.6, 305.4, 369.8, 425.2, 469.6, 507.5, 540.3, 568.8, 617.9, 691.9]) # Kelvin
         Pc = np.array([45.4, 48.2, 41.9, 37.5, 33.3, 30.1, 27.4, 24.9, 21.0, 15.2])*100000 # pascal
-        P = np.array([50])*100000
+        P = np.array([75.4])*100000
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([650])
+        T = np.array([566.6])
 
         Mw = np.array([16.04, 30.07, 44.1, 58.12, 72.15, 86.178, 100.205, 114.232, 142.29, 198.39])*1e-3
         # Mw = np.array([16.04, 30.07, 44.1, 58.12, 72.15, 84, 107, 107, 147, 190])
@@ -534,9 +534,9 @@ class Testes_IGOR(unittest.TestCase):
         z = np.array([0.983415, 0.000325, 0.003012, 0.002570, 0.002252, 0.001912, 0.001676, 0.004838])[:,np.newaxis]
         Tc = np.array([647.37, 635.64, 701.24, 772.05, 826.30, 879.55, 936.97, 1260.0]) # Kelvin
         Pc = np.array([221.2, 24.11, 19.25, 15.10, 12.29, 9.94, 7.79, 6.00])*101325 # pascal
-        P = np.array([7])*101325
+        P = np.array([100])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([438.0])
+        T = np.array([570.0])
         Mw = np.array([18.015, 143.66, 193.82, 263.40, 336.29, 430.48, 573.05, 1033.96])*1e-3
         w = np.array([0.344, 0.4645, 0.6087, 0.788, 0.9467, 1.1042, 1.273, 1.65])
 
@@ -556,16 +556,16 @@ class Testes_IGOR(unittest.TestCase):
         import pdb; pdb.set_trace()
 
 
-    @unittest.skip("not ok - caso voltado para o flash trifásico, não acho que seja o caso de testar agr")
+    @unittest.skip("aparentemente ok p/ o chines tb - não tem como certificar")
     def test_Connolly332(self):
         R = 8.3144598
         # H20, C8, C13, C24, C61+
         z = np.array([0.5, 0.2227, 0.1402, 0.1016, 0.0355])[:,np.newaxis]
         Tc = np.array([647.37, 575.78, 698, 821.3, 1010.056]) # Kelvin
-        Pc = np.array([221.2, 34.82, 23.37, 12.07, 7.79])*100000 # pascal
-        P = np.array([40])*100000
+        Pc = np.array([221.2, 34.82, 23.37, 12.07, 7.79])*101325 # pascal
+        P = np.array([20])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([600])
+        T = np.array([550])
         Mw = np.array([18.015, 116, 183, 337, 858])*1e-3
         w = np.array([0.344, 0.4, 0.84, 1.07, 1.33])
 
@@ -580,16 +580,16 @@ class Testes_IGOR(unittest.TestCase):
         import pdb; pdb.set_trace()
 
 
-    @unittest.skip("teste basico para implementar o trifasico")
+    @unittest.skip("aparentemente ok p/ o chines tb - não tem como certificar")
     def test_Connolly431(self):
         R = 8.3144598
         # H2O, PC1, PC2, PC3, PC4
         z = np.array([0.5, 0.15, 0.1, 0.1, 0.15])[:,np.newaxis]
         Tc = np.array([647.3, 305.556, 638.889, 788.889, 838.889]) # Kelvin
-        Pc = np.array([220.8900, 48.82, 19.65, 10.20, 7.72])*100000 # pascal
-        P = np.array([40])*100000
+        Pc = np.array([220.8900, 48.82, 19.65, 10.20, 7.72])*101325 # pascal
+        P = np.array([20])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([600])
+        T = np.array([300])
 
         Mw = np.array([18.015, 30.00, 156.00, 310.00, 400.00])*1e-3
         w = np.array([0.344, 0.098, 0.535, 0.891, 1.085])
@@ -624,7 +624,7 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    @unittest.skip("aparentemente ok - não tem como certificar")
+    @unittest.skip("aparentemente ok p/ o chines tb - não tem como certificar")
     def test_li2019_water_C3_C16(self):
         R = 8.3144598
                       # H20, C3,   C16
@@ -633,7 +633,7 @@ class Testes_IGOR(unittest.TestCase):
         Pc = np.array([220.89, 42.46, 14.19])*101325 # pascal
         P = np.array([40])*101325
         Pv = np.array([0.0, 0.0, 0.0])
-        T = np.array([350])
+        T = np.array([640])
         Mw = np.array([18.02, 36.0321, 226.4412])*1e-3
         w = np.array([0.344, 0.152, 0.742])
 
@@ -645,7 +645,7 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    #@unittest.skip("ok - Água/Vapor")
+    @unittest.skip("ok - Água/Vapor. ok para o chines")
     def test_Sofyan_case7(self):
         R = 8.3144598
                       # C1 / CO2 / H2S /H2O
@@ -654,7 +654,7 @@ class Testes_IGOR(unittest.TestCase):
         #z = np.array([0.0496, 0.0494, 0.4, 0.5])[:,np.newaxis]
         Tc = np.array([190.6, 304.2, 373.2, 647.3]) # Kelvin
         Pc = np.array([46, 73.8, 89.4, 220.5])*101325 # pascal
-        P = np.array([76])*101325
+        P = np.array([76.0])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0])
         T = np.array([310.95])
         Mw = np.array([16.04, 44.01, 34.1, 18.01528])*1e-3
@@ -671,7 +671,7 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    @unittest.skip("ok - Água/Vapor - only L")
+    @unittest.skip("ok - Água/Vapor - only L(WM). ok para o chines")
     def test_Sabet_case1(self):
         R = 8.3144598
                     # H2O/ C1 / nC5 / nC10 / CO2 / H2S
@@ -697,7 +697,7 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    @unittest.skip("ok - Água/Óleo - only L")
+    @unittest.skip("ok - Água/Óleo - only L. ok para o chines")
     def test_Sabet_case2(self):
         R = 8.3144598
                     # H2O/ CO2 / H2S
@@ -718,7 +718,7 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    @unittest.skip("ok - Água/Óleo - only L")
+    @unittest.skip("ok - Água/Óleo - only L. ok para o chines")
     def test_Sabet_case3(self):
         R = 8.3144598
                     # H2O / nC5 / nC10 / CO2 / H2S

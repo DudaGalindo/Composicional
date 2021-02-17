@@ -58,7 +58,7 @@ class StabilityCheck:
             ponteiro_aux[any(sp > 1)] = True #os que devem passar para o calculo de flash
             ponteiro_flash[~ponteiro_flash] = ponteiro_aux
             index_spmax = np.argmax(np.round(sp, 10))
-            self.equilibrium_ratio_2flash(Kvalue[index_spmax])
+            #self.equilibrium_ratio_2flash(Kvalue[index_spmax])
             print(Kvalue)
             #self.K = Kvalue[4].copy()
             print(self.K)
@@ -109,10 +109,10 @@ class StabilityCheck:
     def equilibrium_ratio_aqueous(self, z):
 
         self.Kw = np.zeros_like(z)
-        #self.Kw[0] = 0.999 / z[0]
-        #self.Kw[1:] = 0.001 / (len(z) - 1) / z[1:]
-        self.Kw[-1] = 0.999 / z[-1]
-        self.Kw[0:-1] = 0.001 / (len(z) - 1) / z[0:-1]
+        self.Kw[0] = 0.999 / z[0]
+        self.Kw[1:] = 0.001 / (len(z) - 1) / z[1:]
+        #self.Kw[-1] = 0.999 / z[-1]
+        #self.Kw[0:-1] = 0.001 / (len(z) - 1) / z[0:-1]
 
     def equilibrium_ratio_2flash(self, K_2flash):
         self.K = K_2flash.copy()
@@ -369,6 +369,7 @@ class StabilityCheck:
 
     """-------------Below starts biphasic flash calculations-----------------"""
     def molar_properties(self, PR, z, ponteiro):
+        #ponteiro = self.molar_properties_Yinghui(PR, z, ponteiro)
         ponteiro = self.molar_properties_Whitson(PR, z, ponteiro)
         return ponteiro
 
@@ -440,10 +441,12 @@ class StabilityCheck:
         if any(x1_min > x1_max): raise ValueError('There is no physical root')
 
         x1 = (x1_min + x1_max) / 2
-
+        x1_new = np.copy(x1)
         ponteiro = np.ones(len(x1), dtype = bool)
 
         while any(ponteiro):
+
+            x1[ponteiro] = np.copy(x1_new[ponteiro])
             f = 1 + ((K1[ponteiro] - KNc[ponteiro]) / (KNc[ponteiro] - 1)) * x1[ponteiro] + np.sum(((Ki[:,ponteiro] - KNc[ponteiro][np.newaxis,:]) /
                 (KNc[ponteiro][np.newaxis,:] - 1)) * zi[:,ponteiro] * (K1[ponteiro][np.newaxis,:] - 1) * x1[ponteiro][np.newaxis,:]
                 / ((Ki[:,ponteiro] - 1) * z1[ponteiro][np.newaxis,:] + (K1[ponteiro][np.newaxis,:] - Ki[:,ponteiro]) *
@@ -452,19 +455,19 @@ class StabilityCheck:
                 (KNc[ponteiro][np.newaxis,:] - 1)) * zi[:,ponteiro] * z1[ponteiro][np.newaxis,:] * (K1[ponteiro][np.newaxis,:] - 1) *
                 (Ki[:,ponteiro] - 1) / ((Ki[:,ponteiro] - 1) * z1[ponteiro][np.newaxis,:] + (K1[ponteiro][np.newaxis,:] - Ki[:,ponteiro]) *
                 x1[ponteiro][np.newaxis,:]) ** 2, axis = 0)
-            x1[ponteiro] = x1[ponteiro] - f/df #Newton-Raphson iterative method
+            x1_new[ponteiro] = x1[ponteiro] - f/df #Newton-Raphson iterative method
             x1_aux = x1[ponteiro]
             x1_aux[x1_aux > x1_max] = (x1_min[x1_aux > x1_max] + x1_max[x1_aux > x1_max])/2
             x1_aux[x1_aux < x1_min] = (x1_min[x1_aux < x1_min] + x1_max[x1_aux < x1_min])/2
             x1[ponteiro] = x1_aux
             ponteiro_aux = ponteiro[ponteiro] #o que muda de tamanho
-            ponteiro_aux[f < 1e-10] = False
+            ponteiro_aux[abs(f) < 1e-10] = False
             ponteiro[ponteiro] = ponteiro_aux
             x1_max = x1_max[ponteiro_aux]
             x1_min = x1_min[ponteiro_aux]
             x1_max[f[ponteiro_aux] * df[ponteiro_aux] > 0] = x1[ponteiro][f[ponteiro_aux] * df[ponteiro_aux] > 0]
             x1_min[f[ponteiro_aux] * df[ponteiro_aux] < 0] = x1[ponteiro][f[ponteiro_aux] * df[ponteiro_aux] < 0]
-
+            #import pdb; pdb.set_trace()
 
         xi = (K1[np.newaxis,:] - 1) * zi * x1[np.newaxis,:] / ((Ki - 1) * z1[np.newaxis,:] +
             (K1[np.newaxis,:] - Ki) * x1[np.newaxis,:])

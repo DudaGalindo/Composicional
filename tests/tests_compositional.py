@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 class Li_et_al_table4:
-
+    #@unittest.skip("ok")
     def __init__(self):
         self.R = 10.73159
         self.Tc = np.array([-116.59, 305.69, 453.65, 652.01])
@@ -22,7 +22,7 @@ class testes_Li_et_al_table4(unittest.TestCase):
 
     #Units: English system
     # methane n-butane n-hexane n-decane
-
+    @unittest.skip("ok")
     def test_all(self):
         prop = Li_et_al_table4()
         z = np.array([[-0.58,0.38,0.6,0.6], [0,0,0,1], [0,0,1,0], [0,1,0,0], [1,0,0,0]])
@@ -44,7 +44,7 @@ class testes_Li_et_al_table4(unittest.TestCase):
                 self.assertAlmostEqual(obj.x[i,j],x.T[i,j],4,'ValueError:Failed')
                 self.assertAlmostEqual(obj.y[i,j],y.T[i,j],4,'ValueError:Failed')
 
-    
+
 class testes_casos_Schmall(unittest.TestCase):
     @unittest.skip("ok")
     def teste_caso_Igor(self):
@@ -330,11 +330,11 @@ class testes_casos_Schmall(unittest.TestCase):
          print('fl: ',obj.fl,'fv: ',obj.fv)
 
 class testes_caso_Firoozabadi(unittest.TestCase):
-    @unittest.skip("ok")
+    #@unittest.skip("ok")
     def test1(self):
         R = 8.3144598
-        z = np.array([0.32083075266749794, 0.1964621674322642, 0.4827070799002378])[:,np.newaxis]#*np.ones([10]) #exemplo aleatório
-        P = np.array([7143703.385053459])
+        z = np.array([0.9, 0.1, 0.])[:,np.newaxis]#*np.ones([10]) #exemplo aleatório
+        P = np.array([6991425])
         #P = np.array([14619094.696946101])*np.ones(10)
         #T = np.array([15 + 273.15])
         T = np.array([311])
@@ -344,11 +344,47 @@ class testes_caso_Firoozabadi(unittest.TestCase):
         w = np.array([0.0115, 0.0995, 0.1523])
         Bin = np.array([[0.,0.,.0], [0.,0.,0.], [0.,0.,.0]])
         print('\ncaso1:')
-        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, 9e6)
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
         obj.run(z,Mw)
+        import pdb; pdb.set_trace()
 
+    @unittest.skip("ok")
+    def test_MY10(self):
+        R = 8.3144598
+        # C1, C2, C3, n-C4, n-C5, n-C6, n-C7, n-C8, n-C10, n-C14
+        z = np.array([0.35, 0.03, 0.04, 0.06, 0.04, 0.03, 0.05, 0.05, 0.3, 0.05])[:,np.newaxis]
+        Tc = np.array([190.6, 305.4, 369.8, 425.2, 469.6, 507.5, 540.3, 568.8, 617.9, 691.9]) # Kelvin
+        Pc = np.array([45.4, 48.2, 41.9, 37.5, 33.3, 30.1, 27.4, 24.9, 21.0, 15.2])*100000 # pascal
+        P = np.array([75.4])*100000
+        Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        T = np.array([566.6])
 
+        Mw = np.array([16.04, 30.07, 44.1, 58.12, 72.15, 86.178, 100.205, 114.232, 142.29, 198.39])*1e-3
+        # Mw = np.array([16.04, 30.07, 44.1, 58.12, 72.15, 84, 107, 107, 147, 190])
 
+        w = np.array([0.008, 0.098, 0.152, 0.193, 0.251, 0.305, 0.305, 0.396, 0.484, 0.747])
+
+        #Bin = np.array([[0., 0.03], [0.03, 0.]])
+        Bin = np.zeros([len(z), len(z)])
+
+        Bin[0][3] = 0.02
+        Bin[0][4] = 0.02
+        Bin[0][5] = 0.025
+        Bin[0][6] = 0.025
+        Bin[0][7] = 0.035
+        Bin[0][8] = 0.045
+        Bin[0][9] = 0.045
+        Bin[3][0] = 0.02
+        Bin[4][0] = 0.02
+        Bin[5][0] = 0.025
+        Bin[6][0] = 0.025
+        Bin[7][0] = 0.035
+        Bin[8][0] = 0.045
+        Bin[9][0] = 0.045
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
+        obj.run(z,Mw)
         import pdb; pdb.set_trace()
     #
     # def test_Abbot(self):

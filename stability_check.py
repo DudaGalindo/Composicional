@@ -369,8 +369,8 @@ class StabilityCheck:
 
     """-------------Below starts biphasic flash calculations-----------------"""
     def molar_properties(self, PR, z, ponteiro):
-        #ponteiro = self.molar_properties_Yinghui(PR, z, ponteiro)
-        ponteiro = self.molar_properties_Whitson(PR, z, ponteiro)
+        ponteiro = self.molar_properties_Yinghui(PR, z, ponteiro)
+        #ponteiro = self.molar_properties_Whitson(PR, z, ponteiro)
         return ponteiro
 
     def deltaG_molar_vectorized(self, PR, l, P, ph):
@@ -486,7 +486,9 @@ class StabilityCheck:
         """ Shaping K to Nc-2 components by removing K1 and KNc and z to Nc-2
         components by removing z1 and zNc """
         K = self.K[:,ponteiro]
+
         x = self.x[:,ponteiro]
+        import pdb; pdb.set_trace()
         K1 = np.max(K, axis = 0); KNc = np.min(K, axis=0)
         z1 = z[K == K1[np.newaxis,:]]
 
@@ -495,7 +497,6 @@ class StabilityCheck:
         aux[K == KNc[np.newaxis,:]] = False
         Ki = K[aux]
         zi = z[aux]
-
 
         vols_ponteiro = np.sum(ponteiro*1) + 1 - np.sign(np.sum(ponteiro*1))
         Ki = Ki.reshape(int(len(Ki)/vols_ponteiro), vols_ponteiro)
@@ -511,7 +512,6 @@ class StabilityCheck:
         z_z1_zero = z[:,z1 == 0]
         K_z1_zero = K[:,z1 == 0]
         K_KNc_z1_zero = K_z1_zero[K_z1_zero == KNc[z1 == 0][np.newaxis,:]]
-
         aux_xNc = np.zeros(K_z1_zero.shape, dtype = bool); aux_x1 = np.copy(aux_xNc)
         aux_xNc[K_z1_zero == KNc[z1 == 0][np.newaxis,:]] = True
         aux_x1[K_z1_zero == K1[z1 == 0][np.newaxis,:]] = True

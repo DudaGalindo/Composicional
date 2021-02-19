@@ -441,7 +441,7 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    #@unittest.skip("ok")
+    @unittest.skip("ok")
     def test_MY10(self):
         R = 8.3144598
         # C1, C2, C3, n-C4, n-C5, n-C6, n-C7, n-C8, n-C10, n-C14
@@ -697,7 +697,7 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    @unittest.skip("ok - Água/Óleo - only L. ok para o chines")
+    #@unittest.skip("ok - Água/Óleo - only L. ok para o chines")
     def test_Sabet_case2(self):
         R = 8.3144598
                     # H2O/ CO2 / H2S

@@ -565,7 +565,7 @@ class Testes_IGOR(unittest.TestCase):
         Pc = np.array([221.2, 34.82, 23.37, 12.07, 7.79])*101325 # pascal
         P = np.array([20])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([550])
+        T = np.array([400])
         Mw = np.array([18.015, 116, 183, 337, 858])*1e-3
         w = np.array([0.344, 0.4, 0.84, 1.07, 1.33])
 
@@ -589,7 +589,7 @@ class Testes_IGOR(unittest.TestCase):
         Pc = np.array([220.8900, 48.82, 19.65, 10.20, 7.72])*101325 # pascal
         P = np.array([20])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([300])
+        T = np.array([550])
 
         Mw = np.array([18.015, 30.00, 156.00, 310.00, 400.00])*1e-3
         w = np.array([0.344, 0.098, 0.535, 0.891, 1.085])
@@ -633,7 +633,7 @@ class Testes_IGOR(unittest.TestCase):
         Pc = np.array([220.89, 42.46, 14.19])*101325 # pascal
         P = np.array([40])*101325
         Pv = np.array([0.0, 0.0, 0.0])
-        T = np.array([640])
+        T = np.array([550])
         Mw = np.array([18.02, 36.0321, 226.4412])*1e-3
         w = np.array([0.344, 0.152, 0.742])
 
@@ -697,7 +697,7 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    #@unittest.skip("ok - Água/Óleo - only L. ok para o chines")
+    @unittest.skip("ok - Água/Óleo - only L. ok para o chines")
     def test_Sabet_case2(self):
         R = 8.3144598
                     # H2O/ CO2 / H2S
@@ -718,7 +718,7 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    @unittest.skip("ok - Água/Óleo - only L. ok para o chines")
+    #@unittest.skip("ok - Água/Óleo - only L. ok para o chines")
     def test_Sabet_case3(self):
         R = 8.3144598
                     # H2O / nC5 / nC10 / CO2 / H2S

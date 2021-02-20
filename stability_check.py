@@ -59,7 +59,7 @@ class StabilityCheck:
             ponteiro_aux[any(sp > 1)] = True #os que devem passar para o calculo de flash
             ponteiro_flash[~ponteiro_flash] = ponteiro_aux
             index_spmax = np.argmax(np.round(sp, 10))
-            #self.equilibrium_ratio_2flash(Kvalue[index_spmax])
+            self.equilibrium_ratio_2flash(Kvalue[index_spmax])
             print(Kvalue)
             self.K = Kvalue[4].copy()
             print(self.K)
@@ -370,8 +370,8 @@ class StabilityCheck:
 
     """-------------Below starts biphasic flash calculations-----------------"""
     def molar_properties(self, PR, z, ponteiro):
-        #ponteiro = self.molar_properties_Yinghui(PR, z, ponteiro)
-        ponteiro = self.molar_properties_Whitson(PR, z, ponteiro)
+        ponteiro = self.molar_properties_Yinghui(PR, z, ponteiro)
+        #ponteiro = self.molar_properties_Whitson(PR, z, ponteiro)
         return ponteiro
 
     def deltaG_molar_vectorized(self, PR, l, P, ph):

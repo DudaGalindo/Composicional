@@ -51,17 +51,18 @@ class StabilityCheck:
         sp = np.zeros(5) # In the case of 5 trial phases in stability analysis
 
         if any(~ponteiro_flash):
-            #sp, Kv1, Kv2, Kv3, Kv4, Kv5 = self.Stability_3phase(PR, z, np.copy(~ponteiro_flash))
-            sp, Kvalue = self.Stability_3phase(PR, z, np.copy(~ponteiro_flash))
+            sp, Kvalue = self.Stability_2phase(PR, z, np.copy(~ponteiro_flash))
             sp = np.round(sp, 14)
 
             ponteiro_aux = ponteiro_flash[~ponteiro_flash]
             ponteiro_aux[any(sp > 1)] = True #os que devem passar para o calculo de flash
             ponteiro_flash[~ponteiro_flash] = ponteiro_aux
             index_spmax = np.argmax(np.round(sp, 10))
-            self.equilibrium_ratio_2flash(Kvalue[index_spmax])
+            if sp[4] > 1:
+                self.K = Kvalue[4].copy()
+            #self.equilibrium_ratio_2flash(Kvalue[index_spmax])
             print(Kvalue)
-            self.K = Kvalue[4].copy()
+            #self.K = Kvalue[4].copy()
             print(self.K)
             #import pdb; pdb.set_trace()
 
@@ -94,6 +95,23 @@ class StabilityCheck:
         #self.L = 1
         #self.V = 0
         self.get_other_properties(PR, Mw)
+
+        print('Fim do fash bifásico')
+        if self.L != 1 and self.V != 1:
+            sp2, Kvalue2 = self.Stability_3phase(PR, self.y, np.copy(ponteiro_flash))
+            sp2 = np.round(sp2, 8)
+            print(f'sp2: {sp2}')
+            print(f'K : {Kvalue2}')
+
+            if any(sp2>1):
+                index_sp2max = np.argmax(sp2)
+                self.K_A = self.K.copy()
+                self.K_V = Kvalue2[index_sp2max].copy()
+                #import pdb; pdb.set_trace()
+                self.molar_properties_3phase(PR, z, np.ones_like(ponteiro_flash, dtype=bool))
+
+
+
         import pdb; pdb.set_trace()
         #PR.get_all_derivatives(self, self.x, self.y, self.L, self.V, self.P)
 
@@ -106,6 +124,7 @@ class StabilityCheck:
 
         self.K = np.exp(5.37 * (1 + self.w) * (1 - 1 / (self.T / self.Tc)), dtype=np.double)[:,np.newaxis] / \
                 (self.P / self.Pc[:,np.newaxis])
+        self.Kwilson = self.K.copy()
 
     def equilibrium_ratio_aqueous(self, z):
 
@@ -212,10 +231,9 @@ class StabilityCheck:
 
 
 
-    """-------------Below starts 3 phase stability test calculation -----------------"""
+    """-------------Below starts 2 phase stability test calculation -----------------"""
 
-    def Stability_3phase(self, PR, z, ponteiro_stab_check):
-        # PRECISO RENOMEAR PARA 3 PHASE
+    def Stability_2phase(self, PR, z, ponteiro_stab_check):
         ''' In the lnphi function: 0 stands for vapor phase and 1 for liquid '''
     #*****************************Test one**********************************#
         stationary_points = np.empty(5)
@@ -346,8 +364,162 @@ class StabilityCheck:
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
 
+
         lny = np.log(y)
         TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphiz[:] - np.log(z)))
+        print(f'TPD do teste 5: {TPD}')
+
+        stationary_point5 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
+        stationary_points[4] = stationary_point5
+
+        print(f'pontos estacionarios: {stationary_points}')
+
+        #return stationary_point1, stationary_point2, stationary_point3, stationary_point4, stationary_point5
+        return stationary_points, [K_value1, K_value2, K_value3, K_value4, K_value5]
+
+
+
+
+
+
+
+
+    """-------------Below starts 3 phase stability test calculation -----------------"""
+
+    def Stability_3phase(self, PR, x, ponteiro_stab_check):
+        'Testing stability in 2 phase system'
+    #*****************************Test one**********************************#
+        stationary_points = np.empty(5)
+        # Trial phase is liquid
+        Y = np.empty(x.shape)
+        lnphix = np.empty(x.shape)
+        ponteiro = np.copy(ponteiro_stab_check)
+        Y[:,ponteiro] = x[:,ponteiro] / self.Kwilson[:,ponteiro]
+        y = Y / np.sum(Y, axis = 0)[np.newaxis,:]
+        lnphix[:,ponteiro] = PR.lnphi(self, x[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
+        K_value1 = 1 / self.Kwilson[:,ponteiro]
+
+        while any(ponteiro):
+            Y_old = np.copy(Y[:,ponteiro])
+            lnphiy = PR.lnphi(self, y[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+            Y[:,ponteiro] = np.exp(np.log(x[:,ponteiro]) + lnphix[:,ponteiro] - lnphiy)
+            y[:,ponteiro] = Y[:,ponteiro] / np.sum(Y[:,ponteiro], axis = 0)[np.newaxis,:]
+            stop_criteria = np.max(abs(Y[:,ponteiro] / Y_old - 1), axis = 0)
+            ponteiro_aux = ponteiro[ponteiro]
+            ponteiro_aux[stop_criteria < 1e-9] = False
+            ponteiro[ponteiro] = ponteiro_aux
+
+        lny = np.log(y)
+
+        TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphix[:] - np.log(x)))
+        print(f'TPD do teste 1: {TPD}')
+
+        stationary_point1 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
+        stationary_points[0] = stationary_point1
+
+    #*****************************Test two**********************************#
+        # Trial phase is vapour
+        ponteiro = np.copy(ponteiro_stab_check)
+
+        Y[:,ponteiro] = self.Kwilson[:,ponteiro] * x[:,ponteiro]
+        y = Y / np.sum(Y, axis = 0)[np.newaxis,:]
+        lnphix[:,ponteiro] = PR.lnphi(self, x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+        K_value2 = self.Kwilson[:,ponteiro]
+
+        while any(ponteiro):
+            Y_old = np.copy(Y[:,ponteiro])
+            lnphiy = PR.lnphi(self, y[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
+            Y[:,ponteiro] = np.exp(np.log(x[:,ponteiro]) + lnphix[:,ponteiro] - lnphiy)
+            y[:,ponteiro] = Y[:,ponteiro] / np.sum(Y[:,ponteiro], axis = 0)[np.newaxis,:]
+            stop_criteria = np.max(abs(Y[:,ponteiro] / Y_old - 1), axis = 0)
+            ponteiro_aux = ponteiro[ponteiro]
+            ponteiro_aux[stop_criteria < 1e-9] = False
+            ponteiro[ponteiro] = ponteiro_aux
+
+        lny = np.log(y)
+        TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphix[:] - np.log(x)))
+        print(f'TPD do teste 2: {TPD}')
+
+        stationary_point2 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
+        stationary_points[1] = stationary_point2
+
+
+    #*****************************Test three**********************************#
+        # Trial phase is liquid
+        ponteiro = np.copy(ponteiro_stab_check)
+
+        Y[:,ponteiro] = x[:,ponteiro] / ((self.Kwilson[:,ponteiro])**(1/3))
+        y = Y / np.sum(Y, axis = 0)[np.newaxis,:]
+        lnphix[:,ponteiro] = PR.lnphi(self, x[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
+        K_value3 = 1 / ((self.Kwilson[:,ponteiro])**(1/3))
+
+        while any(ponteiro):
+            Y_old = np.copy(Y[:,ponteiro])
+            lnphiy = PR.lnphi(self, y[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+            Y[:,ponteiro] = np.exp(np.log(x[:,ponteiro]) + lnphix[:,ponteiro] - lnphiy)
+            y[:,ponteiro] = Y[:,ponteiro] / np.sum(Y[:,ponteiro], axis = 0)[np.newaxis,:]
+            stop_criteria = np.max(abs(Y[:,ponteiro] / Y_old - 1), axis = 0)
+            ponteiro_aux = ponteiro[ponteiro]
+            ponteiro_aux[stop_criteria < 1e-9] = False
+            ponteiro[ponteiro] = ponteiro_aux
+
+        lny = np.log(y)
+        TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphix[:] - np.log(x)))
+        print(f'TPD do teste 3: {TPD}')
+
+        stationary_point3 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
+        stationary_points[2] = stationary_point3
+
+
+
+    #*****************************Test four**********************************#
+        # Trial phase is vapour
+        ponteiro = np.copy(ponteiro_stab_check)
+
+        Y[:,ponteiro] = x[:,ponteiro] * ((self.Kwilson[:,ponteiro])**(1/3))
+        y = Y / np.sum(Y, axis = 0)[np.newaxis,:]
+        lnphix[:,ponteiro] = PR.lnphi(self, x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+        K_value4 = (self.Kwilson[:,ponteiro])**(1/3)
+
+        while any(ponteiro):
+            Y_old = np.copy(Y[:,ponteiro])
+            lnphiy = PR.lnphi(self, y[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
+            Y[:,ponteiro] = np.exp(np.log(x[:,ponteiro]) + lnphix[:,ponteiro] - lnphiy)
+            y[:,ponteiro] = Y[:,ponteiro] / np.sum(Y[:,ponteiro], axis = 0)[np.newaxis,:]
+            stop_criteria = np.max(abs(Y[:,ponteiro] / Y_old - 1), axis = 0)
+            ponteiro_aux = ponteiro[ponteiro]
+            ponteiro_aux[stop_criteria < 1e-9] = False
+            ponteiro[ponteiro] = ponteiro_aux
+
+        lny = np.log(y)
+        TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphix[:] - np.log(x)))
+        print(f'TPD do teste 4: {TPD}')
+
+        stationary_point4 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
+        stationary_points[3] = stationary_point4
+
+
+    #*****************************Test five**********************************#
+        # Trial phase is aqueous
+        ponteiro = np.copy(ponteiro_stab_check)
+        Y[:,ponteiro] = x[:,ponteiro] * self.Kw[:,ponteiro]
+        y = Y / np.sum(Y, axis = 0)[np.newaxis,:]
+
+        lnphix[:,ponteiro] = PR.lnphi(self, x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro]) # both ph_L ?
+        K_value5 = self.Kw[:,ponteiro]
+
+        while any(ponteiro):
+            Y_old = np.copy(Y[:,ponteiro])
+            lnphiy = PR.lnphi(self, y[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro]) # both ph_L ?
+            Y[:,ponteiro] = np.exp(np.log(x[:,ponteiro]) + lnphix[:,ponteiro] - lnphiy)
+            y[:,ponteiro] = Y[:,ponteiro] / np.sum(Y[:,ponteiro], axis = 0)[np.newaxis,:]
+            stop_criteria = np.max(abs(Y[:,ponteiro] / Y_old - 1), axis = 0)
+            ponteiro_aux = ponteiro[ponteiro]
+            ponteiro_aux[stop_criteria < 1e-9] = False
+            ponteiro[ponteiro] = ponteiro_aux
+
+        lny = np.log(y)
+        TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphix[:] - np.log(x)))
         print(f'TPD do teste 5: {TPD}')
 
         stationary_point5 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
@@ -368,10 +540,15 @@ class StabilityCheck:
 
 
 
+
     """-------------Below starts biphasic flash calculations-----------------"""
     def molar_properties(self, PR, z, ponteiro):
-        ponteiro = self.molar_properties_Yinghui(PR, z, ponteiro)
-        #ponteiro = self.molar_properties_Whitson(PR, z, ponteiro)
+        #ponteiro = self.molar_properties_Yinghui(PR, z, ponteiro)
+        ponteiro = self.molar_properties_Whitson(PR, z, ponteiro)
+        return ponteiro
+
+    def molar_properties_3phase(self, PR, z, ponteiro):
+        ponteiro = self.molar_properties_Whitson_3phase(PR, z, ponteiro)
         return ponteiro
 
     def deltaG_molar_vectorized(self, PR, l, P, ph):
@@ -567,105 +744,6 @@ class StabilityCheck:
         print('Yinghui time:', t1-t0)
         return ponteiro_save
 
-
-    """
-    def solve_Whitson_for_L(self, z, ponteiro):
-        K = self.K[:,ponteiro]
-        Kw = self.Kw[:,ponteiro]
-        Lmax = np.max(K, axis = 0)/(np.max(K, axis = 0) - 1)
-        Lmin = np.min(K, axis = 0)/(np.min(K, axis = 0) - 1)
-        L = (Lmin + Lmax) / 2
-
-        ponteiro_save = np.copy(ponteiro)
-        while any(ponteiro):
-        #while abs(L / Lold - 1) > 1e-9:
-             Lold = L[ponteiro]
-             f = np.sum((1 - K[:,ponteiro]) * z[:,ponteiro] / (L[ponteiro][np.newaxis,:]
-                        + (1 - L[ponteiro][np.newaxis,:]) * K[:,ponteiro]), axis = 0)
-             df = - np.sum((1 - K[:,ponteiro]) ** 2 * z[:,ponteiro] / (L[ponteiro][np.newaxis,:] +
-                    (1 - L[ponteiro][np.newaxis,:]) * K[:,ponteiro]) ** 2, axis = 0)
-             L[ponteiro] = L[ponteiro] - f / df #Newton-Raphson iterative method
-             L_aux = L[ponteiro]
-             L_aux[L_aux > Lmax[ponteiro]] = (Lmax[ponteiro] + L[ponteiro]) / 2
-             L_aux[L_aux < Lmin[ponteiro]] = (Lmin[ponteiro] + L[ponteiro]) / 2
-             L[ponteiro] = L_aux
-             stop_criteria = abs(L[ponteiro] / Lold - 1)
-             ponteiro_aux = ponteiro[ponteiro]
-             ponteiro_aux[stop_criteria < 1e-9] = False
-             ponteiro[ponteiro] = ponteiro_aux
-        self.L[ponteiro_save] = L[ponteiro_save]
-        self.V[ponteiro_save] = (1 - self.L[ponteiro_save])
-        self.x[:,ponteiro_save] = z[:,ponteiro_save] / (self.L[ponteiro_save][np.newaxis,:] +
-                        (1 - self.L[ponteiro_save][np.newaxis,:]) * self.K[:,ponteiro_save])
-        self.y[:,ponteiro_save] = self.K[:,ponteiro_save] * self.x[:,ponteiro_save]
-
-
-    def solve_objective_function_Whitson_for_V(self, z, V, Vmax, Vmin, ponteiro):
-
-        ponteiro_save = np.copy(ponteiro)
-        contador = 0
-        while any(ponteiro):
-            Vold = V[ponteiro]
-            f = np.sum((self.K[:,ponteiro] - 1) * z[:,ponteiro] / (1 + V[ponteiro][np.newaxis,:] * (self.K[:,ponteiro] - 1)), axis = 0)
-            df = - np.sum((self.K[:,ponteiro] - 1) ** 2 * z[:,ponteiro] / (1 + V[ponteiro][np.newaxis,:] * (self.K[:,ponteiro] - 1)) ** 2, axis = 0)
-            self.V[ponteiro] = self.V[ponteiro] - f / df #Newton-Raphson iterative method
-            V_aux = self.V[ponteiro]
-            V_aux[V_aux > Vmax[ponteiro]] = 0.5 * (Vmax[ponteiro][V_aux > Vmax[ponteiro]] + Vold[V_aux > Vmax[ponteiro]]) #(Vmax + Vold)/2
-            V_aux[V_aux < Vmin[ponteiro]] = 0.5 * (Vmin[ponteiro][V_aux < Vmin[ponteiro]] + Vold[V_aux < Vmin[ponteiro]])#(Vmin + Vold)/2
-            self.V[ponteiro] = V_aux
-            stop_criteria = abs(V[ponteiro] / Vold - 1)
-            ponteiro_aux = ponteiro[ponteiro]
-            ponteiro_aux[stop_criteria < 1e-9] = False
-            ponteiro[ponteiro] = ponteiro_aux
-            contador += 1
-            if contador > 100:
-                import pdb; pdb.set_trace()
-            #import pdb; pdb.set_trace()
-        #self.V[ponteiro_save] = V[ponteiro_save] + 1e-15 #manipulação
-        self.x[:,ponteiro_save] = z[:,ponteiro_save] / (1 + self.V[ponteiro_save][np.newaxis,:] * (self.K[:,ponteiro_save] - 1))
-        self.y[:,ponteiro_save] = self.K[:,ponteiro_save] * self.x[:,ponteiro_save]
-        self.L[ponteiro_save] = 1. - self.V[ponteiro_save]
-
-
-    def molar_properties_Whitson(self, PR, z, ponteiro):
-
-        Lmax = np.max(self.K, axis = 0)/(np.max(self.K, axis = 0) - 1)
-        Lmin = np.min(self.K, axis = 0)/(np.min(self.K, axis = 0) - 1)
-        Vmax = 1. - Lmin
-        Vmin = 1. - Lmax
-        #Vmin = ((K1-KNc)*z[self.K==K1]-(1-KNc))/((1-KNc)*(K1-1))
-        #proposed by Li et al for Whitson method
-        self.V[ponteiro] = (Vmin[ponteiro] + Vmax[ponteiro]) * 0.5
-
-        razao = np.ones(z.shape)/2
-        ponteiro_save = np.copy(ponteiro)
-        contador = 0
-        while any(ponteiro):
-            #self.solve_objective_function_Whitson_for_V(z, self.V, Vmax, Vmin, np.copy(ponteiro))
-            self.solve_Whitson_for_L(z, np.copy(ponteiro))
-
-            lnphil = self.lnphi_based_on_deltaG(PR, self.x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
-            lnphiv = self.lnphi_based_on_deltaG(PR, self.y[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
-            #lnphil = PR.lnphi(self, self.x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
-            #lnphiv = PR.lnphi(self, self.y[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
-            #import pdb; pdb.set_trace()
-            self.fv = np.exp(lnphiv) * (self.y[:,ponteiro] * self.P[ponteiro][np.newaxis,:])
-            self.fl = np.exp(lnphil) * (self.x[:,ponteiro] * self.P[ponteiro][np.newaxis,:])
-            razao[:,ponteiro] = np.divide(self.fl, self.fv, out = razao[:,ponteiro] / razao[:,ponteiro] * (1 + 1e-10),
-                              where = self.fv != 0)
-            self.K[:,ponteiro] = razao[:,ponteiro] * self.K[:,ponteiro]
-            stop_criteria = np.max(abs(self.fv/self.fl - 1), axis = 0)
-            ponteiro_aux = ponteiro[ponteiro]
-            ponteiro_aux[stop_criteria < 1e-9] = False
-            ponteiro[ponteiro] = ponteiro_aux
-            ponteiro[abs(self.L)>1 or abs(self.V)>1] = False
-            contador += 1
-            if contador > 100:
-                import pdb; pdb.set_trace()
-
-        return ponteiro_save
-    """
-
     def solve_objective_function_Whitson_for_L(self, z, L, Lmax, Lmin, ponteiro):
 
         #Lmax = 1 / (1 - np.min(self.K, axis=0))
@@ -708,8 +786,8 @@ class StabilityCheck:
         while any(ponteiro):
             Vold = V[ponteiro]
             f = np.sum((self.K[:,ponteiro] - 1) * z[:,ponteiro] / (1 + V[ponteiro][np.newaxis,:] * (self.K[:,ponteiro] - 1)), axis = 0)
-            df = - np.sum((self.K[:,ponteiro] - 1) * 2 * z[:,ponteiro] / (1 + V[ponteiro][np.newaxis,:] * (self.K[:,ponteiro] - 1)) * 2, axis = 0)
-            self.V[ponteiro] = self.V[ponteiro] - f / df #Newton-Raphson iterative method
+            df = - np.sum((self.K[:,ponteiro] - 1) ** 2 * z[:,ponteiro] / (1 + V[ponteiro][np.newaxis,:] * (self.K[:,ponteiro] - 1)) ** 2, axis = 0)
+            V[ponteiro] = V[ponteiro] - f / df #Newton-Raphson iterative method
             V_aux = self.V[ponteiro]
             V_aux[V_aux > Vmax[ponteiro]] = 0.5 * (Vmax[ponteiro] + Vold)[V_aux > Vmax[ponteiro]] #(Vmax + Vold)/2
             V_aux[V_aux < Vmin[ponteiro]] = 0.5 * (Vmin[ponteiro] + Vold)[V_aux < Vmin[ponteiro]]#(Vmax + Vold)/2
@@ -991,3 +1069,137 @@ class StabilityCheck:
         plt.ylabel('TPD')
         plt.show()
         return TPD
+
+
+
+
+
+
+
+
+    ' Try of triphasic flash '
+    def molar_properties_Whitson_3phase(self, PR, z, ponteiro):
+        Amax = 1 / (1 - np.min(self.K_A, axis = 0))
+        Amin = 1 / (1 - np.max(self.K_A, axis = 0))
+        Vmax = 1 / (1 - np.min(self.K_V, axis = 0))
+        Vmin = 1 / (1 - np.max(self.K_V, axis = 0))
+
+        self.V[ponteiro] = (Vmin[ponteiro] + Vmax[ponteiro]) * 0.5
+        self.A[ponteiro] = (Amin[ponteiro] + Amax[ponteiro]) * 0.5
+
+        t0 = time.time()
+
+        razao_vl = np.ones(z.shape)/2
+        razao_al = np.ones(z.shape)/2
+        ponteiro_save = np.copy(ponteiro)
+        while any(ponteiro):
+            self.solve_objective_function_Whitson_for_V_and_A(z, self.V, self.A, Vmax, Vmin, Amax, Amin, np.copy(ponteiro))
+
+            lnphil = self.lnphi_based_on_deltaG(PR, self.x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+            lnphiv = self.lnphi_based_on_deltaG(PR, self.y[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
+            lnphia = self.lnphi_based_on_deltaG(PR, self.a[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+
+            self.fv = np.exp(lnphiv) * (self.y[:,ponteiro] * self.P[ponteiro][np.newaxis,:])
+            self.fl = np.exp(lnphil) * (self.x[:,ponteiro] * self.P[ponteiro][np.newaxis,:])
+            self.fa = np.exp(lnphia) * (self.a[:,ponteiro] * self.P[ponteiro][np.newaxis,:])
+
+            razao_vl[:,ponteiro] = np.divide(self.fl, self.fv, out = razao_vl[:,ponteiro] / razao_vl[:,ponteiro] * (1 + 1e-10),
+                              where = self.fv != 0)
+            razao_al[:,ponteiro] = np.divide(self.fl, self.fa, out = razao_al[:,ponteiro] / razao_al[:,ponteiro] * (1 + 1e-10),
+                              where = self.fa != 0)
+
+            self.K_V[:,ponteiro] = razao_vl[:,ponteiro] * self.K_V[:,ponteiro]
+            self.K_A[:,ponteiro] = razao_al[:,ponteiro] * self.K_A[:,ponteiro]
+
+            stop_criteria_vl = np.max(abs(self.fv/self.fl - 1), axis = 0)
+            stop_criteria_al = np.max(abs(self.fa/self.fl - 1), axis = 0)
+            stop_criteria = max(stop_criteria_vl, stop_criteria_al)
+
+            ponteiro_aux = ponteiro[ponteiro]
+            ponteiro_aux[stop_criteria < 1e-9] = False
+            ponteiro[ponteiro] = ponteiro_aux
+            #ponteiro[((self.V)<0) + ((self.V)>1)] = False
+
+        t1 = time.time()
+        print('Whitson-Michelsen time for 3phase flash:', t1-t0)
+
+        return ponteiro_save
+
+    def solve_objective_function_Whitson_for_V_and_A(self, z, V, A, Vmax, Vmin, Amax, Amin, ponteiro):
+
+        ponteiro_save = np.copy(ponteiro)
+        i = 0
+        while any(ponteiro):
+            Vold = V[ponteiro]
+            Aold = A[ponteiro]
+            V_and_A = np.array([Vold, Aold])
+
+            f = np.zeros(2)
+
+            f[0] = np.sum((self.K_V[:,ponteiro] - 1) * z[:,ponteiro] / (1 + \
+                    V[ponteiro][np.newaxis,:] * (self.K_V[:,ponteiro] - 1) + \
+                    A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)), axis = 0)
+
+            f[1] = np.sum((self.K_A[:,ponteiro] - 1) * z[:,ponteiro] / (1 + \
+                    V[ponteiro][np.newaxis,:] * (self.K_V[:,ponteiro] - 1) + \
+                    A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)), axis = 0)
+
+            df_VdV = - np.sum((self.K_V[:,ponteiro] - 1) ** 2 * z[:,ponteiro] / (1 + \
+                    V[ponteiro][np.newaxis,:] * (self.K_V[:,ponteiro] - 1) + \
+                    A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)) ** 2, axis = 0)
+
+            df_VdA = - np.sum((self.K_V[:,ponteiro] - 1) * (self.K_A[:,ponteiro] - 1) * z[:,ponteiro] / (1 + \
+                    V[ponteiro][np.newaxis,:] * (self.K_V[:,ponteiro] - 1) + \
+                    A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)) ** 2, axis = 0)
+
+            df_AdV = - np.sum((self.K_V[:,ponteiro] - 1) * (self.K_A[:,ponteiro] - 1) * z[:,ponteiro] / (1 + \
+                    V[ponteiro][np.newaxis,:] * (self.K_V[:,ponteiro] - 1) + \
+                    A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)) ** 2, axis = 0)
+
+            df_AdA = - np.sum((self.K_A[:,ponteiro] - 1) ** 2 * z[:,ponteiro] / (1 + \
+                    V[ponteiro][np.newaxis,:] * (self.K_V[:,ponteiro] - 1) + \
+                    A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)) ** 2, axis = 0)
+
+            Jacobian = np.empty([2,2])
+            Jacobian[0][0] = df_VdV
+            Jacobian[0][1] = df_VdA
+            Jacobian[1][0] = df_AdV
+            Jacobian[1][1] = df_AdA # Jacobian matrix
+
+            try:
+                Jacobian_inv = np.linalg.inv(Jacobian)
+            except: import pdb; pdb.set_trace()
+
+            V_and_A = V_and_A - np.reshape(f.dot(Jacobian_inv), (2,1))  #Newton-Raphson iterative method
+            V = V_and_A[0]
+            A = V_and_A[1]
+
+            V_aux = V[ponteiro]
+            V_aux[V_aux > Vmax[ponteiro]] = 0.5 * (Vmax[ponteiro] + Vold)[V_aux > Vmax[ponteiro]] #(Vmax + Vold)/2
+            V_aux[V_aux < Vmin[ponteiro]] = 0.5 * (Vmin[ponteiro] + Vold)[V_aux < Vmin[ponteiro]]#(Vmax + Vold)/2
+            V[ponteiro] = V_aux
+
+            A_aux = A[ponteiro]
+            A_aux[A_aux > Amax[ponteiro]] = 0.5 * (Amax[ponteiro] + Aold)[A_aux > Amax[ponteiro]] #(Amax + Aold)/2
+            A_aux[A_aux < Amin[ponteiro]] = 0.5 * (Amin[ponteiro] + Aold)[A_aux < Amin[ponteiro]]#(Amax + Aold)/2
+            A[ponteiro] = A_aux
+
+            stop_criteria = max(abs(V[ponteiro] / Vold - 1), abs(A[ponteiro] / Aold - 1))
+            ponteiro_aux = ponteiro[ponteiro]
+            ponteiro_aux[stop_criteria < 1e-9] = False
+            ponteiro[ponteiro] = ponteiro_aux
+            i+=1
+            if i>=100:
+                print('maxit in triphasic flash')
+                return False
+
+        self.V[ponteiro_save] = V[ponteiro_save]
+        self.A[ponteiro_save] = A[ponteiro_save]
+        self.L[ponteiro_save] = (1 - self.V[ponteiro_save] - self.A[ponteiro_save])
+
+        self.x[:,ponteiro_save] = z[:,ponteiro_save] / (1 + self.V[ponteiro_save][np.newaxis,:] * (self.K_V[:,ponteiro_save] - 1) + \
+                                    self.A[ponteiro_save][np.newaxis,:] * (self.K_A[:,ponteiro_save] - 1))
+        self.y[:,ponteiro_save] = self.K_V[:,ponteiro_save] * self.x[:,ponteiro_save]
+        self.a[:,ponteiro_save] = self.K_A[:,ponteiro_save] * self.x[:,ponteiro_save]
+
+        return True

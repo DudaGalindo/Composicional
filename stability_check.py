@@ -98,7 +98,7 @@ class StabilityCheck:
 
         print('Fim do fash bifásico')
         if self.L != 1 and self.V != 1:
-            sp2, Kvalue2 = self.Stability_3phase(PR, self.y, np.copy(ponteiro_flash))
+            sp2, Kvalue2 = self.Stability_3phase(PR, self.x, np.copy(ponteiro_flash))
             sp2 = np.round(sp2, 8)
             print(f'sp2: {sp2}')
             print(f'K : {Kvalue2}')
@@ -543,8 +543,8 @@ class StabilityCheck:
 
     """-------------Below starts biphasic flash calculations-----------------"""
     def molar_properties(self, PR, z, ponteiro):
-        #ponteiro = self.molar_properties_Yinghui(PR, z, ponteiro)
-        ponteiro = self.molar_properties_Whitson(PR, z, ponteiro)
+        ponteiro = self.molar_properties_Yinghui(PR, z, ponteiro)
+        #ponteiro = self.molar_properties_Whitson(PR, z, ponteiro)
         return ponteiro
 
     def molar_properties_3phase(self, PR, z, ponteiro):
@@ -1084,6 +1084,11 @@ class StabilityCheck:
         Vmax = 1 / (1 - np.min(self.K_V, axis = 0))
         Vmin = 1 / (1 - np.max(self.K_V, axis = 0))
 
+        #Amax = np.array([1.0])
+        #Amin = np.array([0.0])
+        #Vmax = np.array([1.0])
+        #Vmin = np.array([0.0])
+
         self.V[ponteiro] = (Vmin[ponteiro] + Vmax[ponteiro]) * 0.5
         self.A[ponteiro] = (Amin[ponteiro] + Amax[ponteiro]) * 0.5
 
@@ -1130,9 +1135,10 @@ class StabilityCheck:
         ponteiro_save = np.copy(ponteiro)
         i = 0
         while any(ponteiro):
-            Vold = V[ponteiro]
-            Aold = A[ponteiro]
+            Vold = V[ponteiro].copy()
+            Aold = A[ponteiro].copy()
             V_and_A = np.array([Vold, Aold])
+            #print(V_and_A)
 
             f = np.zeros(2)
 
@@ -1184,14 +1190,14 @@ class StabilityCheck:
             A_aux[A_aux < Amin[ponteiro]] = 0.5 * (Amin[ponteiro] + Aold)[A_aux < Amin[ponteiro]]#(Amax + Aold)/2
             A[ponteiro] = A_aux
 
-            stop_criteria = max(abs(V[ponteiro] / Vold - 1), abs(A[ponteiro] / Aold - 1))
+            stop_criteria = max(abs((V[ponteiro] / Vold) - 1), abs((A[ponteiro] / Aold) - 1))
             ponteiro_aux = ponteiro[ponteiro]
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
             i+=1
-            if i>=100:
+            if i>=3000:
                 print('maxit in triphasic flash')
-                return False
+                import pdb; pdb.set_trace()
 
         self.V[ponteiro_save] = V[ponteiro_save]
         self.A[ponteiro_save] = A[ponteiro_save]

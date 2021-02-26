@@ -559,7 +559,7 @@ class Testes_IGOR(unittest.TestCase):
     @unittest.skip("ok for 2 phases. Not ok for 3 phases")
     def test_Connolly332(self):
         R = 8.3144598
-        # H20, C8, C13, C24, C61+
+                    # H20,   C8,     C13,    C24,    C61+
         z = np.array([0.5, 0.2227, 0.1402, 0.1016, 0.0355])[:,np.newaxis]
         Tc = np.array([647.37, 575.78, 698, 821.3, 1010.056]) # Kelvin
         Pc = np.array([221.2, 34.82, 23.37, 12.07, 7.79])*101325 # pascal
@@ -792,7 +792,7 @@ class Testes_IGOR(unittest.TestCase):
 
     # 3 phases
 
-    @unittest.skip("not ok")
+    #@unittest.skip("not ok")
     def test_Varavei_3_1_triphase(self):
         R = 8.3144598
         z = np.array([0.2, 0.1, 0.1, 0.2, 0.4])[:,np.newaxis]
@@ -840,7 +840,7 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    @unittest.skip("not ok")
+    @unittest.skip("ok - chutando para y, resultados parecidos")
     def test_Connolly432(self):
         R = 8.3144598
                     # H2O,  CO2,      N2,       C1,      C2,      C3,     C4-C6,    PC1,      PC2,      PC3

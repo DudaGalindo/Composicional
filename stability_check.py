@@ -97,8 +97,10 @@ class StabilityCheck:
         self.get_other_properties(PR, Mw)
 
         print('Fim do fash bifásico')
+        #import pdb; pdb.set_trace()
+
         if self.L != 1 and self.V != 1:
-            sp2, Kvalue2 = self.Stability_3phase(PR, self.x, np.copy(ponteiro_flash))
+            sp2, Kvalue2 = self.Stability_3phase(PR, self.y, np.copy(ponteiro_flash))
             sp2 = np.round(sp2, 8)
             print(f'sp2: {sp2}')
             print(f'K : {Kvalue2}')
@@ -106,7 +108,9 @@ class StabilityCheck:
             if any(sp2>1):
                 index_sp2max = np.argmax(sp2)
                 self.K_A = self.K.copy()
-                self.K_V = Kvalue2[index_sp2max].copy()
+                #self.K_A = self.Kw.copy()
+                #self.K_V = Kvalue2[index_sp2max].copy()
+                self.K_V = Kvalue2[1].copy()
                 #import pdb; pdb.set_trace()
                 self.molar_properties_3phase(PR, z, np.ones_like(ponteiro_flash, dtype=bool))
 
@@ -1116,8 +1120,8 @@ class StabilityCheck:
             self.K_V[:,ponteiro] = razao_vl[:,ponteiro] * self.K_V[:,ponteiro]
             self.K_A[:,ponteiro] = razao_al[:,ponteiro] * self.K_A[:,ponteiro]
 
-            stop_criteria_vl = np.max(abs(self.fv/self.fl - 1), axis = 0)
-            stop_criteria_al = np.max(abs(self.fa/self.fl - 1), axis = 0)
+            stop_criteria_vl = np.max(abs((self.fv/(self.fl + 1e-15)) - 1), axis = 0)
+            stop_criteria_al = np.max(abs((self.fa/(self.fl + 1e-15)) - 1), axis = 0)
             stop_criteria = max(stop_criteria_vl, stop_criteria_al)
 
             ponteiro_aux = ponteiro[ponteiro]

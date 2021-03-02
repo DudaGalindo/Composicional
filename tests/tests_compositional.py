@@ -694,23 +694,23 @@ class Testes_IGOR(unittest.TestCase):
     @unittest.skip("ok - Água/Vapor. ok para o chines")
     def test_Sofyan_case7(self):
         R = 8.3144598
-                      # C1 / CO2 / H2S / H2O
+                      # H2O / C1 / CO2 / H2S
         #z = np.array([0.1488, 0.2991, 0.0494, 0.5027])[:,np.newaxis]
         #z = np.array([0.1496, 0.3009, 0.0498, 0.4997])[:,np.newaxis]
         #z = np.array([0.0496, 0.0494, 0.4, 0.5])[:,np.newaxis]
-        z = np.array([0.0504, 0.0503, 0.3986, 0.5008])[:,np.newaxis]
-        Tc = np.array([190.6, 304.2, 373.2, 647.3]) # Kelvin
-        Pc = np.array([46, 73.8, 89.4, 220.5])*101325 # pascal
+        z = np.array([0.5008, 0.0504, 0.0503, 0.3986])[:,np.newaxis]
+        Tc = np.array([647.3, 190.6, 304.2, 373.2]) # Kelvin
+        Pc = np.array([220.5, 46, 73.8, 89.4])*101325 # pascal
         P = np.array([62.6])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0])
         T = np.array([310.95])
-        Mw = np.array([16.04, 44.01, 34.1, 18.01528])*1e-3
-        w = np.array([0.008, 0.225, 0.1,  0.344])
+        Mw = np.array([18.01528, 16.04, 44.01, 34.1])*1e-3
+        w = np.array([0.344, 0.008, 0.225, 0.1])
 
-        Bin = np.array([[0, 0,  0.0755, 0.4928], \
-                        [0, 0,  0.0999, 0], \
-                        [ 0.0755,  0.0999, 0, 0.04], \
-                        [0.4928, 0,  0.04, 0]])
+        Bin = np.array([[0, 0.4928,  0, 0.04], \
+                        [0.4928, 0,  0, 0], \
+                        [0,  0, 0, 0], \
+                        [0.04, 0,  0, 0]])
 
         Pb_guess = 8e6
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
@@ -792,7 +792,7 @@ class Testes_IGOR(unittest.TestCase):
 
     # 3 phases
 
-    #@unittest.skip("not ok")
+    @unittest.skip("not ok")
     def test_Varavei_3_1_triphase(self):
         R = 8.3144598
         z = np.array([0.2, 0.1, 0.1, 0.2, 0.4])[:,np.newaxis]

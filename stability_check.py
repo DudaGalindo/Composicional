@@ -34,6 +34,7 @@ class StabilityCheck:
         PR = PengRobinson(self)
         self.vapor_pressure_pure_substancies(PR)
         self.equilibrium_ratio_Wilson()
+        self.bubble_water_saturation()
         self.equilibrium_ratio_aqueous(z)
         self.L = np.empty(len(self.P))
         self.V = np.empty(len(self.P))
@@ -62,7 +63,7 @@ class StabilityCheck:
                 self.K = Kvalue[4].copy()
             #self.equilibrium_ratio_2flash(Kvalue[index_spmax])
             print(Kvalue)
-            #self.K = Kvalue[4].copy()
+            #self.K = Kvalue[1].copy()
             print(self.K)
             #import pdb; pdb.set_trace()
 
@@ -100,7 +101,7 @@ class StabilityCheck:
         #import pdb; pdb.set_trace()
 
         if self.L != 1 and self.V != 1:
-            sp2, Kvalue2 = self.Stability_3phase(PR, self.y, np.copy(ponteiro_flash))
+            sp2, Kvalue2 = self.Stability_3phase(PR, self.x, np.copy(ponteiro_flash))
             sp2 = np.round(sp2, 8)
             print(f'sp2: {sp2}')
             print(f'K : {Kvalue2}')
@@ -140,6 +141,22 @@ class StabilityCheck:
 
     def equilibrium_ratio_2flash(self, K_2flash):
         self.K = K_2flash.copy()
+
+    def bubble_water_saturation(self):
+        ' Correlation of Wagner and Saul 1987 '
+        a1 = -7.85823
+        a2 = 1.83991
+        a3 = -11.7811
+        a4 = 22.6705
+        a5 = -15.9393
+        a6 = 1.77516
+
+        Tc = 647.14 # Kelvin
+        Pc = 22.064e6 # Pascal
+        tal = 1 - (self.T/Tc)
+
+        ln_P_Pc = (Tc/self.T)*(a1*tal + a2*(tal**1.5) + a3*(tal**3) + a4*(tal**3.5) + a5*(tal**4) + a6*(tal**7.5))
+        self.Pw_sat = np.exp(ln_P_Pc) * Pc
 
     """-------------Below starts stability test calculation -----------------"""
 
@@ -552,7 +569,8 @@ class StabilityCheck:
         return ponteiro
 
     def molar_properties_3phase(self, PR, z, ponteiro):
-        ponteiro = self.molar_properties_Whitson_3phase(PR, z, ponteiro)
+        #ponteiro = self.molar_properties_Whitson_3phase(PR, z, ponteiro)
+        ponteiro = self.molar_properties_Lapene_3phase(PR, z, self.x, self.y, ponteiro)
         return ponteiro
 
     def deltaG_molar_vectorized(self, PR, l, P, ph):
@@ -1088,7 +1106,12 @@ class StabilityCheck:
         Vmax = 1 / (1 - np.min(self.K_V, axis = 0))
         Vmin = 1 / (1 - np.max(self.K_V, axis = 0))
 
-        #Amax = np.array([1.0])
+        Amax = np.max(self.K_A, axis = 0)/(np.max(self.K_A, axis = 0) - 1)
+        Amin = np.min(self.K_A, axis = 0)/(np.min(self.K_A, axis = 0) - 1)
+
+        #Amax = 1. - Vmin
+        #Amin = 1. - Vmax
+
         #Amin = np.array([0.0])
         #Vmax = np.array([1.0])
         #Vmin = np.array([0.0])
@@ -1138,10 +1161,11 @@ class StabilityCheck:
 
         ponteiro_save = np.copy(ponteiro)
         i = 0
+        V_and_A = np.array([V, A])
         while any(ponteiro):
             Vold = V[ponteiro].copy()
             Aold = A[ponteiro].copy()
-            V_and_A = np.array([Vold, Aold])
+            #V_and_A = np.array([Vold, Aold])
             #print(V_and_A)
 
             f = np.zeros(2)
@@ -1154,21 +1178,21 @@ class StabilityCheck:
                     V[ponteiro][np.newaxis,:] * (self.K_V[:,ponteiro] - 1) + \
                     A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)), axis = 0)
 
-            df_VdV = - np.sum((self.K_V[:,ponteiro] - 1) ** 2 * z[:,ponteiro] / (1 + \
+            df_VdV = - np.sum(((self.K_V[:,ponteiro] - 1) ** 2) * z[:,ponteiro] / ((1 + \
                     V[ponteiro][np.newaxis,:] * (self.K_V[:,ponteiro] - 1) + \
-                    A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)) ** 2, axis = 0)
+                    A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)) ** 2), axis = 0)
 
-            df_VdA = - np.sum((self.K_V[:,ponteiro] - 1) * (self.K_A[:,ponteiro] - 1) * z[:,ponteiro] / (1 + \
+            df_VdA = - np.sum((self.K_V[:,ponteiro] - 1) * (self.K_A[:,ponteiro] - 1) * z[:,ponteiro] / ((1 + \
                     V[ponteiro][np.newaxis,:] * (self.K_V[:,ponteiro] - 1) + \
-                    A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)) ** 2, axis = 0)
+                    A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)) ** 2), axis = 0)
 
-            df_AdV = - np.sum((self.K_V[:,ponteiro] - 1) * (self.K_A[:,ponteiro] - 1) * z[:,ponteiro] / (1 + \
+            df_AdV = - np.sum((self.K_V[:,ponteiro] - 1) * (self.K_A[:,ponteiro] - 1) * z[:,ponteiro] / ((1 + \
                     V[ponteiro][np.newaxis,:] * (self.K_V[:,ponteiro] - 1) + \
-                    A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)) ** 2, axis = 0)
+                    A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)) ** 2), axis = 0)
 
-            df_AdA = - np.sum((self.K_A[:,ponteiro] - 1) ** 2 * z[:,ponteiro] / (1 + \
+            df_AdA = - np.sum(((self.K_A[:,ponteiro] - 1) ** 2) * z[:,ponteiro] / ((1 + \
                     V[ponteiro][np.newaxis,:] * (self.K_V[:,ponteiro] - 1) + \
-                    A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)) ** 2, axis = 0)
+                    A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)) ** 2), axis = 0)
 
             Jacobian = np.empty([2,2])
             Jacobian[0][0] = df_VdV
@@ -1181,17 +1205,17 @@ class StabilityCheck:
             except: import pdb; pdb.set_trace()
 
             V_and_A = V_and_A - np.reshape(f.dot(Jacobian_inv), (2,1))  #Newton-Raphson iterative method
-            V = V_and_A[0]
-            A = V_and_A[1]
+            V = V_and_A[0].copy()
+            A = V_and_A[1].copy()
 
             V_aux = V[ponteiro]
             V_aux[V_aux > Vmax[ponteiro]] = 0.5 * (Vmax[ponteiro] + Vold)[V_aux > Vmax[ponteiro]] #(Vmax + Vold)/2
-            V_aux[V_aux < Vmin[ponteiro]] = 0.5 * (Vmin[ponteiro] + Vold)[V_aux < Vmin[ponteiro]]#(Vmax + Vold)/2
+            V_aux[V_aux < Vmin[ponteiro]] = 0.5 * (Vmin[ponteiro] + Vold)[V_aux < Vmin[ponteiro]]#(Vmin + Vold)/2
             V[ponteiro] = V_aux
 
             A_aux = A[ponteiro]
             A_aux[A_aux > Amax[ponteiro]] = 0.5 * (Amax[ponteiro] + Aold)[A_aux > Amax[ponteiro]] #(Amax + Aold)/2
-            A_aux[A_aux < Amin[ponteiro]] = 0.5 * (Amin[ponteiro] + Aold)[A_aux < Amin[ponteiro]]#(Amax + Aold)/2
+            A_aux[A_aux < Amin[ponteiro]] = 0.5 * (Amin[ponteiro] + Aold)[A_aux < Amin[ponteiro]]#(Amin + Aold)/2
             A[ponteiro] = A_aux
 
             stop_criteria = max(abs((V[ponteiro] / Vold) - 1), abs((A[ponteiro] / Aold) - 1))
@@ -1213,3 +1237,154 @@ class StabilityCheck:
         self.a[:,ponteiro_save] = self.K_A[:,ponteiro_save] * self.x[:,ponteiro_save]
 
         return True
+
+
+
+
+    def molar_properties_Lapene_3phase(self, PR, z, x, y, ponteiro):
+        self.K_V = self.Kwilson.copy()
+        self.K_V[0] = (self.Pc[0]/self.P)*(self.T/self.Tc[0])
+
+        self.y[0] = self.Pw_sat / self.P
+        K2 = self.y[0].copy() # Nao sei se ta certo
+        self.x[0] = self.y[0] / self.K_V[0]
+        self.a[:] = 0
+        self.a[0] = 1
+
+        t0 = time.time()
+
+        razao_vl = np.ones(z.shape)/2
+        razao_av = np.ones(1)/2
+        ponteiro_save = np.copy(ponteiro)
+        while any(ponteiro):
+            self.y[0] = K2
+            self.x[0] = self.y[0] / self.K_V[0]
+
+            K_V_max = max(self.K_V[1:])
+            K_V_min = min(self.K_V[1:])
+            Kw_ast = (1 - self.y[0]) / (1 - self.x[0])
+            Kwz = (1 - z[0]) / (1 - self.x[0])
+
+            Vmax = Kwz / (Kw_ast - K_V_min)
+            Vmin = Kwz / (Kw_ast - K_V_max)
+
+            if (K_V_max < Kw_ast or K_V_min > Kw_ast):
+                print('Solve for V a classical RR equation')
+                import pdb; pdb.set_trace()
+
+            V_dash = (z[0] - self.x[0]) / (self.y[0] - self.x[0])
+            Objetive_function_V_dash = np.sum((self.K_V[1:,ponteiro] - Kw_ast) * z[1:,ponteiro] / (Kwz + \
+                                        V_dash * (self.K_V[1:,ponteiro] - Kw_ast)), axis = 0)
+
+            ' determine position of V with respect V_dash '
+            if (V_dash > Vmin and V_dash < Vmax):
+                if (Objetive_function_V_dash > 0):
+                    V_bigger_then_Vdash = True
+                else:
+                    V_bigger_then_Vdash = False
+            elif (V_dash < Vmin):
+                V_bigger_then_Vdash = True
+            elif (V_dash > Vmax):
+                V_bigger_then_Vdash = False
+
+            ' determine presence or absence of water '
+            if not V_bigger_then_Vdash:
+                if (self.y[0] < self.x[0]):
+                    self.A = 0
+                    print('Não tem água no sistema')
+                else:
+                    print('Tem água no sistema')
+            if V_bigger_then_Vdash:
+                if (self.y[0] > self.x[0]):
+                    self.A = 0
+                    print('Não tem água no sistema')
+                else:
+                    print('Tem água no sistema')
+
+            self.solve_objective_function_Lapene_for_V(z, self.x, self.y, self.V, Kw_ast, Kwz, K2, np.copy(ponteiro))
+
+            lnphil = self.lnphi_based_on_deltaG(PR, self.x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+            lnphiv = self.lnphi_based_on_deltaG(PR, self.y[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
+            lnphia = self.lnphi_based_on_deltaG(PR, self.a[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+
+
+            self.fv = np.exp(lnphiv) * (self.y[:,ponteiro] * self.P[ponteiro][np.newaxis,:])
+            self.fl = np.exp(lnphil) * (self.x[:,ponteiro] * self.P[ponteiro][np.newaxis,:])
+            self.fa = np.exp(lnphia) * (self.a[:,ponteiro] * self.P[ponteiro][np.newaxis,:])
+
+
+            razao_vl[:,ponteiro] = np.divide(self.fl, self.fv, out = razao_vl[:,ponteiro] / razao_vl[:,ponteiro] * (1 + 1e-10),
+                              where = self.fv != 0)
+            #razao_al[:,ponteiro] = np.divide(self.fl, self.fa, out = razao_al[:,ponteiro] / razao_al[:,ponteiro] * (1 + 1e-10),
+                              #where = self.fa != 0)
+            razao_av[ponteiro] = self.fa[0,ponteiro] / self.fv[0,ponteiro] * (1 + 1e-10)
+
+
+            self.K_V[:,ponteiro] = razao_vl[:,ponteiro] * self.K_V[:,ponteiro]
+            K2 = K2 * razao_av
+
+            stop_criteria = np.max(abs((self.fl/(self.fv + 1e-15)) - 1), axis = 0)
+            ponteiro_aux = ponteiro[ponteiro]
+            ponteiro_aux[stop_criteria < 1e-9] = False
+            ponteiro[ponteiro] = ponteiro_aux
+
+            #ponteiro[((self.V)<0) + ((self.V)>1)] = False
+
+        t1 = time.time()
+        print('Lapene time for 3phase flash:', t1-t0)
+
+        V_ast = (1 - z[0]) / (1 - y[0])
+        if self.V > V_ast:
+            self.V = V_ast
+            print('V maior que o V asterisco')
+        
+        self.A = (z[0] + self.V*(x[0] - y[0]) - x[0]) / (1 - x[0])
+        self.L = 1 - self.A - self.V
+
+        return ponteiro_save
+
+    def solve_objective_function_Lapene_for_V(self, z, x, y, V, Kw_ast, Kwz, K2, ponteiro):
+        ' Leibovici–Neoschil window '
+        Vmin = np.max(((self.K_V[self.K_V>Kw_ast] * z[self.K_V>Kw_ast] - Kwz) / (self.K_V[self.K_V>Kw_ast] - Kw_ast)))
+        Vmax = np.min(((Kwz - z[self.K_V<Kw_ast]) / (Kw_ast - self.K_V[self.K_V<Kw_ast])), axis = 0)
+
+        V[ponteiro] = 0.5*(Vmax + Vmin) # Chute inicial
+
+        ponteiro_save = np.copy(ponteiro)
+        i = 0
+
+        while any(ponteiro):
+            Vold = V[ponteiro]
+
+            G = np.sum((self.K_V[1:,ponteiro] - Kw_ast) * z[1:,ponteiro] / (Kwz + \
+                        V * (self.K_V[1:,ponteiro] - Kw_ast)), axis = 0)
+
+            dG = - np.sum(((self.K_V[1:,ponteiro] - Kw_ast)**2) * z[1:,ponteiro] / (Kwz + \
+                        V * (self.K_V[1:,ponteiro] - Kw_ast))**2, axis = 0)
+
+            V[ponteiro] = V[ponteiro] - G / dG # Newton-Raphson iterative method
+
+            V_aux = V[ponteiro]
+            #V_aux[V_aux > Vmax[ponteiro]] = 0.5 * (Vmax[ponteiro] + Vold)[V_aux > Vmax[ponteiro]] #(Vmax + Vold)/2
+            #V_aux[V_aux < Vmin[ponteiro]] = 0.5 * (Vmin[ponteiro] + Vold)[V_aux < Vmin[ponteiro]]#(Vmin + Vold)/2
+            V_aux[V_aux > Vmax] = 0.5 * (Vmax + Vold)[V_aux > Vmax] #(Vmax + Vold)/2
+            V_aux[V_aux < Vmin] = 0.5 * (Vmin + Vold)[V_aux < Vmin]#(Vmin + Vold)/2
+            V[ponteiro] = V_aux
+
+            stop_criteria = abs((V[ponteiro] / Vold) - 1)
+            ponteiro_aux = ponteiro[ponteiro]
+            ponteiro_aux[stop_criteria < 1e-9] = False
+            ponteiro[ponteiro] = ponteiro_aux
+            i+=1
+            if i>=3000:
+                print('maxit in triphasic flash')
+                import pdb; pdb.set_trace()
+
+        x[1:] = z[1:] / (1 + V*(self.K_V[1:] - 1 + (y[0] - x[0])/(1 - x[0])) + (x[0] - z[0])/(1 - x[0]))
+        y[1:] = x[1:] * self.K_V[1:]
+        y[0] = K2
+        x[0] = y[0] / self.K_V[0]
+
+        self.V[ponteiro_save] = V[ponteiro_save]
+        self.x[:,ponteiro_save] = x
+        self.y[:,ponteiro_save] = y

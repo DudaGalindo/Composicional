@@ -101,18 +101,17 @@ class StabilityCheck:
         #import pdb; pdb.set_trace()
 
         if self.L != 1 and self.V != 1:
-            sp2, Kvalue2 = self.Stability_3phase(PR, self.x, np.copy(ponteiro_flash))
-            sp2 = np.round(sp2, 8)
-            print(f'sp2: {sp2}')
-            print(f'K : {Kvalue2}')
+            #sp2, Kvalue2 = self.Stability_3phase(PR, self.y, np.copy(ponteiro_flash))
+            #sp2 = np.round(sp2, 8)
+            #print(f'sp2: {sp2}')
+            #print(f'K : {Kvalue2}')
 
-            if any(sp2>1):
-                index_sp2max = np.argmax(sp2)
-                self.K_A = self.K.copy()
-                #self.K_A = self.Kw.copy()
-                #self.K_V = Kvalue2[index_sp2max].copy()
-                self.K_V = Kvalue2[1].copy()
-                #import pdb; pdb.set_trace()
+            #if any(sp2>1):
+            if (2>1):
+                #index_sp2max = np.argmax(sp2)
+                #self.K_A = self.K.copy()
+                #self.K_V = Kvalue2[1].copy()
+                self.K_V = self.Kwilson.copy()
                 self.molar_properties_3phase(PR, z, np.ones_like(ponteiro_flash, dtype=bool))
 
 
@@ -456,6 +455,7 @@ class StabilityCheck:
             ponteiro_aux = ponteiro[ponteiro]
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
+
 
         lny = np.log(y)
         TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphix[:] - np.log(x)))
@@ -1337,7 +1337,7 @@ class StabilityCheck:
         if self.V > V_ast:
             self.V = V_ast
             print('V maior que o V asterisco')
-        
+
         self.A = (z[0] + self.V*(x[0] - y[0]) - x[0]) / (1 - x[0])
         self.L = 1 - self.A - self.V
 

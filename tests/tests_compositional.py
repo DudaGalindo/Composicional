@@ -627,27 +627,6 @@ class Testes_IGOR(unittest.TestCase):
         obj.run(z,Mw)
         import pdb; pdb.set_trace()
 
-    @unittest.skip("not ok - Water/Oil")
-    def test_lapene_water_benzene_toluene(self):
-        R = 8.3144598
-                      # H20 / tolueno / benzeno
-        z = np.array([0.29, 0.01, 0.7])[:,np.newaxis]
-        Tc = np.array([647, 593, 562]) # Kelvin
-        Pc = np.array([220.5, 41, 48.9])*101325 # pascal
-        P = np.array([1])*101325
-        Pv = np.array([0.0, 0.0, 0.0])
-        T = np.array([342])
-        Mw = np.array([18.02, 92.13, 78.11])*1e-3
-        w = np.array([0.344, 0.262, 0.212])
-
-        Bin = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
-
-        Pb_guess = 8e6
-        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
-        obj.run(z,Mw)
-
-        import pdb; pdb.set_trace()
-
     @unittest.skip("aparentemente ok p/ o chines tb - não tem como certificar")
     def test_li2019_water_C3_C16(self):
         R = 8.3144598
@@ -868,4 +847,123 @@ class Testes_IGOR(unittest.TestCase):
         Pb_guess = 8e6
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,Pb_guess)
         obj.run(z,Mw)
+        import pdb; pdb.set_trace()
+
+    @unittest.skip("not ok - Water/Oil")
+    def test_lapene_water_benzene_toluene(self):
+        R = 8.3144598
+                      # H20 / tolueno / benzeno
+        z = np.array([0.29, 0.01, 0.7])[:,np.newaxis]
+        Tc = np.array([647, 593, 562]) # Kelvin
+        Pc = np.array([220.5, 41, 48.9])*101325 # pascal
+        P = np.array([1])*101325
+        Pv = np.array([0.0, 0.0, 0.0])
+        T = np.array([341])
+        Mw = np.array([18.02, 92.13, 78.11])*1e-3
+        w = np.array([0.344, 0.262, 0.212])
+
+        Bin = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj.run(z,Mw)
+
+        import pdb; pdb.set_trace()
+
+    @unittest.skip("ok - resolver questão do V negativo - rever matriz de coef binario")
+    def test_lapene_water_nitrogen_C10_C20(self):
+        R = 8.3144598
+                      # H20 / nitrogen / C10 / C20
+        z = np.array([0.55, 0.1, 0.1, 0.25])[:,np.newaxis]
+        Tc = np.array([647, 126.2, 622, 782]) # Kelvin
+        Pc = np.array([220.5, 34, 25.3, 14.6])*101325 # pascal
+        P = np.array([50])*101325
+        Pv = np.array([0.0, 0.0, 0.0, 0.0])
+        T = np.array([250])
+        Mw = np.array([18, 28, 134, 275])*1e-3
+        w = np.array([0.344, 0.04, 0.443, 0.816])
+
+        Bin = np.array([[0, 0.4778, 0.5, 0.5], [0.4778, 0, 0.1, 0.1], \
+                        [0.5, 0.1, 0, 0], [0.5, 0.1, 0, 0]])
+        Bin = np.array([[0, 0, 0, 0], [0, 0, 0, 0], \
+                        [0, 0, 0, 0], [0, 0, 0, 0]])
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj.run(z,Mw)
+
+        import pdb; pdb.set_trace()
+
+    @unittest.skip("ok - conferir mais no detalhe para P=200 bar")
+    def test_lapene_18_components(self):
+        R = 8.3144598
+
+        z = np.array([20, 0.26, 3.60, 74.12, 7.94, 3.29, 0.68, 1.24, 0.55, 0.61, \
+                    0.87, 1.15, 1.07, 0.95, 0.67, 1.65, 1.13, 0.22])[:,np.newaxis]
+        z = z/np.sum(z)
+        Tc = np.array([647.37, 126.20, 304.21, 190.60, 305.40, 369.80, 408.10, 425.20, \
+                        464.74, 469.60, 515.28, 553.84, 581.28, 609.35, 626.97, 658.15, 778.15, 998.15]) # Kelvin
+        Pc = np.array([221.20, 33.94, 73.77, 46.00, 48.84, 42.46, 36.48, 38.00, 34.77, \
+                        33.74, 32.57, 31.00, 28.50, 26.50, 24.60, 21.20, 15.70, 13.50])*101325 # pascal
+        P = np.array([200])*101325
+        Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, \
+                        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        T = np.array([450])
+        Mw = np.array([18.02, 28.01, 44.01, 16.04, 30.07, 44.10, 58.12, 58.12, 71.94, \
+                        72.15, 84.99, 97.87, 111.54, 126.10, 140.14, 179.30, 290.60, 450.00])*1e-3
+        w = np.array([0.344, 0.04, 0.2250, 0.0115, 0.0908, 0.1454, 0.1760, 0.1928, 0.2235, 0.2273, \
+                        0.2637, 0.2897, 0.3245, 0.3791, 0.4363, 0.5200, 0.6500, 0.7200])
+
+        Bin = np.array([[0, 0.4778, 0.1896, 0.4850, 0.4920, 0.5525, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5], \
+                        [0.4778, 0, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1], \
+                        [0.1896, 0.1, 0, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12, 0.12], \
+                        [0.485, 0.1, 0.12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.02, 0.03, 0.05, 0.07, 0.085, 0.07], \
+                        [0.492, 0.1, 0.12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.02, 0.04, 0.05, 0.04], \
+                        [0.5525, 0.1, 0.12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                        [0.5, 0.1, 0.12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                        [0.5, 0.1, 0.12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                        [0.5, 0.1, 0.12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                        [0.5, 0.1, 0.12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                        [0.5, 0.1, 0.12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                        [0.5, 0.1, 0.12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                        [0.5, 0.1, 0.12, 0.02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                        [0.5, 0.1, 0.12, 0.03, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                        [0.5, 0.1, 0.12, 0.05, 0.02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                        [0.5, 0.1, 0.12, 0.07, 0.04, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                        [0.5, 0.1, 0.12, 0.085, 0.05, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                        [0.5, 0.1, 0.12, 0.07, 0.04, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj.run(z,Mw)
+
+        import pdb; pdb.set_trace()
+
+    #@unittest.skip("not ok - região trifásica muito estreita")
+    def test_lapene_4_5(self):
+        R = 8.3144598
+
+        z = np.array([0.983415, 0.000325, 0.003012, 0.002570, 0.002252, 0.001912, 0.001676, 0.004838])[:,np.newaxis]
+        Tc = np.array([647.37, 635.64, 701.24, 772.05, 826.30, 879.55, 936.97, 1260.00]) # Kelvin
+        Pc = np.array([221.20, 24.11, 19.25, 15.10, 12.29, 9.94, 7.79, 6.00])*101325 # pascal
+        P = np.array([7])*101325
+        Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        T = np.array([400])
+        Mw = np.array([18.02, 143.66, 193.82, 263.40, 336.29, 430.48, 573.05, 1033.96])*1e-3
+        w = np.array([0.344, 0.4645, 0.6087, 0.7880, 0.9467, 1.1042, 1.2730, 1.6500])
+
+        Bin = np.array([[0, 0, 0, 0, 0, 0, 0, 0], \
+                        [0, 0, 0, 0, 0, 0, 0, 0], \
+                        [0, 0, 0, 0, 0, 0, 0, 0], \
+                        [0, 0, 0, 0, 0, 0, 0, 0], \
+                        [0, 0, 0, 0, 0, 0, 0, 0], \
+                        [0, 0, 0, 0, 0, 0, 0, 0], \
+                        [0, 0, 0, 0, 0, 0, 0, 0], \
+                        [0, 0, 0, 0, 0, 0, 0, 0]])
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj.run(z,Mw)
+
         import pdb; pdb.set_trace()

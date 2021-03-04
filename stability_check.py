@@ -1322,7 +1322,8 @@ class StabilityCheck:
             self.K_V[:,ponteiro] = razao_vl[:,ponteiro] * self.K_V[:,ponteiro]
             K2 = K2 * razao_av
 
-            stop_criteria = np.max(abs((self.fl/(self.fv + 1e-15)) - 1), axis = 0)
+            #stop_criteria = np.max(abs((self.fl/(self.fv + 1e-15)) - 1), axis = 0)
+            stop_criteria = (np.sum(((self.fl/(self.fv + 1e-15)) - 1)**2))**0.5
             ponteiro_aux = ponteiro[ponteiro]
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux

@@ -975,7 +975,7 @@ class Testes_IGOR(unittest.TestCase):
         Pc = np.array([22089.00, 2969.00, 2439.00, 1824.00])*1000 # pascal
         P = np.array([500])*1000
         Pv = np.array([0.0, 0.0, 0.0, 0.0])
-        T = np.array([388])
+        T = np.array([338])
         Mw = np.array([18, 86.178, 142.3, 206])*1e-3
         w = np.array([0.344, 0.296, 0.5764, 0.7678])
 
@@ -997,7 +997,7 @@ class Testes_IGOR(unittest.TestCase):
         Pc = np.array([22089.00, 2439.00, 1824.00, 1581.00, 1435.00, 1420.00])*1000 # pascal
         P = np.array([1500])*1000
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([400])
+        T = np.array([550])
         Mw = np.array([18, 142.3, 206, 268.31, 300.2675, 412.7])*1e-3
         w = np.array([0.344, 0.5764, 0.7678, 0.9046, 1.0755, 1.1014])
 
@@ -1011,7 +1011,7 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    @unittest.skip("aparentemente ok")
+    #@unittest.skip("aparentemente ok")
     def test_heidari_4_8_1_3(self):
         R = 8.3144598
                       # H20 / CO2 / C2 / nC5 / C8 / C12
@@ -1020,7 +1020,7 @@ class Testes_IGOR(unittest.TestCase):
         Pc = np.array([22048.3, 7376.1, 4883.6, 3374.0, 2950.4, 2191.6])*1000 # pascal
         P = np.array([7040])*1000
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([320])
+        T = np.array([290])
         Mw = np.array([18, 44.01, 30.070, 60.05, 96.08, 162.27])*1e-3
         w = np.array([0.344, 0.2250, 0.098, 0.251, 0.351, 0.522])
 
@@ -1030,29 +1030,6 @@ class Testes_IGOR(unittest.TestCase):
                         [0.5, 0.15, 0.008578, 0, 0.001765, 0.008637], \
                         [0.48, 0.15, 0.01796, 0.001765, 0, 0.002618], \
                         [0.48, 0.15, 0.033751, 0.008637, 0.002618, 0]])
-
-        Pb_guess = 8e6
-        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
-        obj.run(z,Mw)
-
-        import pdb; pdb.set_trace()
-
-    @unittest.skip("aparentemente ok")
-    def test_heidari_4_8_1_5(self):
-        R = 8.3144598
-                      # H20 / C1 / C40
-        z = np.array([0.3333, 0.3333, 0.3334])[:,np.newaxis]
-        Tc = np.array([647.3, 190.6, 934.3]) # Kelvin
-        Pc = np.array([22048.32, 4599.93, 800.43])*1000 # pascal
-        P = np.array([7040])*1000
-        Pv = np.array([0.0, 0.0, 0.0])
-        T = np.array([320])
-        Mw = np.array([18, ])*1e-3
-        w = np.array([0.344, 0.008, 1.259])
-
-        Bin = np.array([[0, 0.4907, 0.4800], \
-                        [0.4907, 0, 0.125465], \
-                        [0.4800, 0.125465, 0]])
 
         Pb_guess = 8e6
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)

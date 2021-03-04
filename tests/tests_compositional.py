@@ -849,7 +849,7 @@ class Testes_IGOR(unittest.TestCase):
         obj.run(z,Mw)
         import pdb; pdb.set_trace()
 
-    @unittest.skip("not ok - Water/Oil")
+    @unittest.skip("mais ou menos ok")
     def test_lapene_water_benzene_toluene(self):
         R = 8.3144598
                       # H20 / tolueno / benzeno
@@ -858,7 +858,7 @@ class Testes_IGOR(unittest.TestCase):
         Pc = np.array([220.5, 41, 48.9])*101325 # pascal
         P = np.array([1])*101325
         Pv = np.array([0.0, 0.0, 0.0])
-        T = np.array([341])
+        T = np.array([345.5])
         Mw = np.array([18.02, 92.13, 78.11])*1e-3
         w = np.array([0.344, 0.262, 0.212])
 
@@ -870,21 +870,19 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    @unittest.skip("ok - resolver questão do V negativo - rever matriz de coef binario")
+    @unittest.skip("ok - resolver questão do V negativo")
     def test_lapene_water_nitrogen_C10_C20(self):
         R = 8.3144598
                       # H20 / nitrogen / C10 / C20
         z = np.array([0.55, 0.1, 0.1, 0.25])[:,np.newaxis]
         Tc = np.array([647, 126.2, 622, 782]) # Kelvin
         Pc = np.array([220.5, 34, 25.3, 14.6])*101325 # pascal
-        P = np.array([50])*101325
+        P = np.array([150])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0])
-        T = np.array([250])
+        T = np.array([450])
         Mw = np.array([18, 28, 134, 275])*1e-3
         w = np.array([0.344, 0.04, 0.443, 0.816])
 
-        Bin = np.array([[0, 0.4778, 0.5, 0.5], [0.4778, 0, 0.1, 0.1], \
-                        [0.5, 0.1, 0, 0], [0.5, 0.1, 0, 0]])
         Bin = np.array([[0, 0, 0, 0], [0, 0, 0, 0], \
                         [0, 0, 0, 0], [0, 0, 0, 0]])
 
@@ -894,7 +892,7 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    @unittest.skip("ok - conferir mais no detalhe para P=200 bar")
+    @unittest.skip("ok")
     def test_lapene_18_components(self):
         R = 8.3144598
 
@@ -940,7 +938,7 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    #@unittest.skip("not ok - região trifásica muito estreita")
+    @unittest.skip("not ok - região trifásica muito estreita, pau no flash bifasico")
     def test_lapene_4_5(self):
         R = 8.3144598
 
@@ -949,7 +947,7 @@ class Testes_IGOR(unittest.TestCase):
         Pc = np.array([221.20, 24.11, 19.25, 15.10, 12.29, 9.94, 7.79, 6.00])*101325 # pascal
         P = np.array([7])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([400])
+        T = np.array([438.0])
         Mw = np.array([18.02, 143.66, 193.82, 263.40, 336.29, 430.48, 573.05, 1033.96])*1e-3
         w = np.array([0.344, 0.4645, 0.6087, 0.7880, 0.9467, 1.1042, 1.2730, 1.6500])
 
@@ -961,6 +959,100 @@ class Testes_IGOR(unittest.TestCase):
                         [0, 0, 0, 0, 0, 0, 0, 0], \
                         [0, 0, 0, 0, 0, 0, 0, 0], \
                         [0, 0, 0, 0, 0, 0, 0, 0]])
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj.run(z,Mw)
+
+        import pdb; pdb.set_trace()
+
+    @unittest.skip("not ok")
+    def test_heidari_water_C6_C10_C15(self):
+        R = 8.3144598
+                      # H20 / C6 / C10 / C15
+        z = np.array([0.55, 0.1, 0.1, 0.25])[:,np.newaxis]
+        Tc = np.array([647.3, 507.4, 594.906, 676.266]) # Kelvin
+        Pc = np.array([22089.00, 2969.00, 2439.00, 1824.00])*1000 # pascal
+        P = np.array([500])*1000
+        Pv = np.array([0.0, 0.0, 0.0, 0.0])
+        T = np.array([388])
+        Mw = np.array([18, 86.178, 142.3, 206])*1e-3
+        w = np.array([0.344, 0.296, 0.5764, 0.7678])
+
+        Bin = np.array([[0, 0.48, 0.48, 0.48], [0.48, 0, 0.00280, 0.01097], \
+                        [0.48, 0.00280, 0, 0.02657], [0.48, 0.01097, 0.02657, 0]])
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj.run(z,Mw)
+
+        import pdb; pdb.set_trace()
+
+    @unittest.skip("not ok")
+    def test_heidari_water_C10_C15_C19_C25_C26(self):
+        R = 8.3144598
+                      # H20 / C10 / C15 / C19 / C25 / C26
+        z = np.array([0.0915, 0.0004, 0.0009, 0.0009, 0.0023, 0.9040])[:,np.newaxis]
+        Tc = np.array([647.3, 594.906, 676.266, 726.653, 791.757, 802.131]) # Kelvin
+        Pc = np.array([22089.00, 2439.00, 1824.00, 1581.00, 1435.00, 1420.00])*1000 # pascal
+        P = np.array([1500])*1000
+        Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        T = np.array([400])
+        Mw = np.array([18, 142.3, 206, 268.31, 300.2675, 412.7])*1e-3
+        w = np.array([0.344, 0.5764, 0.7678, 0.9046, 1.0755, 1.1014])
+
+        Bin = np.array([[0, 0.48, 0.48, 0.48, 0.48, 0.48], [0.48, 0, 0, 0, 0, 0], \
+                        [0.48, 0, 0, 0, 0, 0], [0.48, 0, 0, 0, 0, 0], \
+                        [0.48, 0, 0, 0, 0, 0], [0.48, 0, 0, 0, 0, 0]])
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj.run(z,Mw)
+
+        import pdb; pdb.set_trace()
+
+    @unittest.skip("aparentemente ok")
+    def test_heidari_4_8_1_3(self):
+        R = 8.3144598
+                      # H20 / CO2 / C2 / nC5 / C8 / C12
+        z = np.array([0.134, 0.800, 0.033, 0.011, 0.011, 0.011])[:,np.newaxis]
+        Tc = np.array([647.3, 304.2, 305.4, 469.6, 570.5, 663.9]) # Kelvin
+        Pc = np.array([22048.3, 7376.1, 4883.6, 3374.0, 2950.4, 2191.6])*1000 # pascal
+        P = np.array([7040])*1000
+        Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        T = np.array([320])
+        Mw = np.array([18, 44.01, 30.070, 60.05, 96.08, 162.27])*1e-3
+        w = np.array([0.344, 0.2250, 0.098, 0.251, 0.351, 0.522])
+
+        Bin = np.array([[0, 0.2, 0.4911, 0.5, 0.48, 0.48], \
+                        [0.2, 0, 0.15, 0.15, 0.15, 0.15], \
+                        [0.4911, 0.15, 0, 0.008578, 0.01796, 0.033751], \
+                        [0.5, 0.15, 0.008578, 0, 0.001765, 0.008637], \
+                        [0.48, 0.15, 0.01796, 0.001765, 0, 0.002618], \
+                        [0.48, 0.15, 0.033751, 0.008637, 0.002618, 0]])
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj.run(z,Mw)
+
+        import pdb; pdb.set_trace()
+
+    @unittest.skip("aparentemente ok")
+    def test_heidari_4_8_1_5(self):
+        R = 8.3144598
+                      # H20 / C1 / C40
+        z = np.array([0.3333, 0.3333, 0.3334])[:,np.newaxis]
+        Tc = np.array([647.3, 190.6, 934.3]) # Kelvin
+        Pc = np.array([22048.32, 4599.93, 800.43])*1000 # pascal
+        P = np.array([7040])*1000
+        Pv = np.array([0.0, 0.0, 0.0])
+        T = np.array([320])
+        Mw = np.array([18, ])*1e-3
+        w = np.array([0.344, 0.008, 1.259])
+
+        Bin = np.array([[0, 0.4907, 0.4800], \
+                        [0.4907, 0, 0.125465], \
+                        [0.4800, 0.125465, 0]])
 
         Pb_guess = 8e6
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)

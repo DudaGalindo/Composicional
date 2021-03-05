@@ -98,14 +98,14 @@ class StabilityCheck:
         self.get_other_properties(PR, Mw)
 
         print('Fim do fash bifásico')
-        #import pdb; pdb.set_trace()
+        import pdb; pdb.set_trace()
 
         if self.L != 1 and self.V != 1:
-            sp2, Kvalue2 = self.Stability_3phase(PR, self.y, np.copy(ponteiro_flash))
+            sp2, Kvalue2 = self.Stability_3phase(PR, self.x, np.copy(ponteiro_flash))
             sp2 = np.round(sp2, 8)
             print(f'sp2: {sp2}')
             print(f'K : {Kvalue2}')
-
+            #sp2[0] = 5
             if any(sp2>1):
                 index_sp2max = np.argmax(sp2)
                 self.K_A = self.K.copy()
@@ -134,8 +134,10 @@ class StabilityCheck:
         self.Kw = np.zeros_like(z)
         self.Kw[0] = 0.999 / z[0]
         self.Kw[1:] = 0.001 / (len(z) - 1) / z[1:]
-        #self.Kw[-1] = 0.999 / z[-1]
-        #self.Kw[0:-1] = 0.001 / (len(z) - 1) / z[0:-1]
+
+        #self.Kw = 0.001 / (len(z) - 1) / z
+        #self.Kw[3] = 0.999 / z[-1]
+
 
     def equilibrium_ratio_2flash(self, K_2flash):
         self.K = K_2flash.copy()
@@ -569,7 +571,10 @@ class StabilityCheck:
 
     def molar_properties_3phase(self, PR, z, ponteiro):
         #ponteiro = self.molar_properties_Whitson_3phase(PR, z, ponteiro)
-        ponteiro = self.molar_properties_Lapene_3phase(PR, z, self.x, self.y, self.V, ponteiro)
+        #V = self.V.copy()
+        #x = self.x.copy()
+        #y = self.y.copy()
+        ponteiro = self.molar_properties_Lapene_3phase(PR, z, ponteiro)
         return ponteiro
 
     def deltaG_molar_vectorized(self, PR, l, P, ph):
@@ -1240,12 +1245,16 @@ class StabilityCheck:
 
 
 
-    def molar_properties_Lapene_3phase(self, PR, z, x, y, V, ponteiro):
+    def molar_properties_Lapene_3phase(self, PR, z, ponteiro):
         #self.K_V = self.Kwilson.copy()
+        V = self.V.copy()
+        x = self.x.copy()
+        y = self.y.copy()
+
         self.K_V[0] = (self.Pc[0]/self.P)*(self.T/self.Tc[0])
 
         y[0] = self.Pw_sat / self.P
-        self.K2w = self.y[0].copy() # Nao sei se ta certo
+        self.K2w = y[0].copy() # Nao sei se ta certo
         x[0] = y[0] / self.K_V[0]
         self.a[:] = 0
         self.a[0] = 1
@@ -1343,9 +1352,9 @@ class StabilityCheck:
             V = 0
 
         # Aqui atualizar tudo
-        self.V[ponteiro_save] = V[ponteiro_save]
-        self.x[:,ponteiro_save] = x
-        self.y[:,ponteiro_save] = y
+        self.V[ponteiro_save] = V[ponteiro_save].copy()
+        self.x[:,ponteiro_save] = x.copy()
+        self.y[:,ponteiro_save] = y.copy()
         self.A = (z[0] + self.V*(self.x[0] - self.y[0]) - self.x[0]) / (1 - self.x[0])
         self.L = 1 - self.A - self.V
 

@@ -849,7 +849,7 @@ class Testes_IGOR(unittest.TestCase):
         obj.run(z,Mw)
         import pdb; pdb.set_trace()
 
-    #@unittest.skip("mais ou menos ok")
+    @unittest.skip("mais ou menos ok")
     def test_lapene_water_benzene_toluene(self):
         R = 8.3144598
                       # H20 / tolueno / benzeno
@@ -858,7 +858,7 @@ class Testes_IGOR(unittest.TestCase):
         Pc = np.array([220.5, 41, 48.9])*101325 # pascal
         P = np.array([1])*101325
         Pv = np.array([0.0, 0.0, 0.0])
-        T = np.array([345])
+        T = np.array([342])
         Mw = np.array([18.02, 92.13, 78.11])*1e-3
         w = np.array([0.344, 0.262, 0.212])
 
@@ -870,14 +870,14 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    @unittest.skip("ok")
+    #@unittest.skip("ok")
     def test_lapene_water_nitrogen_C10_C20(self):
         R = 8.3144598
                       # H20 / nitrogen / C10 / C20
         z = np.array([0.55, 0.1, 0.1, 0.25])[:,np.newaxis]
         Tc = np.array([647, 126.2, 622, 782]) # Kelvin
         Pc = np.array([220.5, 34, 25.3, 14.6])*101325 # pascal
-        P = np.array([100])*101325
+        P = np.array([52])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0])
         T = np.array([450])
         Mw = np.array([18, 28, 134, 275])*1e-3
@@ -903,7 +903,7 @@ class Testes_IGOR(unittest.TestCase):
                         464.74, 469.60, 515.28, 553.84, 581.28, 609.35, 626.97, 658.15, 778.15, 998.15]) # Kelvin
         Pc = np.array([221.20, 33.94, 73.77, 46.00, 48.84, 42.46, 36.48, 38.00, 34.77, \
                         33.74, 32.57, 31.00, 28.50, 26.50, 24.60, 21.20, 15.70, 13.50])*101325 # pascal
-        P = np.array([200])*101325
+        P = np.array([100])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, \
                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         T = np.array([450])

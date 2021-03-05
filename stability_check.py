@@ -27,56 +27,68 @@ class StabilityCheck:
         self.ph_L = np.ones(len(self.P), dtype = bool)
         self.ph_V = np.zeros(len(self.P), dtype = bool)
 
-
         #StabilityCheck.TPD(self)
 
     def run(self, z, Mw):
         PR = PengRobinson(self)
-        self.vapor_pressure_pure_substancies(PR)
+        #self.vapor_pressure_pure_substancies(PR)
+
         self.equilibrium_ratio_Wilson()
+
         self.L = np.empty(len(self.P))
         self.V = np.empty(len(self.P))
         self.x = np.empty(z.shape)
         self.y = np.empty(z.shape)
-        #z[z==0] = 1e-50
+        z[z==0] = 1e-50
         ponteiro_flash = np.zeros(len(self.P), dtype = bool)
         dir_flash = np.argwhere(z <= 0)
         ponteiro_flash[dir_flash[:,1]] = True
 
         #import pdb; pdb.set_trace()
         if any(~ponteiro_flash):
-            sp1,sp2 = self.Stability(PR, z, np.copy(~ponteiro_flash))
+            sp1, sp2 = self.Stability(PR, z, np.copy(~ponteiro_flash))
             ponteiro_aux = ponteiro_flash[~ponteiro_flash]
             ponteiro_aux[(np.round(sp1,14) > 1) + (np.round(sp2,14) > 1)] = True #os que devem passar para o calculo de flash
             ponteiro_flash[~ponteiro_flash] = ponteiro_aux
 
         self.molar_properties(PR, z, np.ones_like(ponteiro_flash, dtype=bool))
-        import pdb; pdb.set_trace()
-        '''self.y[:,(self.L>1) + (self.V>1)] = z[:,(self.L>1) + (self.V>1)]
+        #import pdb; pdb.set_trace()
+        #if len(z[:,0]==1): self.check_phase_nc_1(z)
+
+        self.y[:,(self.L>1) + (self.V>1)] = z[:,(self.L>1) + (self.V>1)]
         self.x[:,(self.L>1) + (self.V>1)] = z[:,(self.L>1) + (self.V>1)]
         self.L[self.L>1] = 1
         self.L[self.L<0] = 0
-        self.V = 1 - self.L'''
+        self.V = 1 - self.L
+        
         #self.bubble_point_pressure(PR, z, Mw, np.copy(~ponteiro_flash))
         #self.x = z
         #self.y = z
         #self.V = 0
         #import pdb; pdb.set_trace()
         self.get_other_properties(PR, Mw)
-        #import pdb; pdb.set_trace()
-        dVtdNk, self.dVtdP = PR.get_all_derivatives(self, self.x, self.y, self.L, self.V, self.P)
+
+        #dVtdNk, self.dVtdP = PR.get_all_derivatives(self, self.x, self.y, self.L, self.V, self.P)
+
+    def check_phase_nc_1(self, z):
+        self.x = z
+        self.y = z
+        self.L[self.P > self.Pv[z[:,0]!=0]] = 1
+        self.L[self.P < self.Pv[z[:,0]!=0]] = 0.
+        self.V = 1. - self.L
+        import pdb; pdb.set_trace()
+        self.K = self.y/self.x
 
     def get_other_properties(self, PR, Mw):
         self.Mw_L, self.ksi_L, self.rho_L = self.other_properties(PR, self.x, Mw, self.ph_L)
         self.Mw_V, self.ksi_V, self.rho_V = self.other_properties(PR, self.y, Mw, self.ph_V)
 
     def equilibrium_ratio_Wilson(self):
-
         self.K = np.exp(5.37 * (1 + self.w) * (1 - 1 / (self.T / self.Tc)), dtype=np.double)[:,np.newaxis] / \
                 (self.P / self.Pc[:,np.newaxis])
 
 
-    """-------------Below starts stability test calculation -----------------"""
+    """------------- Below starts stability test calculation ----------------"""
 
     def Stability(self, PR, z, ponteiro_stab_check):
         ''' In the lnphi function: 0 stands for vapor phase and 1 for liquid '''
@@ -104,7 +116,6 @@ class StabilityCheck:
 
         stationary_point1 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
 
-
         # print(sum(Y))
         # if sum(Y) <= 1: print('estavel')
         # else: print('instavel') #estavel2 = 0
@@ -114,6 +125,7 @@ class StabilityCheck:
         explaned later, this alone doesn't guarantee the phase stability.
          If it returns unstable: There is another composition that makes the
         Gibbs free energy at its global minimum indicated by sum(Y)>1'''
+
     #*****************************Test two**********************************#
         #Used alone when the phase investigated (z) is clearly liquid like (ph == 1)
         ponteiro = np.copy(ponteiro_stab_check)
@@ -158,7 +170,7 @@ class StabilityCheck:
         #if stationary_point2 == 1: return stationary_point1,stationary_point2, Pb2
         return stationary_point1,stationary_point2
 
-    """-------------Below starts biphasic flash calculations-----------------"""
+    """------------- Below starts biphasic flash calculations ---------------"""
     def molar_properties(self, PR, z, ponteiro):
         #ponteiro = self.molar_properties_Whitson(PR, z, ponteiro)
         ponteiro = self.molar_properties_Yinghui(PR, z, ponteiro)
@@ -227,7 +239,7 @@ class StabilityCheck:
 
         if any(x1_min > x1_max):
             raise ValueError('There is no physical root')
-        
+
         x1 = x1 + ((x1_min + x1_max) / 2) * (1 - np.sign(i))
 
         x1_new = np.copy(x1)
@@ -431,7 +443,8 @@ class StabilityCheck:
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
             #ponteiro[((self.V)<0) + ((self.V)>1)] = False
-            #import pdb; pdb.set_trace()
+            #if ((self.V)<0) + ((self.V)>1): import pdb; pdb.set_trace()
+
         print('Whitson it:', i)
         t1 = time.time()
         print('Whitson time:', t1-t0)

@@ -37,7 +37,7 @@ class CubicRoots:
         real_args = np.isreal(xs_args)
         xs_args[real_args] = np.cbrt(np.real(xs_args[real_args])) + 0j
         xs_args[~real_args] = (xs_args[~real_args])**(1/3)
-        X = omegas@xs_args
+        X = omegas @ xs_args
         return X
 
     def get_actual_roots(self, coef, X):

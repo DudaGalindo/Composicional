@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 class Li_et_al_table4:
-    #@unittest.skip("ok")
+    @unittest.skip("ok")
     def __init__(self):
         self.R = 10.73159
         self.Tc = np.array([-116.59, 305.69, 453.65, 652.01])
@@ -16,7 +16,6 @@ class Li_et_al_table4:
         self.P = np.array([600]) * np.ones(5)
         self.T = np.array([160 + 459.67])
         self.Bin = np.zeros([len(self.w),len(self.w)])
-
 
 class testes_Li_et_al_table4(unittest.TestCase):
 
@@ -281,9 +280,9 @@ class testes_casos_Schmall(unittest.TestCase):
     @unittest.skip("ok")
     def test_caso3(self):
         R = 10.73159
-        z = np.array([0.5,0.5])[:,np.newaxis]*np.ones([2,10]) #exemplo aleatório
-        P = (100*1E5)/101325*14.7 * np.ones(10)# pressão de 100bar e ele converte para atm e depois psi
-        T = 350*9/5 #- T em K to R
+        z = np.array([0.5,0.5])[:,np.newaxis]#*np.ones([2,10]) #exemplo aleatório
+        P = np.array([(100*1E5)])/101325*14.7 #* np.ones(10)# pressão de 100bar e ele converte para atm e depois psi
+        T = np.array([350])*9/5 #- T em K to R
         Tc = np.array([190.6, 460.4])*9/5;
         Pc =np.array([45.4,33.4])*14.7; # 14.7*class
         w = np.array([0.008,0.227])
@@ -293,7 +292,7 @@ class testes_casos_Schmall(unittest.TestCase):
 
         print('\ncaso3:')
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
-        obj.run(z.T,Mw)
+        obj.run(z,Mw)
 
         print('x: ',obj.x,'y: ',obj.y)
         print('K: ',obj.K)
@@ -333,15 +332,15 @@ class testes_caso_Firoozabadi(unittest.TestCase):
     #@unittest.skip("ok")
     def test1(self):
         R = 8.3144598
-        z = np.array([0.9, 0.1, 0.])[:,np.newaxis]#*np.ones([10]) #exemplo aleatório
-        P = np.array([6991425])
+        z = np.array([1., 0., 0.])[:,np.newaxis]#*np.ones([10]) #exemplo aleatório
+        P = np.array([69e5])
         #P = np.array([14619094.696946101])*np.ones(10)
         #T = np.array([15 + 273.15])
         T = np.array([311])
-        Tc = np.array([190.56, 305.32, 369.83])
-        Pc = np.array([4599000, 4873000, 4248000])
-        Mw = np.array([16.043e-3, 30.070e-3, 44.096e-3])
-        w = np.array([0.0115, 0.0995, 0.1523])
+        Tc = np.array([190.6, 305.32, 369.83])
+        Pc = np.array([4600000, 4873000, 4248000])
+        Mw = np.array([16.e-3, 30.070e-3, 44.096e-3])
+        w = np.array([0.01, 0.0995, 0.1523])
         Bin = np.array([[0.,0.,.0], [0.,0.,0.], [0.,0.,.0]])
         print('\ncaso1:')
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
@@ -355,18 +354,10 @@ class testes_caso_Firoozabadi(unittest.TestCase):
         z = np.array([0.35, 0.03, 0.04, 0.06, 0.04, 0.03, 0.05, 0.05, 0.3, 0.05])[:,np.newaxis]
         Tc = np.array([190.6, 305.4, 369.8, 425.2, 469.6, 507.5, 540.3, 568.8, 617.9, 691.9]) # Kelvin
         Pc = np.array([45.4, 48.2, 41.9, 37.5, 33.3, 30.1, 27.4, 24.9, 21.0, 15.2])*100000 # pascal
-        P = np.array([75.4])*100000
-        Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([566.6])
-
         Mw = np.array([16.04, 30.07, 44.1, 58.12, 72.15, 86.178, 100.205, 114.232, 142.29, 198.39])*1e-3
-        # Mw = np.array([16.04, 30.07, 44.1, 58.12, 72.15, 84, 107, 107, 147, 190])
-
         w = np.array([0.008, 0.098, 0.152, 0.193, 0.251, 0.305, 0.305, 0.396, 0.484, 0.747])
 
-        #Bin = np.array([[0., 0.03], [0.03, 0.]])
         Bin = np.zeros([len(z), len(z)])
-
         Bin[0][3] = 0.02
         Bin[0][4] = 0.02
         Bin[0][5] = 0.025
@@ -382,7 +373,9 @@ class testes_caso_Firoozabadi(unittest.TestCase):
         Bin[8][0] = 0.045
         Bin[9][0] = 0.045
 
-        Pb_guess = 8e6
+        P = np.array([75.4])*100000
+        T = np.array([566.6])
+
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
         obj.run(z,Mw)
         import pdb; pdb.set_trace()

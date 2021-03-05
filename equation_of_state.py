@@ -181,7 +181,6 @@ class PengRobinson:
         plt.show()'''
         return dVtdP, dVtdNk
 
-
     def get_phase_derivatives(self, kprop, P, xij, Nj, ph):
         A, B = self.coefficients_cubic_EOS_all(kprop, xij, P)
         Zfunc = np.vectorize(PengRobinson.Z)

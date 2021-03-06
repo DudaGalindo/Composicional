@@ -98,7 +98,7 @@ class StabilityCheck:
         self.get_other_properties(PR, Mw)
 
         print('Fim do fash bifásico')
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
 
         if self.L != 1 and self.V != 1:
             sp2, Kvalue2 = self.Stability_3phase(PR, self.x, np.copy(ponteiro_flash))
@@ -410,6 +410,8 @@ class StabilityCheck:
     def Stability_3phase(self, PR, x, ponteiro_stab_check):
         'Testing stability in 2 phase system'
     #*****************************Test one**********************************#
+        t0 = time.time()
+
         stationary_points = np.empty(5)
         # Trial phase is liquid
         Y = np.empty(x.shape)
@@ -548,6 +550,9 @@ class StabilityCheck:
         stationary_points[4] = stationary_point5
 
         print(f'pontos estacionarios: {stationary_points}')
+
+        t1 = time.time()
+        print('stability time:', t1-t0)
 
         #return stationary_point1, stationary_point2, stationary_point3, stationary_point4, stationary_point5
         return stationary_points, [K_value1, K_value2, K_value3, K_value4, K_value5]
@@ -1352,9 +1357,12 @@ class StabilityCheck:
             V = 0
 
         # Aqui atualizar tudo
-        self.V[ponteiro_save] = V[ponteiro_save].copy()
-        self.x[:,ponteiro_save] = x.copy()
-        self.y[:,ponteiro_save] = y.copy()
+        #self.V = V[ponteiro_save].copy()
+        #self.x[:,ponteiro_save] = x.copy()
+        #self.y[:,ponteiro_save] = y.copy()
+        self.V = V
+        self.x = x
+        self.y = y
         self.A = (z[0] + self.V*(self.x[0] - self.y[0]) - self.x[0]) / (1 - self.x[0])
         self.L = 1 - self.A - self.V
 

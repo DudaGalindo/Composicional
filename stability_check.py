@@ -52,7 +52,7 @@ class StabilityCheck:
         sp = np.zeros(5) # In the case of 5 trial phases in stability analysis
 
         if any(~ponteiro_flash):
-            sp, Kvalue = self.Stability_2phase(PR, z, np.copy(~ponteiro_flash))
+            sp, Kvalue = self.Stability_3phase(PR, z, np.copy(~ponteiro_flash))
             sp = np.round(sp, 14)
 
             ponteiro_aux = ponteiro_flash[~ponteiro_flash]
@@ -62,6 +62,7 @@ class StabilityCheck:
             if sp[4] > 1:
                 self.K = Kvalue[4].copy()
             #self.equilibrium_ratio_2flash(Kvalue[index_spmax])
+            print(f'sp: {sp}')
             print(Kvalue)
             #self.K = Kvalue[1].copy()
             print(self.K)
@@ -159,7 +160,7 @@ class StabilityCheck:
         self.Pw_sat = np.exp(ln_P_Pc) * Pc
 
     """-------------Below starts stability test calculation -----------------"""
-
+    """ delete this function """
     def Stability(self, PR, z, ponteiro_stab_check):
         ''' In the lnphi function: 0 stands for vapor phase and 1 for liquid '''
     #****************************INITIAL GUESS******************************#
@@ -252,10 +253,11 @@ class StabilityCheck:
 
 
 
-    """-------------Below starts 2 phase stability test calculation -----------------"""
-
+    """-------------Below starts phase stability test calculation -----------------"""
+    ''' delete this function '''
     def Stability_2phase(self, PR, z, ponteiro_stab_check):
         ''' In the lnphi function: 0 stands for vapor phase and 1 for liquid '''
+        t0 = time.time()
     #*****************************Test one**********************************#
         stationary_points = np.empty(5)
         # Trial phase is liquid
@@ -393,7 +395,8 @@ class StabilityCheck:
         stationary_point5 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
         stationary_points[4] = stationary_point5
 
-        print(f'pontos estacionarios: {stationary_points}')
+        t1 = time.time()
+        print('stability test time:', t1-t0)
 
         #return stationary_point1, stationary_point2, stationary_point3, stationary_point4, stationary_point5
         return stationary_points, [K_value1, K_value2, K_value3, K_value4, K_value5]
@@ -408,7 +411,7 @@ class StabilityCheck:
     """-------------Below starts 3 phase stability test calculation -----------------"""
 
     def Stability_3phase(self, PR, x, ponteiro_stab_check):
-        'Testing stability in 2 phase system'
+        'Testing stability in system'
     #*****************************Test one**********************************#
         t0 = time.time()
 

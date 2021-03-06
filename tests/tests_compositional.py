@@ -771,7 +771,7 @@ class Testes_IGOR(unittest.TestCase):
 
     # 3 phases
 
-    @unittest.skip("ok - valores aproximados")
+    @unittest.skip("ok para a instabilidade em y - valores aproximados")
     def test_Varavei_3_1_triphase(self):
         R = 8.3144598
         z = np.array([0.2, 0.1, 0.1, 0.2, 0.4])[:,np.newaxis]

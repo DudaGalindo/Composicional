@@ -38,9 +38,7 @@ class StabilityCheck:
         self.equilibrium_ratio_aqueous(z)
         self.L = np.empty(len(self.P))
         self.V = np.empty(len(self.P))
-
         self.A = np.empty(len(self.P))     # 3 phases
-
         self.x = np.empty(z.shape)
         self.y = np.empty(z.shape)
         self.a = np.empty(z.shape)         # 3 phases
@@ -49,7 +47,7 @@ class StabilityCheck:
         dir_flash = np.argwhere(z <= 0)
         ponteiro_flash[dir_flash[:,1]] = True
 
-        sp = np.zeros(5) # In the case of 5 trial phases in stability analysis
+        #sp = np.zeros(5) # In the case of 5 trial phases in stability analysis
 
         if any(~ponteiro_flash):
             sp, Kvalue = self.Stability_3phase(PR, z, np.copy(~ponteiro_flash))
@@ -113,6 +111,7 @@ class StabilityCheck:
                 #self.K_V = Kvalue2[1].copy()
                 self.K_V = self.Kwilson.copy()
                 self.molar_properties_3phase(PR, z, np.ones_like(ponteiro_flash, dtype=bool))
+                self.get_other_properties_3phases(PR, Mw)
 
 
 
@@ -123,6 +122,11 @@ class StabilityCheck:
     def get_other_properties(self, PR, Mw):
         self.Mw_L, self.ksi_L, self.rho_L = self.other_properties(PR, self.x, Mw, self.ph_L)
         self.Mw_V, self.ksi_V, self.rho_V = self.other_properties(PR, self.y, Mw, self.ph_V)
+
+    def get_other_properties_3phases(self, PR, Mw):
+        self.Mw_L, self.ksi_L, self.rho_L = self.other_properties(PR, self.x, Mw, self.ph_L)
+        self.Mw_V, self.ksi_V, self.rho_V = self.other_properties(PR, self.y, Mw, self.ph_V)
+        self.Mw_A, self.ksi_A, self.rho_A = self.other_properties(PR, self.a, Mw, self.ph_L)
 
     def equilibrium_ratio_Wilson(self):
 
@@ -579,9 +583,6 @@ class StabilityCheck:
 
     def molar_properties_3phase(self, PR, z, ponteiro):
         #ponteiro = self.molar_properties_Whitson_3phase(PR, z, ponteiro)
-        #V = self.V.copy()
-        #x = self.x.copy()
-        #y = self.y.copy()
         ponteiro = self.molar_properties_Lapene_3phase(PR, z, ponteiro)
         return ponteiro
 

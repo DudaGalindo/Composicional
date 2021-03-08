@@ -819,7 +819,7 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    #@unittest.skip("ok - diagrama de fase")
+    @unittest.skip("ok - diagrama de fase")
     def test_Connolly432(self):
         R = 8.3144598
                     # H2O,  CO2,      N2,       C1,      C2,      C3,     C4-C6,    PC1,      PC2,      PC3
@@ -892,7 +892,7 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    @unittest.skip("ok")
+    #@unittest.skip("ok")
     def test_lapene_18_components(self):
         R = 8.3144598
 

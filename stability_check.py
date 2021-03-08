@@ -757,7 +757,7 @@ class StabilityCheck:
             self.fv = np.exp(lnphiv) * (self.y[:,ponteiro] * self.P[ponteiro][np.newaxis,:])
             razao[:,ponteiro] = np.divide(self.fl, self.fv, out = razao[:,ponteiro] / razao[:,ponteiro] * (1 + 1e-10),
                               where = self.fv != 0)
-            x1 = self.x[self.K==np.max(self.K,axis=0)]
+            #x1 = self.x[self.K==np.max(self.K,axis=0)]
             self.K[:,ponteiro] = razao[:,ponteiro] * self.K[:,ponteiro]
             stop_criteria = np.max(abs(razao[:,ponteiro] - 1), axis = 0)
             ponteiro_aux = ponteiro[ponteiro]

@@ -427,9 +427,9 @@ class Testes_IGOR(unittest.TestCase):
         z = np.array([0.8097, 0.0566, 0.0306, 0.0457, 0.0330, 0.0244])[:,np.newaxis]
         Tc = np.array([190.6, 305.4, 369.8, 469.6, 540.3, 617.9])*1.8 # Rankine
         Pc = np.array([45.4, 48.2, 41.9, 33.3, 27.4, 21.0])*14.5038 # psia
-        P = np.array([150.0])*14.5038
+        P = np.array([198.1])*14.5038
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([450.0])*1.8
+        T = np.array([295.4])*1.8
         Mw = np.array([16.043, 30.070, 44.097, 72.15, 100.205, 142.29])
         w = np.array([0.008, 0.098, 0.152, 0.251, 0.305, 0.484])
 
@@ -556,7 +556,7 @@ class Testes_IGOR(unittest.TestCase):
         import pdb; pdb.set_trace()
 
 
-    @unittest.skip("ok for 2 phases. Not ok for 3 phases")
+    #@unittest.skip("ok")
     def test_Connolly332(self):
         R = 8.3144598
                     # H20,   C8,     C13,    C24,    C61+
@@ -572,6 +572,11 @@ class Testes_IGOR(unittest.TestCase):
         Bin = np.array([[0, 0.5, 0.5, 0.5, 0.5], \
                         [0.5, 0, 0, 0, 0], [0.5, 0, 0, 0, 0], \
                         [0.5, 0, 0, 0, 0], [0.5, 0, 0, 0, 0]])
+
+        CP1 = np.array([32.20, -1.23e+01, -5.08, -5.69, 0.1230])
+        CP2 = np.array([0.001924, 6.65e-01, 9.97e-01, 1.840, 4.750])
+        CP3 = np.array([1.055E-05, -2.52e-04, -4.14e-04, -7.64e-04, -1.95e-03])
+        CP4 = np.array([-3.596e-09, 0.0, 0.0, 0.0, 0.0])
 
         Pb_guess = 8e6
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
@@ -611,9 +616,9 @@ class Testes_IGOR(unittest.TestCase):
         z = np.array([0.5, 0.15, 0.1, 0.1, 0.15])[:,np.newaxis]
         Tc = np.array([647.3, 305.556, 638.889, 788.889, 838.889]) # Kelvin
         Pc = np.array([220.8900, 48.82, 19.65, 10.20, 7.72])*101325 # pascal
-        P = np.array([5])*101325
+        P = np.array([30])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([350])
+        T = np.array([483.63])
 
         Mw = np.array([18.015, 30.00, 156.00, 310.00, 400.00])*1e-3
         w = np.array([0.344, 0.098, 0.535, 0.891, 1.085])
@@ -826,9 +831,9 @@ class Testes_IGOR(unittest.TestCase):
         z = np.array([0.1, 0.01089, 0.01746, 0.59391, 0.07821, 0.05319, 0.08703, 0.042705, 0.013635, 0.00297])[:,np.newaxis]
         Tc = np.array([647.3, 304.7, 126.2, 190.6, 305.43, 369.8, 448.08, 465.62, 587.8, 717.72]) # Kelvin
         Pc = np.array([220.8900, 73.86796, 33.94563, 46.04085, 48.83673, 42.65743, 35.50565, 28.32348, 17.06905, 11.06196])*101325 # pascal
-        P = np.array([200])*101325
+        P = np.array([220])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([290.5])
+        T = np.array([400])
 
         Mw = np.array([18.015, 44.01, 28.013, 16.043, 30.07, 44.097, 66.86942, 107.77943, 198.56203, 335.1979])*1e-3
         w = np.array([0.344, 0.225, 0.04, 0.013, 0.0986, 0.1524, 0.21575, 0.3123, 0.5567, 0.91692])
@@ -858,7 +863,7 @@ class Testes_IGOR(unittest.TestCase):
         Pc = np.array([220.5, 41, 48.9])*101325 # pascal
         P = np.array([1])*101325
         Pv = np.array([0.0, 0.0, 0.0])
-        T = np.array([346])
+        T = np.array([342])
         Mw = np.array([18.02, 92.13, 78.11])*1e-3
         w = np.array([0.344, 0.262, 0.212])
 
@@ -877,7 +882,7 @@ class Testes_IGOR(unittest.TestCase):
         z = np.array([0.55, 0.1, 0.1, 0.25])[:,np.newaxis]
         Tc = np.array([647, 126.2, 622, 782]) # Kelvin
         Pc = np.array([220.5, 34, 25.3, 14.6])*101325 # pascal
-        P = np.array([150])*101325
+        P = np.array([50])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0])
         T = np.array([450])
         Mw = np.array([18, 28, 134, 275])*1e-3
@@ -892,7 +897,7 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    #@unittest.skip("ok")
+    @unittest.skip("ok")
     def test_lapene_18_components(self):
         R = 8.3144598
 
@@ -1047,7 +1052,7 @@ class Testes_IGOR(unittest.TestCase):
         Tc = np.array([647.3, 190.6, 934.3]) # Kelvin
         Pc = np.array([22048.32, 4599.93, 800.43])*1000 # pascal
         P = np.array([1000])*1000
-        Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        Pv = np.array([0.0, 0.0, 0.0])
         T = np.array([350])
         Mw = np.array([18, 12.0107, 480.4280])*1e-3
         w = np.array([0.344, 0.008, 1.259])
@@ -1055,6 +1060,32 @@ class Testes_IGOR(unittest.TestCase):
         Bin = np.array([[0, 0.4907, 0.4800], \
                         [0.4907, 0, 0.125465], \
                         [0.48, 0.125465, 0]])
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj.run(z,Mw)
+
+        import pdb; pdb.set_trace()
+
+    @unittest.skip("not ok")
+    def test_Connolly_5_4_1(self):
+        R = 8.3144598
+                      #
+        z = np.array([0.800, 0.066, 0.022, 0.022, 0.022, 0.068])[:,np.newaxis]
+        Tc = np.array([304.20, 190.60, 369.80, 469.60, 568.80, 658.30]) # Kelvin
+        Pc = np.array([73.76, 46.00, 42.46, 33.74, 24.82, 18.24])*101325 # pascal
+        P = np.array([77.5])*101325
+        Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        T = np.array([303.35])
+        Mw = np.array([44.01, 16.043, 44.097, 72.151, 114.232, 170.34])*1e-3
+        w = np.array([0.225, 0.008, 0.152, 0.251, 0.394, 0.562])
+
+        Bin = np.array([[0, 0.12, 0.12, 0.12, 0.1, 0.1], \
+                        [0.12, 0, 0, 0, 0.0496, 0], \
+                        [0.12, 0, 0, 0, 0, 0], \
+                        [0.12, 0, 0, 0, 0, 0], \
+                        [0.1, 0.0496, 0, 0, 0, 0], \
+                        [0.1, 0, 0, 0, 0, 0]])
 
         Pb_guess = 8e6
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)

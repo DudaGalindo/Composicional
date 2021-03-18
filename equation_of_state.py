@@ -132,6 +132,61 @@ class PengRobinson:
 
         return lnphi
 
+    " ----------------------------- Teste - inicio --------------------------------------"
+    def enthalpy_calculation(self, kprop, l, P, ph):
+
+        PR_kC7 = np.array([0.379642, 1.48503, 0.1644, 0.016667])
+        PR_k = np.array([0.37464, 1.54226, 0.26992])
+
+        k = (PR_kC7[0] + PR_kC7[1] * kprop.w - PR_kC7[2] * kprop.w ** 2 + \
+            PR_kC7[3] * kprop.w ** 3) * (1*(kprop.w >= 0.5)) + (PR_k[0] + PR_k[1] * kprop.w - \
+            PR_k[2] * kprop.w ** 2) * (1*(kprop.w < 0.5))  # FUnção com o fator acentrico - 2 possibilidades, varia com o w
+
+        alpha = (1 + k * (1 - (kprop.T / kprop.Tc) ** (1 / 2))) ** 2
+        aalpha_i = 0.45724 * (kprop.R * kprop.Tc) ** 2 / kprop.Pc * alpha
+        A, B = self.coefficients_cubic_EOS_all(kprop, l, P)
+
+
+        daalphadt = self.daalphadt(l, k, kprop, aalpha_i)
+        h_ref = self.h_reference(l, kprop)
+        Z = self.Z_vectorized(A, B, ph)
+
+        h = ((kprop.T * daalphadt - self.aalpha) / self.bm) * np.log((Z + (np.sqrt(2) + 1)*B) / (Z + (np.sqrt(2) - 1)*B)) + \
+            kprop.R * kprop.T * (Z - 1) + h_ref
+
+        import pdb; pdb.set_trace()
+        return h
+
+    def daalphadt(self, l, k, kprop, aalpha_i):
+        daalpha_idt = self.daalpha_idt(k, kprop)
+        l_reshape = np.ones((self.aalpha_ik).shape)[:,:,np.newaxis] * l[:,np.newaxis,:]
+        aalpha_i_reshape = np.ones((kprop.Nc,kprop.Nc)) * aalpha_i[:,np.newaxis]
+
+        daalphadt = 0.5 * (l_reshape * l[np.newaxis,:,:] * ((1 - kprop.Bin) / (aalpha_i_reshape.T * aalpha_i[:,np.newaxis])) * \
+                            (aalpha_i_reshape.T * daalpha_idt[:,np.newaxis] + aalpha_i[:,np.newaxis] * daalpha_idt)).sum(axis=0).sum(axis=0)
+        import pdb; pdb.set_trace()
+        "Algum erro, saindo vetor no lugar de um valor"
+        return daalphadt
+
+    def daalpha_idt(self, k, kprop):
+        daalpha_idt = - (0.42748*(kprop.R * kprop.Tc)**2 * (k/(kprop.Tc**1.5))*(1 - (kprop.T / kprop.Tc) ** (1 / 2))) / kprop.Pc
+        return daalpha_idt
+
+    def h_reference(self, l, kprop):
+        T_ref = 0 # DUVIDA SOBRE O REAL VALOR
+        kprop.CP1 = np.array([32.20, -1.23e+01, -5.08, -5.69, 0.1230])
+        kprop.CP2 = np.array([0.001924, 6.65e-01, 9.97e-01, 1.840, 4.750])
+        kprop.CP3 = np.array([1.055E-05, -2.52e-04, -4.14e-04, -7.64e-04, -1.95e-03])
+        kprop.CP4 = np.array([-3.596e-09, 0.0, 0.0, 0.0, 0.0])
+        print('aqui')
+        hi = kprop.CP1*(kprop.T - T_ref) + 0.5*kprop.CP2*(kprop.T**2 - T_ref**2) + \
+            (1/3)*kprop.CP3*(kprop.T**3 - T_ref**3) + 0.25*kprop.CP4*(kprop.T**4 - T_ref**4)
+
+        hj = np.sum(l*hi)
+        return hj
+
+    " ----------------------------- Teste - Fim --------------------------------------"
+
     def get_all_derivatives(self, kprop, x, y, L, V, P):
 
         #x = fprop.component_molar_fractions[0:kprop.Nc,0,:]

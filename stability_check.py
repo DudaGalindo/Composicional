@@ -50,7 +50,7 @@ class StabilityCheck:
         #sp = np.zeros(5) # In the case of 5 trial phases in stability analysis
 
         if any(~ponteiro_flash):
-            sp, Kvalue = self.Stability_3phase(PR, z, np.copy(~ponteiro_flash))
+            sp, Kvalue = self.Stability_2phase(PR, z, np.copy(~ponteiro_flash))
             sp = np.round(sp, 14)
 
             ponteiro_aux = ponteiro_flash[~ponteiro_flash]
@@ -61,9 +61,9 @@ class StabilityCheck:
                 self.K = Kvalue[4].copy()
             #self.equilibrium_ratio_2flash(Kvalue[index_spmax])
             print(f'sp: {sp}')
-            print(Kvalue)
+            #print(Kvalue)
             #self.K = Kvalue[1].copy()
-            print(self.K)
+            #print(self.K)
             #import pdb; pdb.set_trace()
 
 
@@ -102,8 +102,13 @@ class StabilityCheck:
         if self.L != 1 and self.V != 1:
             sp2, Kvalue2 = self.Stability_3phase(PR, self.x, np.copy(ponteiro_flash))
             sp2 = np.round(sp2, 8)
+            if all(sp2 <= 1):
+                sp2, Kvalue2 = self.Stability_3phase(PR, self.y, np.copy(ponteiro_flash))
+
+            sp2 = np.round(sp2, 8)
             print(f'sp2: {sp2}')
-            print(f'K : {Kvalue2}')
+            #import pdb; pdb.set_trace()
+            #print(f'K : {Kvalue2}')
             #sp2[0] = 5
             if any(sp2>1):
                 index_sp2max = np.argmax(sp2)
@@ -114,7 +119,7 @@ class StabilityCheck:
                 self.get_other_properties_3phases(PR, Mw)
 
 
-
+        PR.enthalpy_calculation(self, self.x, self.P, self.ph_L) # Teste de calculo da entalpia
         import pdb; pdb.set_trace()
         #PR.get_all_derivatives(self, self.x, self.y, self.L, self.V, self.P)
 
@@ -441,8 +446,8 @@ class StabilityCheck:
 
         lny = np.log(y)
 
-        TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphix[:] - np.log(x)))
-        print(f'TPD do teste 1: {TPD}')
+        #TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphix[:] - np.log(x)))
+        #print(f'TPD do teste 1: {TPD}')
 
         stationary_point1 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
         stationary_points[0] = stationary_point1
@@ -468,8 +473,9 @@ class StabilityCheck:
 
 
         lny = np.log(y)
-        TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphix[:] - np.log(x)))
-        print(f'TPD do teste 2: {TPD}')
+
+        #TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphix[:] - np.log(x)))
+        #print(f'TPD do teste 2: {TPD}')
 
         stationary_point2 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
         stationary_points[1] = stationary_point2
@@ -495,8 +501,9 @@ class StabilityCheck:
             ponteiro[ponteiro] = ponteiro_aux
 
         lny = np.log(y)
-        TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphix[:] - np.log(x)))
-        print(f'TPD do teste 3: {TPD}')
+
+        #TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphix[:] - np.log(x)))
+        #print(f'TPD do teste 3: {TPD}')
 
         stationary_point3 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
         stationary_points[2] = stationary_point3
@@ -523,8 +530,9 @@ class StabilityCheck:
             ponteiro[ponteiro] = ponteiro_aux
 
         lny = np.log(y)
-        TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphix[:] - np.log(x)))
-        print(f'TPD do teste 4: {TPD}')
+
+        #TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphix[:] - np.log(x)))
+        #print(f'TPD do teste 4: {TPD}')
 
         stationary_point4 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
         stationary_points[3] = stationary_point4
@@ -550,13 +558,14 @@ class StabilityCheck:
             ponteiro[ponteiro] = ponteiro_aux
 
         lny = np.log(y)
-        TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphix[:] - np.log(x)))
-        print(f'TPD do teste 5: {TPD}')
+
+        #TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphix[:] - np.log(x)))
+        #print(f'TPD do teste 5: {TPD}')
 
         stationary_point5 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
         stationary_points[4] = stationary_point5
 
-        print(f'pontos estacionarios: {stationary_points}')
+        #print(f'pontos estacionarios: {stationary_points}')
 
         t1 = time.time()
         print('stability time:', t1-t0)

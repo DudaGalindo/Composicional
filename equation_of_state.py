@@ -107,10 +107,12 @@ class PengRobinson:
 
         try:
             Z[aux_neg] = Z[~aux_neg][0]
-        except: import pdb; pdb.set_trace()
+        except:
+            Z[aux_neg] = Z[~aux_neg]
+            #import pdb; pdb.set_trace()
         #Z[aux_neg] = Z[~aux_neg][0]
 
-        Zz = np.min(Z, axis = 1) * ph + np.max(Z, axis = 1) * (1 - ph)
+        Zz = np.min(Z, axis = 1, initial=1) * ph + np.max(Z, axis = 1, initial=1) * (1 - ph)
         Z_ = np.real(Zz)
         #import pdb; pdb.set_trace()
         return Z_
@@ -147,38 +149,54 @@ class PengRobinson:
         A, B = self.coefficients_cubic_EOS_all(kprop, l, P)
 
 
-        daalphadt = self.daalphadt(l, k, kprop, aalpha_i)
+        daalphadt = self.daalphadt(l, kprop, aalpha_i)
         h_ref = self.h_reference(l, kprop)
+        #h_ref = 0
         Z = self.Z_vectorized(A, B, ph)
 
         h = ((kprop.T * daalphadt - self.aalpha) / self.bm) * np.log((Z + (np.sqrt(2) + 1)*B) / (Z + (np.sqrt(2) - 1)*B)) + \
             kprop.R * kprop.T * (Z - 1) + h_ref
 
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         return h
 
-    def daalphadt(self, l, k, kprop, aalpha_i):
-        daalpha_idt = self.daalpha_idt(k, kprop)
+    def daalphadt(self, l, kprop, aalpha_i):
+        daalpha_idt = self.daalpha_idt(kprop)
         l_reshape = np.ones((self.aalpha_ik).shape)[:,:,np.newaxis] * l[:,np.newaxis,:]
         aalpha_i_reshape = np.ones((kprop.Nc,kprop.Nc)) * aalpha_i[:,np.newaxis]
 
         daalphadt = 0.5 * (l_reshape * l[np.newaxis,:,:] * ((1 - kprop.Bin) / (aalpha_i_reshape.T * aalpha_i[:,np.newaxis])) * \
                             (aalpha_i_reshape.T * daalpha_idt[:,np.newaxis] + aalpha_i[:,np.newaxis] * daalpha_idt)).sum(axis=0).sum(axis=0)
-        import pdb; pdb.set_trace()
-        "Algum erro, saindo vetor no lugar de um valor"
-        return daalphadt
 
-    def daalpha_idt(self, k, kprop):
-        daalpha_idt = - (0.42748*(kprop.R * kprop.Tc)**2 * (k/(kprop.Tc**1.5))*(1 - (kprop.T / kprop.Tc) ** (1 / 2))) / kprop.Pc
+        "Erro no daalphadt"
+        daalphadt_2 = 0
+        for i in range(len(l)):
+            for k in range(len(l)):
+                daalphadt_2 += l[i] * l[k] * ((1 - kprop.Bin[i][k]) / (aalpha_i[i] * aalpha_i[k])) * \
+                                (aalpha_i[i] * daalpha_idt[k] + aalpha_i[k] * daalpha_idt[i])
+
+        daalphadt_2 = daalphadt_2 * 0.5
+        #import pdb; pdb.set_trace()
+        return daalphadt_2
+
+    def daalpha_idt(self, kprop):
+        fw = 0.48 + 1.574*kprop.w - 0.176*(kprop.w**2)
+        daalpha_idt = - (0.42748*(kprop.R * kprop.Tc)**2 * (fw/(kprop.Tc**1.5))*(1 - (kprop.T / kprop.Tc) ** (1 / 2))) / kprop.Pc
         return daalpha_idt
 
     def h_reference(self, l, kprop):
-        T_ref = 0 # DUVIDA SOBRE O REAL VALOR
-        kprop.CP1 = np.array([32.20, -1.23e+01, -5.08, -5.69, 0.1230])
-        kprop.CP2 = np.array([0.001924, 6.65e-01, 9.97e-01, 1.840, 4.750])
-        kprop.CP3 = np.array([1.055E-05, -2.52e-04, -4.14e-04, -7.64e-04, -1.95e-03])
-        kprop.CP4 = np.array([-3.596e-09, 0.0, 0.0, 0.0, 0.0])
-        print('aqui')
+        T_ref = 273.15 # DUVIDA SOBRE O REAL VALOR
+        'Connolly 332'
+        #kprop.CP1 = np.array([32.20, -1.23e+01, -5.08, -5.69, 0.1230])
+        #kprop.CP2 = np.array([0.001924, 6.65e-01, 9.97e-01, 1.840, 4.750])
+        #kprop.CP3 = np.array([1.055E-05, -2.52e-04, -4.14e-04, -7.64e-04, -1.95e-03])
+        #kprop.CP4 = np.array([-3.596e-09, 0.0, 0.0, 0.0, 0.0])
+        'heidari_4_8_1_3'
+        kprop.CP1 = np.array([33.75536, 29.26153, 33.30586, 33.77337, -20.53700, -26.45610])
+        kprop.CP2 = np.array([-0.00594, -0.02236, -0.01113, 0.24845, 0.69221, 1.02055])
+        kprop.CP3 = np.array([2.24e-05, 0.000265, 0.000357, 0.000253, -0.000280, -0.000410])
+        kprop.CP4 = np.array([-9.96e-09, -4.15e-07, -3.76e-07, -3.84e-07, 0, 0])
+
         hi = kprop.CP1*(kprop.T - T_ref) + 0.5*kprop.CP2*(kprop.T**2 - T_ref**2) + \
             (1/3)*kprop.CP3*(kprop.T**3 - T_ref**3) + 0.25*kprop.CP4*(kprop.T**4 - T_ref**4)
 

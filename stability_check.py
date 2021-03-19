@@ -54,17 +54,18 @@ class StabilityCheck:
             sp = np.round(sp, 14)
 
             ponteiro_aux = ponteiro_flash[~ponteiro_flash]
-            ponteiro_aux[any(sp > 1)] = True #os que devem passar para o calculo de flash
+            ponteiro_aux[(sp>1).sum(axis=0,dtype=bool)] = True #os que devem passar para o calculo de flash
             ponteiro_flash[~ponteiro_flash] = ponteiro_aux
-            index_spmax = np.argmax(np.round(sp, 10))
-            if sp[4] > 1:
-                self.K = Kvalue[4].copy()
+            #index_spmax = np.argmax(np.round(sp, 10))
+            #if sp[4] > 1:
+                    #self.K = self.Kw
+            self.K[:,sp[4]>1] = self.Kw
             #self.equilibrium_ratio_2flash(Kvalue[index_spmax])
-            print(f'sp: {sp}')
+            #print(f'sp: {sp}')
             #print(Kvalue)
             #self.K = Kvalue[1].copy()
             #print(self.K)
-            #import pdb; pdb.set_trace()
+
 
 
             #sp1,sp2 = self.Stability(PR, z, np.copy(~ponteiro_flash))
@@ -96,9 +97,38 @@ class StabilityCheck:
         #self.V = 0
         self.get_other_properties(PR, Mw)
 
-        print('Fim do fash bifásico')
+        #print('Fim do fash bifásico')
         #import pdb; pdb.set_trace()
+        ponteiro_flash_3phase = np.zeros(len(self.P), dtype = bool)
+        ponteiro_flash_3phase[(self.L != 1) and (self.V != 1)] = True
+        sp2, Kvalue2 = self.Stability_3phase(PR, self.x, np.copy(ponteiro_flash_3phase))
+        sp2 = np.round(sp2, 8)
 
+        sp2[0] = 5
+
+        ponteiro_flash_3phase2 = ponteiro_flash_3phase[ponteiro_flash_3phase]
+        ponteiro_flash_3phase2[(sp2>1).sum(axis=0,dtype=bool)] = False
+        ponteiro_flash_3phase[ponteiro_flash_3phase] = ponteiro_flash_3phase2
+
+
+        sp2, Kvalue2 = self.Stability_3phase(PR, self.y, np.copy(ponteiro_flash_3phase))
+        sp2 = np.round(sp2, 8)
+
+        #print(f'sp2: {sp2}')
+        #import pdb; pdb.set_trace()
+        #print(f'K : {Kvalue2}')
+        #sp2[0] = 5
+        ponteiro_flash_3phase2 = ~ponteiro_flash_3phase[ponteiro_flash_3phase]
+        ponteiro_flash_3phase2[(sp2>1).sum(axis=0,dtype=bool)] = True
+        ponteiro_flash_3phase[ponteiro_flash_3phase] = ponteiro_flash_3phase2
+
+        self.K_A = self.K.copy()
+        #self.K_V = Kvalue2[1].copy()
+        self.K_V = self.Kwilson.copy()
+        self.molar_properties_3phase(PR, z, np.ones_like(ponteiro_flash, dtype=bool))
+        self.get_other_properties_3phases(PR, Mw)
+
+        ##########################
         if self.L != 1 and self.V != 1:
             sp2, Kvalue2 = self.Stability_3phase(PR, self.x, np.copy(ponteiro_flash))
             sp2 = np.round(sp2, 8)
@@ -117,9 +147,11 @@ class StabilityCheck:
                 self.K_V = self.Kwilson.copy()
                 self.molar_properties_3phase(PR, z, np.ones_like(ponteiro_flash, dtype=bool))
                 self.get_other_properties_3phases(PR, Mw)
+        ############################
 
+        enthalpy_oil = PR.enthalpy_calculation(self, self.x, self.P, self.ph_L) # Teste de calculo da entalpia
+        enthalpy_vapour = PR.enthalpy_calculation(self, self.y, self.P, self.ph_V) # Teste de calculo da entalpia
 
-        PR.enthalpy_calculation(self, self.x, self.P, self.ph_L) # Teste de calculo da entalpia
         import pdb; pdb.set_trace()
         #PR.get_all_derivatives(self, self.x, self.y, self.L, self.V, self.P)
 
@@ -268,7 +300,7 @@ class StabilityCheck:
         ''' In the lnphi function: 0 stands for vapor phase and 1 for liquid '''
         t0 = time.time()
     #*****************************Test one**********************************#
-        stationary_points = np.empty(5)
+        stationary_points = np.empty((5, len(ponteiro_stab_check[ponteiro_stab_check])))
         # Trial phase is liquid
         Y = np.empty(z.shape)
         lnphiz = np.empty(z.shape)
@@ -424,8 +456,9 @@ class StabilityCheck:
     #*****************************Test one**********************************#
         t0 = time.time()
 
-        stationary_points = np.empty(5)
+        stationary_points = np.empty((5, len(ponteiro_stab_check[ponteiro_stab_check])))
         # Trial phase is liquid
+        #import pdb; pdb.set_trace()
         Y = np.empty(x.shape)
         lnphix = np.empty(x.shape)
         ponteiro = np.copy(ponteiro_stab_check)
@@ -444,8 +477,7 @@ class StabilityCheck:
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
 
-        lny = np.log(y)
-
+        #lny = np.log(y[:, ponteiro_stab_check])
         #TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphix[:] - np.log(x)))
         #print(f'TPD do teste 1: {TPD}')
 
@@ -665,7 +697,7 @@ class StabilityCheck:
         if any(x1_min > x1_max):
             raise ValueError('There is no physical root')
 
-        x1 = x1 + ((x1_min + x1_max) / 2) * (1 - np.sign(i))
+        x1 = ((x1_min + x1_max) / 2)
 
         x1_new = np.copy(x1)
         ponteiro = np.ones(len(x1), dtype = bool)
@@ -1264,7 +1296,7 @@ class StabilityCheck:
 
 
     def molar_properties_Lapene_3phase(self, PR, z, ponteiro):
-        #self.K_V = self.Kwilson.copy()
+
         V = self.V.copy()
         x = self.x.copy()
         y = self.y.copy()
@@ -1272,7 +1304,7 @@ class StabilityCheck:
         self.K_V[0] = (self.Pc[0]/self.P)*(self.T/self.Tc[0])
 
         y[0] = self.Pw_sat / self.P
-        self.K2w = y[0].copy() # Nao sei se ta certo
+        self.K2w = y[0].copy()
         x[0] = y[0] / self.K_V[0]
         self.a[:] = 0
         self.a[0] = 1

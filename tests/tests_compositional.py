@@ -556,7 +556,7 @@ class Testes_IGOR(unittest.TestCase):
         import pdb; pdb.set_trace()
 
 
-    #@unittest.skip("ok")
+    @unittest.skip("ok")
     def test_Connolly332(self):
         R = 8.3144598
                     # H20,   C8,     C13,    C24,    C61+
@@ -776,7 +776,7 @@ class Testes_IGOR(unittest.TestCase):
 
     # 3 phases
 
-    @unittest.skip("ok para a instabilidade em y - valores aproximados")
+    #@unittest.skip("ok para a instabilidade em y - valores aproximados")
     def test_Varavei_3_1_triphase(self):
         R = 8.3144598
         z = np.array([0.2, 0.1, 0.1, 0.2, 0.4])[:,np.newaxis]
@@ -1026,7 +1026,7 @@ class Testes_IGOR(unittest.TestCase):
         Pc = np.array([22048.3, 7376.1, 4883.6, 3374.0, 2950.4, 2191.6])*1000 # pascal
         P = np.array([7040])*1000
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([440])
+        T = np.array([460])
         Mw = np.array([18, 44.01, 30.070, 60.05, 96.08, 162.27])*1e-3
         w = np.array([0.344, 0.2250, 0.098, 0.251, 0.351, 0.522])
 
@@ -1036,6 +1036,11 @@ class Testes_IGOR(unittest.TestCase):
                         [0.5, 0.15, 0.008578, 0, 0.001765, 0.008637], \
                         [0.48, 0.15, 0.01796, 0.001765, 0, 0.002618], \
                         [0.48, 0.15, 0.033751, 0.008637, 0.002618, 0]])
+
+        CP1 = np.array([33.75536, 29.26153, 33.30586, 33.77337, -20.53700, -26.45610])
+        CP2 = np.array([-0.00594, -0.02236, -0.01113, 0.24845, 0.69221, 1.02055])
+        CP3 = np.array([2.24e-05, 0.000265, 0.000357, 0.000253, -0.000280, -0.000410])
+        CP4 = np.array([-9.96e-09, -4.15e-07, -3.76e-07, -3.84e-07, 0, 0])
 
         Pb_guess = 8e6
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
@@ -1068,7 +1073,7 @@ class Testes_IGOR(unittest.TestCase):
         import pdb; pdb.set_trace()
 
     @unittest.skip("not ok")
-    def test_Connolly_5_4_1(self):
+    def test_Connolly_5_4_2(self):
         R = 8.3144598
                       #
         z = np.array([0.800, 0.066, 0.022, 0.022, 0.022, 0.068])[:,np.newaxis]

@@ -52,14 +52,15 @@ class StabilityCheck:
         if any(~ponteiro_flash):
             sp, Kvalue = self.Stability_2phase(PR, z, np.copy(~ponteiro_flash))
             sp = np.round(sp, 14)
-
+            #import pdb; pdb.set_trace()
             ponteiro_aux = ponteiro_flash[~ponteiro_flash]
             ponteiro_aux[(sp>1).sum(axis=0,dtype=bool)] = True #os que devem passar para o calculo de flash
             ponteiro_flash[~ponteiro_flash] = ponteiro_aux
             #index_spmax = np.argmax(np.round(sp, 10))
             #if sp[4] > 1:
                     #self.K = self.Kw
-            self.K[:,sp[4]>1] = self.Kw
+            #import pdb; pdb.set_trace()
+            self.K[:,sp[4]>1] = self.Kw[:,sp[4]>1]
             #self.equilibrium_ratio_2flash(Kvalue[index_spmax])
             #print(f'sp: {sp}')
             #print(Kvalue)
@@ -80,8 +81,8 @@ class StabilityCheck:
         self.molar_properties(PR, z, np.ones_like(ponteiro_flash, dtype=bool)) # cálculo do flash bifásico
         #import pdb; pdb.set_trace()
 
-        self.x[:,self.L>1 or self.V>1] = z[:,self.L>1 or self.V>1]
-        self.y[:,self.L>1 or self.V>1] = z[:,self.L>1 or self.V>1]
+        self.y[:,(self.L>1) + (self.V>1)] = z[:,(self.L>1) + (self.V>1)]
+        self.x[:,(self.L>1) + (self.V>1)] = z[:,(self.L>1) + (self.V>1)]
         self.L[self.L>1] = 1
         self.L[self.L<0] = 0
         self.V = 1 - self.L
@@ -97,37 +98,55 @@ class StabilityCheck:
         #self.V = 0
         self.get_other_properties(PR, Mw)
 
-        #print('Fim do fash bifásico')
-        #import pdb; pdb.set_trace()
+        '-----------------REVER----------------'
         ponteiro_flash_3phase = np.zeros(len(self.P), dtype = bool)
-        ponteiro_flash_3phase[(self.L != 1) and (self.V != 1)] = True
+        ponteiro_flash_3phase[(self.L != 1) & (self.V != 1)] = True
+        ponteiro_flash_3phase2 = ponteiro_flash_3phase.copy()
+
         sp2, Kvalue2 = self.Stability_3phase(PR, self.x, np.copy(ponteiro_flash_3phase))
         sp2 = np.round(sp2, 8)
+        import pdb; pdb.set_trace()
+        ponteiro_aux = ~ponteiro_flash_3phase[ponteiro_flash_3phase]
+        #ponteiro_aux = np.zeros(len(self.P), dtype = bool)
+        ponteiro_aux[(sp2>1).sum(axis=0,dtype=bool)] = True
+        ponteiro_flash_3phase[ponteiro_flash_3phase] = ponteiro_aux
+        #ponteiro_flash_3phase = ponteiro_aux
 
-        sp2[0] = 5
-
-        ponteiro_flash_3phase2 = ponteiro_flash_3phase[ponteiro_flash_3phase]
+        #ponteiro_flash_3phase2 = ponteiro_flash_3phase[ponteiro_flash_3phase]
+        #ponteiro_flash_3phase2 = np.ones(len(self.P), dtype = bool)
         ponteiro_flash_3phase2[(sp2>1).sum(axis=0,dtype=bool)] = False
-        ponteiro_flash_3phase[ponteiro_flash_3phase] = ponteiro_flash_3phase2
+        #ponteiro_flash_3phase[ponteiro_flash_3phase] = ponteiro_flash_3phase2
+
+        sp3, Kvalue3 = self.Stability_3phase(PR, self.y, np.copy(ponteiro_flash_3phase2))
+        sp3 = np.round(sp3, 8)
+        import pdb; pdb.set_trace()
+        ponteiro_aux2 = ~ponteiro_flash_3phase2[ponteiro_flash_3phase2]
+        #ponteiro_aux2 = np.zeros(len(self.P), dtype = bool)
+        ponteiro_aux2[(sp3>1).sum(axis=0,dtype=bool)] = True
+        ponteiro_flash_3phase2[ponteiro_flash_3phase2] = ponteiro_aux2
+        #ponteiro_flash_3phase2 = ponteiro_aux2
+
+        ponteiro_flash_3phase = ponteiro_flash_3phase + ponteiro_flash_3phase2
+        #ponteiro_flash_3phase[ponteiro_flash_3phase] = ponteiro_flash_3phase2
+        import pdb; pdb.set_trace()
 
 
-        sp2, Kvalue2 = self.Stability_3phase(PR, self.y, np.copy(ponteiro_flash_3phase))
-        sp2 = np.round(sp2, 8)
 
-        #print(f'sp2: {sp2}')
-        #import pdb; pdb.set_trace()
-        #print(f'K : {Kvalue2}')
-        #sp2[0] = 5
+        '''
         ponteiro_flash_3phase2 = ~ponteiro_flash_3phase[ponteiro_flash_3phase]
-        ponteiro_flash_3phase2[(sp2>1).sum(axis=0,dtype=bool)] = True
-        ponteiro_flash_3phase[ponteiro_flash_3phase] = ponteiro_flash_3phase2
+        ponteiro_flash_3phase2[(sp3>1).sum(axis=0,dtype=bool)] = True
 
+        #ponteiro_flash_3phase[ponteiro_flash_3phase] = ponteiro_flash_3phase2
+        ponteiro_flash_3phase[ponteiro_flash_3phase2] = ponteiro_flash_3phase2
+        '''
+
+        'here!'
         self.K_A = self.K.copy()
         #self.K_V = Kvalue2[1].copy()
         self.K_V = self.Kwilson.copy()
-        self.molar_properties_3phase(PR, z, np.ones_like(ponteiro_flash, dtype=bool))
+        self.molar_properties_3phase(PR, z, np.ones_like(ponteiro_flash_3phase, dtype=bool))
         self.get_other_properties_3phases(PR, Mw)
-
+        import pdb; pdb.set_trace()
         ##########################
         if self.L != 1 and self.V != 1:
             sp2, Kvalue2 = self.Stability_3phase(PR, self.x, np.copy(ponteiro_flash))
@@ -174,8 +193,8 @@ class StabilityCheck:
     def equilibrium_ratio_aqueous(self, z):
 
         self.Kw = np.zeros_like(z)
-        self.Kw[0] = 0.999 / z[0]
-        self.Kw[1:] = 0.001 / (len(z) - 1) / z[1:]
+        self.Kw[0] = 0.999 / z[0][0]
+        self.Kw[1:] = 0.001 / (len(z) - 1) / z[1:,[0]]
 
         #self.Kw = 0.001 / (len(z) - 1) / z
         #self.Kw[3] = 0.999 / z[-1]
@@ -320,10 +339,10 @@ class StabilityCheck:
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
 
-        lny = np.log(y)
-        TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphiz[:] - np.log(z)))
-        print(f'TPD do teste 1: {TPD}')
-
+        #lny = np.log(y)
+        #TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphiz[:] - np.log(z)))
+        #print(f'TPD do teste 1: {TPD}')
+        #import pdb; pdb.set_trace()
         stationary_point1 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
         stationary_points[0] = stationary_point1
 

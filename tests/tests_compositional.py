@@ -776,7 +776,7 @@ class Testes_IGOR(unittest.TestCase):
 
     # 3 phases
 
-    #@unittest.skip("ok para a instabilidade em y - valores aproximados")
+    @unittest.skip("ok para a instabilidade em y - valores aproximados")
     def test_Varavei_3_1_triphase(self):
         R = 8.3144598
         z = np.array([0.2, 0.1, 0.1, 0.2, 0.4])[:,np.newaxis]
@@ -798,14 +798,16 @@ class Testes_IGOR(unittest.TestCase):
         obj.run(z,Mw)
         import pdb; pdb.set_trace()
 
-    @unittest.skip("ok - solução parecida")
+    @unittest.skip("ok - solução parecida - TESTE VETORIZADO")
     def test_Sabet_case_3phases(self):
         R = 8.3144598
                     # H2O/ C1 / nC5 / nC10 / CO2 / H2S
         z = np.array([0.1, 0.3, 0.15, 0.25, 0.1, 0.1])[:,np.newaxis]
+        z = np.array([0.1, 0.3, 0.15, 0.25, 0.1, 0.1])[:,np.newaxis]*np.ones([6,2])
+
         Tc = np.array([647.3, 190.6, 469.6, 617.9, 304.2, 373.2]) # Kelvin
         Pc = np.array([220.5, 46, 33.3, 21, 73.8, 89.4])*101325 # pascal
-        P = np.array([10e6])
+        P = np.array([10e6, 10e6])
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         T = np.array([100 + 273.15])
         Mw = np.array([18.01528, 16.04, 60.05, 120.107, 44.01, 34.1])*1e-3
@@ -824,14 +826,17 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    @unittest.skip("ok - diagrama de fase")
+    #@unittest.skip("ok - diagrama de fase - BUGANDO NO VETORIZADO")
     def test_Connolly432(self):
         R = 8.3144598
                     # H2O,  CO2,      N2,       C1,      C2,      C3,     C4-C6,    PC1,      PC2,      PC3
-        z = np.array([0.1, 0.01089, 0.01746, 0.59391, 0.07821, 0.05319, 0.08703, 0.042705, 0.013635, 0.00297])[:,np.newaxis]
+        #z = np.array([0.1, 0.01089, 0.01746, 0.59391, 0.07821, 0.05319, 0.08703, 0.042705, 0.013635, 0.00297])[:,np.newaxis]
+        z = np.array([0.1, 0.01089, 0.01746, 0.59391, 0.07821, 0.05319, 0.08703, 0.042705, 0.013635, 0.00297])[:,np.newaxis]*np.ones([10,2])
         Tc = np.array([647.3, 304.7, 126.2, 190.6, 305.43, 369.8, 448.08, 465.62, 587.8, 717.72]) # Kelvin
         Pc = np.array([220.8900, 73.86796, 33.94563, 46.04085, 48.83673, 42.65743, 35.50565, 28.32348, 17.06905, 11.06196])*101325 # pascal
-        P = np.array([220])*101325
+        #P = np.array([2, 100, 220])*101325
+        P = np.array([100, 220])*101325
+        #P = np.array([100])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         T = np.array([400])
 

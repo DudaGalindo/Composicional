@@ -105,7 +105,7 @@ class StabilityCheck:
 
         sp2, Kvalue2 = self.Stability_3phase(PR, self.x, np.copy(ponteiro_flash_3phase))
         sp2 = np.round(sp2, 8)
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         ponteiro_aux = ~ponteiro_flash_3phase[ponteiro_flash_3phase]
         #ponteiro_aux = np.zeros(len(self.P), dtype = bool)
         ponteiro_aux[(sp2>1).sum(axis=0,dtype=bool)] = True
@@ -119,7 +119,7 @@ class StabilityCheck:
 
         sp3, Kvalue3 = self.Stability_3phase(PR, self.y, np.copy(ponteiro_flash_3phase2))
         sp3 = np.round(sp3, 8)
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         ponteiro_aux2 = ~ponteiro_flash_3phase2[ponteiro_flash_3phase2]
         #ponteiro_aux2 = np.zeros(len(self.P), dtype = bool)
         ponteiro_aux2[(sp3>1).sum(axis=0,dtype=bool)] = True
@@ -141,10 +141,10 @@ class StabilityCheck:
         '''
 
         'here!'
-        self.K_A = self.K.copy()
-        #self.K_V = Kvalue2[1].copy()
-        self.K_V = self.Kwilson.copy()
-        self.molar_properties_3phase(PR, z, np.ones_like(ponteiro_flash_3phase, dtype=bool))
+        self.K_A = self.K[:, ponteiro_flash_3phase]
+        self.K_V = self.Kwilson[:, ponteiro_flash_3phase]
+
+        self.molar_properties_3phase(PR, z, ponteiro_flash_3phase)
         self.get_other_properties_3phases(PR, Mw)
         import pdb; pdb.set_trace()
         ##########################
@@ -1316,71 +1316,113 @@ class StabilityCheck:
 
     def molar_properties_Lapene_3phase(self, PR, z, ponteiro):
 
-        V = self.V.copy()
-        x = self.x.copy()
-        y = self.y.copy()
+        V = self.V[ponteiro]
+        x = self.x[:, ponteiro]
+        y = self.y[:, ponteiro]
 
-        self.K_V[0] = (self.Pc[0]/self.P)*(self.T/self.Tc[0])
+        self.K_V[0] = (self.Pc[0]/self.P[ponteiro])*(self.T/self.Tc[0]) # Adicionar ponteiro no T para o termico
 
-        y[0] = self.Pw_sat / self.P
+        y[0] = self.Pw_sat / self.P[ponteiro]
         self.K2w = y[0].copy()
         x[0] = y[0] / self.K_V[0]
-        self.a[:] = 0
-        self.a[0] = 1
+        self.a[:, ponteiro] = 0
+        self.a[0, ponteiro] = 1
 
         t0 = time.time()
 
-        razao_vl = np.ones(z.shape)/2
-        razao_av = np.ones(1)/2
+        razao_vl = np.ones(x.shape)/2
+        razao_av = np.ones(self.P[ponteiro].shape)/2
         ponteiro_save = np.copy(ponteiro)
-        while any(ponteiro): # Atualiza o self.K_V
+
+        while any(ponteiro):
             y[0] = self.K2w.copy()
             x[0] = y[0] / self.K_V[0]
 
-            K_V_max = max(self.K_V[1:])
-            K_V_min = min(self.K_V[1:])
+            K_V_max = np.amax(self.K_V[1:,:], axis=0)
+            K_V_min = np.amin(self.K_V[1:,:], axis=0)
             Kw_ast = (1 - y[0]) / (1 - x[0])
-            Kwz = (1 - z[0]) / (1 - x[0])
+            Kwz = (1 - z[0, ponteiro]) / (1 - x[0])
 
             Vmax = Kwz / (Kw_ast - K_V_min)
             Vmin = Kwz / (Kw_ast - K_V_max)
 
+            ponteiro[ponteiro] = ~((K_V_max < Kw_ast) + (K_V_min > Kw_ast))
+            '''
             if (K_V_max < Kw_ast or K_V_min > Kw_ast):
                 print('Solve for V a classical RR equation')
-                # algum return com o ponteiro, para sair do flash
+                # colocar False no ponteiro
                 import pdb; pdb.set_trace()
+            '''
 
-            V_dash = (z[0] - x[0]) / (y[0] - x[0])
-            Objetive_function_V_dash = np.sum((self.K_V[1:,ponteiro] - Kw_ast) * z[1:,ponteiro] / (Kwz + \
-                                        V_dash * (self.K_V[1:,ponteiro] - Kw_ast)), axis = 0)
+            V_dash = (z[0, ponteiro] - x[0]) / (y[0] - x[0])
+            Objetive_function_V_dash = np.sum((self.K_V[1:] - Kw_ast) * z[1:,ponteiro] / (Kwz + \
+                                        V_dash * (self.K_V[1:] - Kw_ast)), axis = 0)
+
+            # Duvida se o calculo de cima esta certo mesmo
 
             ' determine position of V with respect V_dash '
+            V_bigger_then_Vdash = np.ones(len(V), dtype = bool)
+            ponteiro_aux = np.ones(len(V), dtype = bool)
+
+            ponteiro_aux[ponteiro_aux] = (V_dash > Vmin) & (V_dash < Vmax)
+            V_bigger_then_Vdash[ponteiro_aux] = Objetive_function_V_dash[ponteiro_aux] > 0
+            '''
             if (V_dash > Vmin and V_dash < Vmax):
                 if (Objetive_function_V_dash > 0):
                     V_bigger_then_Vdash = True
                 else:
                     V_bigger_then_Vdash = False
+            '''
+
+            #ponteiro_aux[~ponteiro_aux] = (V_dash < Vmin)[~ponteiro_aux]
+            ponteiro_aux = V_dash < Vmin
+            V_bigger_then_Vdash[ponteiro_aux] = True
+            '''
             elif (V_dash < Vmin):
                 V_bigger_then_Vdash = True
+            '''
+
+            #ponteiro_aux[~ponteiro_aux] = V_dash > Vmax
+            ponteiro_aux = V_dash > Vmax
+            V_bigger_then_Vdash[ponteiro_aux] = False
+            '''
             elif (V_dash > Vmax):
                 V_bigger_then_Vdash = False
+            '''
 
             ' determine presence or absence of water '
+            cond_ext = ~V_bigger_then_Vdash
+            cond_int = y[0] < x[0]
+
+            cond1 = cond_ext & cond_int
+            cond2 = ~cond_ext & ~cond_int
+
+            aux = self.A[ponteiro]
+            aux[cond1 + cond2] = 0.0
+            self.A[ponteiro] = aux
+
+            aux2 = ponteiro[ponteiro]
+            aux2[cond1 + cond2] = False
+            ponteiro[ponteiro] = aux2
+            import pdb; pdb.set_trace()
+            '''
             if not V_bigger_then_Vdash:
                 if (y[0] < x[0]):
                     self.A = 0
                     print('Não tem água no sistema')
-                    # Teoricamente interrompe o flash, resolver RR clássico
+                    # ponteiro falso
                 else:
                     print('Tem água no sistema')
             if V_bigger_then_Vdash:
                 if (y[0] > x[0]):
                     self.A = 0
                     print('Não tem água no sistema')
-                    # Teoricamente interrompe o flash, resolver RR clássico
+                    # ponteiro falso
                 else:
                     print('Tem água no sistema')
+            '''
 
+            """---------------- Stop Here ------------"""
             V, x, y = self.solve_objective_function_Lapene_for_V(z, x, y, V, Kw_ast, Kwz, np.copy(ponteiro))
 
             lnphil = self.lnphi_based_on_deltaG(PR, x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])

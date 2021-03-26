@@ -26,6 +26,10 @@ class StabilityCheck:
         self.ph_L = np.ones(len(self.P), dtype = bool)
         self.ph_V = np.zeros(len(self.P), dtype = bool)
         self.Pb_guess = Pb_guess
+        #self.CP1 = CP1
+        #self.CP2 = CP2
+        #self.CP3 = CP3
+        #self.CP4 = CP4
 
 
         #StabilityCheck.TPD(self)
@@ -147,7 +151,8 @@ class StabilityCheck:
         self.molar_properties_3phase(PR, z, ponteiro_flash_3phase)
         self.get_other_properties_3phases(PR, Mw)
         import pdb; pdb.set_trace()
-        ##########################
+
+        """
         if self.L != 1 and self.V != 1:
             sp2, Kvalue2 = self.Stability_3phase(PR, self.x, np.copy(ponteiro_flash))
             sp2 = np.round(sp2, 8)
@@ -166,7 +171,7 @@ class StabilityCheck:
                 self.K_V = self.Kwilson.copy()
                 self.molar_properties_3phase(PR, z, np.ones_like(ponteiro_flash, dtype=bool))
                 self.get_other_properties_3phases(PR, Mw)
-        ############################
+        """
 
         enthalpy_oil = PR.enthalpy_calculation(self, self.x, self.P, self.ph_L) # Teste de calculo da entalpia
         enthalpy_vapour = PR.enthalpy_calculation(self, self.y, self.P, self.ph_V) # Teste de calculo da entalpia
@@ -365,9 +370,9 @@ class StabilityCheck:
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
 
-        lny = np.log(y)
-        TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphiz[:] - np.log(z)))
-        print(f'TPD do teste 2: {TPD}')
+        #lny = np.log(y)
+        #TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphiz[:] - np.log(z)))
+        #print(f'TPD do teste 2: {TPD}')
 
         stationary_point2 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
         stationary_points[1] = stationary_point2
@@ -392,9 +397,9 @@ class StabilityCheck:
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
 
-        lny = np.log(y)
-        TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphiz[:] - np.log(z)))
-        print(f'TPD do teste 3: {TPD}')
+        #lny = np.log(y)
+        #TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphiz[:] - np.log(z)))
+        #print(f'TPD do teste 3: {TPD}')
 
         stationary_point3 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
         stationary_points[2] = stationary_point3
@@ -420,9 +425,9 @@ class StabilityCheck:
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
 
-        lny = np.log(y)
-        TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphiz[:] - np.log(z)))
-        print(f'TPD do teste 4: {TPD}')
+        #lny = np.log(y)
+        #TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphiz[:] - np.log(z)))
+        #print(f'TPD do teste 4: {TPD}')
 
         stationary_point4 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
         stationary_points[3] = stationary_point4
@@ -448,9 +453,9 @@ class StabilityCheck:
             ponteiro[ponteiro] = ponteiro_aux
 
 
-        lny = np.log(y)
-        TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphiz[:] - np.log(z)))
-        print(f'TPD do teste 5: {TPD}')
+        #lny = np.log(y)
+        #TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphiz[:] - np.log(z)))
+        #print(f'TPD do teste 5: {TPD}')
 
         stationary_point5 = np.sum(Y[:,ponteiro_stab_check], axis = 0)
         stationary_points[4] = stationary_point5
@@ -1341,12 +1346,17 @@ class StabilityCheck:
             K_V_max = np.amax(self.K_V[1:,:], axis=0)
             K_V_min = np.amin(self.K_V[1:,:], axis=0)
             Kw_ast = (1 - y[0]) / (1 - x[0])
-            Kwz = (1 - z[0, ponteiro]) / (1 - x[0])
+            try:
+                Kwz = (1 - z[0, ponteiro_save]) / (1 - x[0])
+                #Kwz = (1 - z[0, ponteiro]) / (1 - x[0])
+            except: import pdb; pdb.set_trace()
 
             Vmax = Kwz / (Kw_ast - K_V_min)
             Vmin = Kwz / (Kw_ast - K_V_max)
 
-            ponteiro[ponteiro] = ~((K_V_max < Kw_ast) + (K_V_min > Kw_ast))
+            try:
+                ponteiro[ponteiro_save] = ~((K_V_max < Kw_ast) + (K_V_min > Kw_ast))
+            except: import pdb; pdb.set_trace()
             '''
             if (K_V_max < Kw_ast or K_V_min > Kw_ast):
                 print('Solve for V a classical RR equation')
@@ -1404,7 +1414,7 @@ class StabilityCheck:
             aux2 = ponteiro[ponteiro]
             aux2[cond1 + cond2] = False
             ponteiro[ponteiro] = aux2
-            import pdb; pdb.set_trace()
+
             '''
             if not V_bigger_then_Vdash:
                 if (y[0] < x[0]):
@@ -1425,26 +1435,30 @@ class StabilityCheck:
             """---------------- Stop Here ------------"""
             V, x, y = self.solve_objective_function_Lapene_for_V(z, x, y, V, Kw_ast, Kwz, np.copy(ponteiro))
 
-            lnphil = self.lnphi_based_on_deltaG(PR, x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
-            lnphiv = self.lnphi_based_on_deltaG(PR, y[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
+            lnphil = self.lnphi_based_on_deltaG(PR, x, self.P[ponteiro], self.ph_L[ponteiro])
+            lnphiv = self.lnphi_based_on_deltaG(PR, y, self.P[ponteiro], self.ph_V[ponteiro])
             lnphia = self.lnphi_based_on_deltaG(PR, self.a[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
 
 
-            self.fv = np.exp(lnphiv) * (y[:,ponteiro] * self.P[ponteiro][np.newaxis,:])
-            self.fl = np.exp(lnphil) * (x[:,ponteiro] * self.P[ponteiro][np.newaxis,:])
+            self.fv = np.exp(lnphiv) * (y * self.P[ponteiro][np.newaxis,:])
+            self.fl = np.exp(lnphil) * (x * self.P[ponteiro][np.newaxis,:])
             self.fa = np.exp(lnphia) * (self.a[:,ponteiro] * self.P[ponteiro][np.newaxis,:])
 
 
-            razao_vl[:,ponteiro] = np.divide(self.fl, self.fv, out = razao_vl[:,ponteiro] / razao_vl[:,ponteiro] * (1 + 1e-10),
+            razao_vl = np.divide(self.fl, self.fv, out = razao_vl / razao_vl * (1 + 1e-10),
                               where = self.fv != 0)
-            razao_av[ponteiro] = self.fa[0,ponteiro] / self.fv[0,ponteiro] * (1 + 1e-10)
+            razao_av = self.fa[0] / self.fv[0] * (1 + 1e-10)
+            #razao_vl[:,ponteiro] = np.divide(self.fl, self.fv, out = razao_vl[:,ponteiro] / razao_vl[:,ponteiro] * (1 + 1e-10),
+                              #where = self.fv != 0)
+            #razao_av[ponteiro] = self.fa[0,ponteiro] / self.fv[0,ponteiro] * (1 + 1e-10)
 
-
-            self.K_V[:,ponteiro] = razao_vl[:,ponteiro] * self.K_V[:,ponteiro]
+            self.K_V = razao_vl * self.K_V
             self.K2w = self.K2w * razao_av
+            #self.K_V[ponteiro] = razao_vl[ponteiro] * self.K_V[ponteiro]
+            #self.K2w[ponteiro] = self.K2w[ponteiro] * razao_av
 
             #stop_criteria = np.max(abs((self.fl/(self.fv + 1e-15)) - 1), axis = 0)
-            stop_criteria = (np.sum(((self.fl/self.fv) - 1)**2))**0.5
+            stop_criteria = (np.sum(((self.fl/self.fv) - 1)**2, axis=0))**0.5
             ponteiro_aux = ponteiro[ponteiro]
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
@@ -1454,64 +1468,104 @@ class StabilityCheck:
         t1 = time.time()
         print('Lapene time for 3phase flash:', t1-t0)
 
-        V_ast = (1 - z[0]) / (1 - y[0])
-        if V > V_ast:
-            V = V_ast
-            print('V maior que o V asterisco')
-
-        if V < 0:
-            V = 0
+        V_ast = (1 - z[0, ponteiro_save]) / (1 - y[0])
+        V[V>V_ast] = V_ast[V>V_ast]
+        #if V > V_ast:
+            #V = V_ast
+            #print('V maior que o V asterisco')
+        V[V<0] = 0.0
+        #if V < 0:
+            #V = 0
 
         # Aqui atualizar tudo
         #self.V = V[ponteiro_save].copy()
         #self.x[:,ponteiro_save] = x.copy()
         #self.y[:,ponteiro_save] = y.copy()
-        self.V = V
-        self.x = x
-        self.y = y
-        self.A = (z[0] + self.V*(self.x[0] - self.y[0]) - self.x[0]) / (1 - self.x[0])
-        self.L = 1 - self.A - self.V
+        self.V[ponteiro_save] = V
+        self.x[:, ponteiro_save] = x
+        self.y[:, ponteiro_save] = y
+        self.A[ponteiro_save] = (z[0, ponteiro_save] + self.V[ponteiro_save]*(self.x[0, ponteiro_save] - self.y[0, ponteiro_save]) - self.x[0, ponteiro_save]) / (1 - self.x[0, ponteiro_save])
+        self.L[ponteiro_save] = 1 - self.A[ponteiro_save] - self.V[ponteiro_save]
+        self.L[self.L<0] = 0.0
 
         return ponteiro_save
 
     def solve_objective_function_Lapene_for_V(self, z, x, y, V, Kw_ast, Kwz, ponteiro):
         ' Leibovici–Neoschil window '
-        Vmin = np.max(((self.K_V[self.K_V>Kw_ast] * z[self.K_V>Kw_ast] - Kwz) / (self.K_V[self.K_V>Kw_ast] - Kw_ast)))
-        Vmax = np.min(((Kwz - z[self.K_V<Kw_ast]) / (Kw_ast - self.K_V[self.K_V<Kw_ast])), axis = 0)
-        #problema com o ponteiro, Vmin e Vmax nao sao arrays
-        V[ponteiro] = 0.5*(Vmax + Vmin) # Chute inicial
+
+        '''
+        # Alternativa para calcular o Vmin
+        aux = self.K_V > Kw_ast
+        aux_vols = aux.astype(int).sum(axis=0)
+        vols = len(aux_vols[aux_vols>0])
+        Vmin = np.empty(vols)
+        z_aux = z[:, ponteiro]
+
+        for i in range(self.Nc):
+            Vmin[aux_vols[aux_vols>0]==(self.Nc-i)] = np.max((self.K_V[:,aux_vols==self.Nc-i] * z_aux[:,aux_vols==self.Nc-i] - \
+            Kwz[aux_vols==self.Nc-i])/(self.K_V[:,aux_vols==self.Nc-i] - Kw_ast[aux_vols==self.Nc-i]), axis=0, initial=0)
+        '''
+
+        z_aux = z[:, ponteiro]
+        equation1 = (self.K_V * z_aux - Kwz)/(self.K_V - Kw_ast)
+        equation1[(self.K_V <= Kw_ast)] = -np.inf
+        Vmin = np.max(equation1, axis=0)
+
+        equation2 = (Kwz - z_aux)/(Kw_ast - self.K_V)
+        equation2[(self.K_V >= Kw_ast)] = np.inf
+        Vmax = np.min(equation2, axis=0)
+
+        #V[ponteiro] = 0.5*(Vmax + Vmin) # Chute inicial
+        V = 0.5*(Vmax + Vmin) # Chute inicial
 
         ponteiro_save = np.copy(ponteiro)
         i = 0
 
-        while any(ponteiro):
-            Vold = V[ponteiro]
+        while any(ponteiro_save):
+            #Vold = V[ponteiro]
+            Vold = V
 
-            G = np.sum((self.K_V[1:,ponteiro] - Kw_ast) * z[1:,ponteiro] / (Kwz + \
-                        V * (self.K_V[1:,ponteiro] - Kw_ast)), axis = 0)
+            G = np.sum((self.K_V[1:] - Kw_ast) * z[1:,ponteiro] / (Kwz + \
+                    V * (self.K_V[1:] - Kw_ast)), axis = 0)
 
-            dG = - np.sum(((self.K_V[1:,ponteiro] - Kw_ast)**2) * z[1:,ponteiro] / ((Kwz + \
-                        V * (self.K_V[1:,ponteiro] - Kw_ast))**2), axis = 0)
+            dG = - np.sum(((self.K_V[1:] - Kw_ast)**2) * z[1:,ponteiro] / ((Kwz + \
+                    V * (self.K_V[1:] - Kw_ast))**2), axis = 0)
 
-            V[ponteiro] = V[ponteiro] - G / dG # Newton-Raphson iterative method
+            #G = np.sum((self.K_V[1:] - Kw_ast) * z[1:,ponteiro_save] / (Kwz + \
+                    #V * (self.K_V[1:] - Kw_ast)), axis = 0)
 
-            V_aux = V[ponteiro]
+            #dG = - np.sum(((self.K_V[1:] - Kw_ast)**2) * z[1:,ponteiro_save] / ((Kwz + \
+                    #V * (self.K_V[1:] - Kw_ast))**2), axis = 0)
+
+            #V[ponteiro] = V[ponteiro] - G / dG # Newton-Raphson iterative method
+            V = V - G / dG # Newton-Raphson iterative method
+
+            #V_aux = V[ponteiro]
+            V_aux = V
             #V_aux[V_aux > Vmax[ponteiro]] = 0.5 * (Vmax[ponteiro] + Vold)[V_aux > Vmax[ponteiro]] #(Vmax + Vold)/2
             #V_aux[V_aux < Vmin[ponteiro]] = 0.5 * (Vmin[ponteiro] + Vold)[V_aux < Vmin[ponteiro]]#(Vmin + Vold)/2
             V_aux[V_aux > Vmax] = 0.5 * (Vmax + Vold)[V_aux > Vmax] #(Vmax + Vold)/2
-            V_aux[V_aux < Vmin] = 0.5 * (Vmin + Vold)[V_aux < Vmin]#(Vmin + Vold)/2
-            V[ponteiro] = V_aux
+            V_aux[V_aux < Vmin] = 0.5 * (Vmin + Vold)[V_aux < Vmin] #(Vmin + Vold)/2
+            #V[ponteiro] = V_aux
+            V = V_aux
 
-            stop_criteria = abs((V[ponteiro] / Vold) - 1)
-            ponteiro_aux = ponteiro[ponteiro]
+            #stop_criteria = abs((V[ponteiro] / Vold) - 1)
+            #import pdb; pdb.set_trace()
+            #stop_criteria = np.empty(ponteiro_save[ponteiro_save].shape)
+            #stop_criteria[ponteiro_save[ponteiro_save]] = abs((V / Vold) - 1)
+            stop_criteria = abs((V / Vold) - 1)
+            ponteiro_aux = ponteiro_save[ponteiro]
+            #ponteiro_aux = ponteiro_save[ponteiro_save]
             ponteiro_aux[stop_criteria < 1e-9] = False
-            ponteiro[ponteiro] = ponteiro_aux
+            ponteiro_save[ponteiro] = ponteiro_aux
+            #ponteiro_save[ponteiro_save] = ponteiro_aux
             i+=1
             if i>=3000:
                 print('maxit in triphasic flash')
                 import pdb; pdb.set_trace()
 
-        x[1:] = z[1:] / (1 + V*(self.K_V[1:] - 1 + (y[0] - x[0])/(1 - x[0])) + (x[0] - z[0])/(1 - x[0]))
+
+        x[1:] = z[1:, ponteiro] / (1 + V*(self.K_V[1:] - 1 + (y[0] - x[0])/(1 - x[0])) + (x[0] - z[0, ponteiro])/(1 - x[0]))
         y[1:] = x[1:] * self.K_V[1:]
         y[0] = self.K2w.copy()
         x[0] = y[0] / self.K_V[0]

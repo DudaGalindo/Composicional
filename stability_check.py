@@ -606,15 +606,16 @@ class StabilityCheck:
         while any(ponteiro):
             Y_old = np.copy(Y[:,ponteiro])
             lnphiy = PR.lnphi(self, y[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro]) # both ph_L ?
+            #import pdb; pdb.set_trace()
             Y[:,ponteiro] = np.exp(np.log(x[:,ponteiro]) + lnphix[:,ponteiro] - lnphiy)
             y[:,ponteiro] = Y[:,ponteiro] / np.sum(Y[:,ponteiro], axis = 0)[np.newaxis,:]
             stop_criteria = np.max(abs(Y[:,ponteiro] / Y_old - 1), axis = 0)
             ponteiro_aux = ponteiro[ponteiro]
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
+            #import pdb; pdb.set_trace()
 
-        lny = np.log(y)
-
+        #lny = np.log(y)
         #TPD = np.sum(y[:]*(lnphiy[:] + lny[:] - lnphix[:] - np.log(x)))
         #print(f'TPD do teste 5: {TPD}')
 

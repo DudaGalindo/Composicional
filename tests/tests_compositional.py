@@ -776,18 +776,24 @@ class Testes_IGOR(unittest.TestCase):
 
     # 3 phases
 
-    @unittest.skip("ok para a instabilidade em y - valores aproximados")
+    #@unittest.skip("ok para a instabilidade em y - erro bizarro no vetorizado")
     def test_Varavei_3_1_triphase(self):
         R = 8.3144598
-        z = np.array([0.2, 0.1, 0.1, 0.2, 0.4])[:,np.newaxis]
-                     # H2O, C1, C6, C10, C15
+                    # H2O, C1, C6, C10, C15
+        #z = np.array([0.2, 0.1, 0.1, 0.2, 0.4])[:,np.newaxis]
+        z = np.array([0.2, 0.1, 0.1, 0.2, 0.4])[:,np.newaxis]*np.ones([5,2])
+
         T = np.array([366.483]) # Kelvin
-        P = np.array([200])*6895 # Pascal
+        P = np.array([200*6895.0])*np.ones([2,]) # Pascal
 
         Tc = np.array([647.3, 190.6, 507.4, 594.906, 676.266]) # Kelvin
         Pc = np.array([22089.00, 4600, 2969.00, 2439.00, 1824.00])*1000 # Pascal
 
-        Bin = np.zeros([len(z), len(z)])
+        Bin = np.array([[0, 0, 0, 0, 0], \
+                        [0, 0, 0, 0, 0], \
+                        [0, 0, 0, 0, 0], \
+                        [0, 0, 0, 0, 0], \
+                        [0, 0, 0, 0, 0]])
 
         w = np.array([0.344, 0.008, 0.296, 0.5764, 0.7678])
         Mw = np.array([18, 16.04, 86.2, 142.3, 206])*1e-3
@@ -798,16 +804,16 @@ class Testes_IGOR(unittest.TestCase):
         obj.run(z,Mw)
         import pdb; pdb.set_trace()
 
-    @unittest.skip("ok - solução parecida - TESTE VETORIZADO")
+    @unittest.skip("ok vetorizado")
     def test_Sabet_case_3phases(self):
         R = 8.3144598
                     # H2O/ C1 / nC5 / nC10 / CO2 / H2S
         z = np.array([0.1, 0.3, 0.15, 0.25, 0.1, 0.1])[:,np.newaxis]
-        z = np.array([0.1, 0.3, 0.15, 0.25, 0.1, 0.1])[:,np.newaxis]*np.ones([6,2])
+        z = np.array([0.1, 0.3, 0.15, 0.25, 0.1, 0.1])[:,np.newaxis]*np.ones([6,10])
 
         Tc = np.array([647.3, 190.6, 469.6, 617.9, 304.2, 373.2]) # Kelvin
         Pc = np.array([220.5, 46, 33.3, 21, 73.8, 89.4])*101325 # pascal
-        P = np.array([10e6, 10e6])
+        P = np.array([10e6])*np.ones([10,])
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         T = np.array([100 + 273.15])
         Mw = np.array([18.01528, 16.04, 60.05, 120.107, 44.01, 34.1])*1e-3
@@ -826,7 +832,7 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    #@unittest.skip("ok - diagrama de fase - BUGANDO NO VETORIZADO")
+    @unittest.skip("ok - diagrama de fase - BUGANDO NO VETORIZADO PARA VALORES BAIXOS DE PRESSAO")
     def test_Connolly432(self):
         R = 8.3144598
                     # H2O,  CO2,      N2,       C1,      C2,      C3,     C4-C6,    PC1,      PC2,      PC3
@@ -902,18 +908,22 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    @unittest.skip("ok")
+    @unittest.skip("ok vetorizado")
     def test_lapene_18_components(self):
         R = 8.3144598
 
         z = np.array([20, 0.26, 3.60, 74.12, 7.94, 3.29, 0.68, 1.24, 0.55, 0.61, \
                     0.87, 1.15, 1.07, 0.95, 0.67, 1.65, 1.13, 0.22])[:,np.newaxis]
         z = z/np.sum(z)
+        z = z**np.ones([18,5])
+
         Tc = np.array([647.37, 126.20, 304.21, 190.60, 305.40, 369.80, 408.10, 425.20, \
                         464.74, 469.60, 515.28, 553.84, 581.28, 609.35, 626.97, 658.15, 778.15, 998.15]) # Kelvin
         Pc = np.array([221.20, 33.94, 73.77, 46.00, 48.84, 42.46, 36.48, 38.00, 34.77, \
                         33.74, 32.57, 31.00, 28.50, 26.50, 24.60, 21.20, 15.70, 13.50])*101325 # pascal
         P = np.array([200])*101325
+        P = P**np.ones([5,])
+
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, \
                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         T = np.array([450])

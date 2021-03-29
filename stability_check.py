@@ -13,7 +13,7 @@ class StabilityCheck:
     """Check for stability of a thermodynamic equilibrium and returns the
     equilibrium phase compositions (perform the flash calculation)."""
 
-    def __init__(self, w, Bin, R, Tc, Pc, T, P, Pb_guess):
+    def __init__(self, w, Bin, R, Tc, Pc, T, P, Pb_guess, CP1, CP2, CP3, CP4):
         self.w = w
         self.Bin = Bin
         self.R = R
@@ -26,10 +26,10 @@ class StabilityCheck:
         self.ph_L = np.ones(len(self.P), dtype = bool)
         self.ph_V = np.zeros(len(self.P), dtype = bool)
         self.Pb_guess = Pb_guess
-        #self.CP1 = CP1
-        #self.CP2 = CP2
-        #self.CP3 = CP3
-        #self.CP4 = CP4
+        self.CP1 = CP1
+        self.CP2 = CP2
+        self.CP3 = CP3
+        self.CP4 = CP4
 
 
         #StabilityCheck.TPD(self)
@@ -102,7 +102,7 @@ class StabilityCheck:
         #self.V = 0
         self.get_other_properties(PR, Mw)
 
-        '-----------------REVER----------------'
+
         ponteiro_flash_3phase = np.zeros(len(self.P), dtype = bool)
         ponteiro_flash_3phase[(self.L != 1) & (self.V != 1)] = True
         ponteiro_flash_3phase2 = ponteiro_flash_3phase.copy()
@@ -118,7 +118,10 @@ class StabilityCheck:
 
         #ponteiro_flash_3phase2 = ponteiro_flash_3phase[ponteiro_flash_3phase]
         #ponteiro_flash_3phase2 = np.ones(len(self.P), dtype = bool)
-        ponteiro_flash_3phase2[(sp2>1).sum(axis=0,dtype=bool)] = False
+
+        try:
+            ponteiro_flash_3phase2[(sp2>1).sum(axis=0,dtype=bool)] = False
+        except: import pdb; pdb.set_trace()
         #ponteiro_flash_3phase[ponteiro_flash_3phase] = ponteiro_flash_3phase2
 
         sp3, Kvalue3 = self.Stability_3phase(PR, self.y, np.copy(ponteiro_flash_3phase2))
@@ -132,9 +135,6 @@ class StabilityCheck:
 
         ponteiro_flash_3phase = ponteiro_flash_3phase + ponteiro_flash_3phase2
         #ponteiro_flash_3phase[ponteiro_flash_3phase] = ponteiro_flash_3phase2
-        import pdb; pdb.set_trace()
-
-
 
         '''
         ponteiro_flash_3phase2 = ~ponteiro_flash_3phase[ponteiro_flash_3phase]
@@ -144,7 +144,8 @@ class StabilityCheck:
         ponteiro_flash_3phase[ponteiro_flash_3phase2] = ponteiro_flash_3phase2
         '''
 
-        'here!'
+        self.A[~ponteiro_flash_3phase] = 0.0
+        self.a[:, ~ponteiro_flash_3phase] = 0.0
         self.K_A = self.K[:, ponteiro_flash_3phase]
         self.K_V = self.Kwilson[:, ponteiro_flash_3phase]
 
@@ -606,7 +607,7 @@ class StabilityCheck:
         while any(ponteiro):
             Y_old = np.copy(Y[:,ponteiro])
             lnphiy = PR.lnphi(self, y[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro]) # both ph_L ?
-            import pdb; pdb.set_trace()
+            #import pdb; pdb.set_trace()
             Y[:,ponteiro] = np.exp(np.log(x[:,ponteiro]) + lnphix[:,ponteiro] - lnphiy)
             y[:,ponteiro] = Y[:,ponteiro] / np.sum(Y[:,ponteiro], axis = 0)[np.newaxis,:]
             stop_criteria = np.max(abs(Y[:,ponteiro] / Y_old - 1), axis = 0)
@@ -1433,7 +1434,9 @@ class StabilityCheck:
                     print('Tem água no sistema')
             '''
 
-            """---------------- Stop Here ------------"""
+            if any(ponteiro) == False:
+                return ponteiro_save
+
             V, x, y = self.solve_objective_function_Lapene_for_V(z, x, y, V, Kw_ast, Kwz, np.copy(ponteiro))
 
             lnphil = self.lnphi_based_on_deltaG(PR, x, self.P[ponteiro], self.ph_L[ponteiro])
@@ -1509,11 +1512,17 @@ class StabilityCheck:
 
         z_aux = z[:, ponteiro]
         equation1 = (self.K_V * z_aux - Kwz)/(self.K_V - Kw_ast)
-        equation1[(self.K_V <= Kw_ast)] = -np.inf
+        try:
+            equation1[(self.K_V <= Kw_ast)] = -np.inf
+        except: import pdb; pdb.set_trace()
+
         Vmin = np.max(equation1, axis=0)
 
         equation2 = (Kwz - z_aux)/(Kw_ast - self.K_V)
-        equation2[(self.K_V >= Kw_ast)] = np.inf
+        try:
+            equation2[(self.K_V >= Kw_ast)] = np.inf
+        except: import pdb; pdb.set_trace()
+
         Vmax = np.min(equation2, axis=0)
 
         #V[ponteiro] = 0.5*(Vmax + Vmin) # Chute inicial

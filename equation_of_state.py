@@ -12,17 +12,17 @@ class PengRobinson:
     def coefficientsPR(self, kprop):
 
         #l - any phase molar composition
-        PR_kC7 = np.array([0.379642, 1.48503, 0.1644, 0.016667])
-        PR_k = np.array([0.37464, 1.54226, 0.26992])
+        self.PR_kC7 = np.array([0.379642, 1.48503, 0.1644, 0.016667])
+        self.PR_k = np.array([0.37464, 1.54226, 0.26992])
 
-        k = (PR_kC7[0] + PR_kC7[1] * kprop.w - PR_kC7[2] * kprop.w ** 2 + \
-            PR_kC7[3] * kprop.w ** 3) * (1*(kprop.w >= 0.5)) + (PR_k[0] + PR_k[1] * kprop.w - \
-            PR_k[2] * kprop.w ** 2) * (1*(kprop.w < 0.5))  # FUnção com o fator acentrico - 2 possibilidades, varia com o w
+        k = (self.PR_kC7[0] + self.PR_kC7[1] * kprop.w - self.PR_kC7[2] * kprop.w ** 2 + \
+            self.PR_kC7[3] * kprop.w ** 3) * (1*(kprop.w >= 0.5)) + (self.PR_k[0] + self.PR_k[1] * kprop.w - \
+            self.PR_k[2] * kprop.w ** 2) * (1*(kprop.w < 0.5))  # FUnção com o fator acentrico - 2 possibilidades, varia com o w
         alpha = (1 + k * (1 - (kprop.T / kprop.Tc) ** (1 / 2))) ** 2
-        aalpha_i = 0.45724 * (kprop.R * kprop.Tc) ** 2 / kprop.Pc * alpha
+        self.aalpha_i = 0.45724 * (kprop.R * kprop.Tc) ** 2 / kprop.Pc * alpha
         self.b = 0.07780 * kprop.R * kprop.Tc / kprop.Pc
-        aalpha_i_reshape = np.ones((kprop.Nc,kprop.Nc)) * aalpha_i[:,np.newaxis]
-        self.aalpha_ik = np.sqrt(aalpha_i_reshape.T * aalpha_i[:,np.newaxis]) \
+        aalpha_i_reshape = np.ones((kprop.Nc,kprop.Nc)) * self.aalpha_i[:,np.newaxis]
+        self.aalpha_ik = np.sqrt(aalpha_i_reshape.T * self.aalpha_i[:,np.newaxis]) \
                         * (1 - kprop.Bin)
 
     def coefficients_cubic_EOS_all(self, kprop, l, P):
@@ -140,46 +140,34 @@ class PengRobinson:
 
         return lnphi
 
-    " ----------------------------- Teste - inicio --------------------------------------"
+    " ----------------------------- Teste da entalpia e energia interna --------------------------------------"
     def enthalpy_calculation(self, kprop, l, P, ph):
+        'Calculates enthalpy of phases'
 
-        PR_kC7 = np.array([0.379642, 1.48503, 0.1644, 0.016667])
-        PR_k = np.array([0.37464, 1.54226, 0.26992])
-
-        k = (PR_kC7[0] + PR_kC7[1] * kprop.w - PR_kC7[2] * kprop.w ** 2 + \
-            PR_kC7[3] * kprop.w ** 3) * (1*(kprop.w >= 0.5)) + (PR_k[0] + PR_k[1] * kprop.w - \
-            PR_k[2] * kprop.w ** 2) * (1*(kprop.w < 0.5))  # FUnção com o fator acentrico - 2 possibilidades, varia com o w
-
-        alpha = (1 + k * (1 - (kprop.T / kprop.Tc) ** (1 / 2))) ** 2
-        aalpha_i = 0.45724 * (kprop.R * kprop.Tc) ** 2 / kprop.Pc * alpha
         A, B = self.coefficients_cubic_EOS_all(kprop, l, P)
-
-
-        daalphadt = self.daalphadt(l, kprop, aalpha_i)
+        daalphadt = self.daalphadt(l, kprop)
         h_ref = self.h_reference(l, kprop)
         #h_ref = 0
         Z = self.Z_vectorized(A, B, ph)
-
         h = ((kprop.T * daalphadt - self.aalpha) / self.bm) * np.log((Z + (np.sqrt(2) + 1)*B) / (Z + (np.sqrt(2) - 1)*B)) + \
             kprop.R * kprop.T * (Z - 1) + h_ref
 
         #import pdb; pdb.set_trace()
         return h
 
-    def daalphadt(self, l, kprop, aalpha_i):
+    def daalphadt(self, l, kprop):
         daalpha_idt = self.daalpha_idt(kprop)
         l_reshape = np.ones((self.aalpha_ik).shape)[:,:,np.newaxis] * l[:,np.newaxis,:]
-        aalpha_i_reshape = np.ones((kprop.Nc,kprop.Nc)) * aalpha_i[:,np.newaxis]
-
-        daalphadt = 0.5 * (l_reshape * l[np.newaxis,:,:] * ((1 - kprop.Bin) / (aalpha_i_reshape.T * aalpha_i[:,np.newaxis])) * \
-                            (aalpha_i_reshape.T * daalpha_idt[:,np.newaxis] + aalpha_i[:,np.newaxis] * daalpha_idt)).sum(axis=0).sum(axis=0)
+        aalpha_i_reshape = np.ones((kprop.Nc,kprop.Nc)) * self.aalpha_i[:,np.newaxis]
+        daalphadt = 0.5 * (l_reshape * l[np.newaxis,:,:] * ((1 - kprop.Bin) / (aalpha_i_reshape.T * self.aalpha_i[:,np.newaxis])) * \
+                            (aalpha_i_reshape.T * daalpha_idt[:,np.newaxis] + self.aalpha_i[:,np.newaxis] * daalpha_idt)).sum(axis=0).sum(axis=0)
 
         "Erro no daalphadt"
         daalphadt_2 = 0
         for i in range(len(l)):
             for k in range(len(l)):
-                daalphadt_2 += l[i] * l[k] * ((1 - kprop.Bin[i][k]) / (aalpha_i[i] * aalpha_i[k])) * \
-                                (aalpha_i[i] * daalpha_idt[k] + aalpha_i[k] * daalpha_idt[i])
+                daalphadt_2 += l[i] * l[k] * ((1 - kprop.Bin[i][k]) / (self.aalpha_i[i] * self.aalpha_i[k])) * \
+                                (self.aalpha_i[i] * daalpha_idt[k] + self.aalpha_i[k] * daalpha_idt[i])
 
         daalphadt_2 = daalphadt_2 * 0.5
         #import pdb; pdb.set_trace()
@@ -192,22 +180,20 @@ class PengRobinson:
 
     def h_reference(self, l, kprop):
         T_ref = 273.15 # DUVIDA SOBRE O REAL VALOR
-        'Connolly 332'
-        #kprop.CP1 = np.array([32.20, -1.23e+01, -5.08, -5.69, 0.1230])
-        #kprop.CP2 = np.array([0.001924, 6.65e-01, 9.97e-01, 1.840, 4.750])
-        #kprop.CP3 = np.array([1.055E-05, -2.52e-04, -4.14e-04, -7.64e-04, -1.95e-03])
-        #kprop.CP4 = np.array([-3.596e-09, 0.0, 0.0, 0.0, 0.0])
-        'heidari_4_8_1_3'
-        kprop.CP1 = np.array([33.75536, 29.26153, 33.30586, 33.77337, -20.53700, -26.45610])
-        kprop.CP2 = np.array([-0.00594, -0.02236, -0.01113, 0.24845, 0.69221, 1.02055])
-        kprop.CP3 = np.array([2.24e-05, 0.000265, 0.000357, 0.000253, -0.000280, -0.000410])
-        kprop.CP4 = np.array([-9.96e-09, -4.15e-07, -3.76e-07, -3.84e-07, 0, 0])
 
         hi = kprop.CP1*(kprop.T - T_ref) + 0.5*kprop.CP2*(kprop.T**2 - T_ref**2) + \
             (1/3)*kprop.CP3*(kprop.T**3 - T_ref**3) + 0.25*kprop.CP4*(kprop.T**4 - T_ref**4)
 
         hj = np.sum(l*hi)
         return hj
+
+    def energy_calculation(h, P, v):
+        'Calculates internal phase energy'
+        u = h - P*v
+        'h is enthalpy of each phase'
+        'P is pressure'
+        'v is molar volume of each phase'
+        return u
 
     " ----------------------------- Teste - Fim --------------------------------------"
 

@@ -118,7 +118,7 @@ class PengRobinson:
         Zneg2 = Z[lines_Zneg2]
         Zneg2[Zneg2<0] = np.repeat(np.max(Z[lines_Zneg2],axis=1, initial=0),2)
         Z[lines_Zneg2] = Zneg2
-        
+
         Zz = np.min(Z, axis = 1) * ph + np.max(Z, axis = 1) * (1 - ph)
         Z_ = np.real(Zz)
         return Z_

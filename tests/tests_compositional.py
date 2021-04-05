@@ -205,7 +205,7 @@ class testes_casos_Schmall(unittest.TestCase):
                         [0.,0.,.0,0.,0.,0.], [0.,0.,.0,0.,0.,0.]])
         Pv = np.array([8e6, 0., 0., 0., 0., 0.])
         #P = np.linspace(8.46e6, 62e6, 100)
-        P = np.array([10.34e6])
+        P = np.array([8.96e6])
         T = np.array([344.25])
 
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
@@ -299,7 +299,7 @@ class testes_casos_Schmall(unittest.TestCase):
         print('L: ',obj.L,'V: ',obj.V)
         print('fl: ',obj.fl,'fv: ',obj.fv)
 
-    @unittest.skip("ok")
+
     def test_bookDandekar(self):
          R = 10.73159
          z = np.array([0.8232,0.0871,0.0505,0.0198,0.0194])[:,np.newaxis]
@@ -312,24 +312,29 @@ class testes_casos_Schmall(unittest.TestCase):
                          [0.08,0.039,0.022,0.004,0]])
          w = np.array([0.008,0.152,0.251,0.490,0.742])
          Mw = np.array([16.043,44.097,72.15,142.29,226.41])
-         T = np.array([100+459.67])#Fahrenheit
+         T = np.array([100 + 459.67])#Fahrenheit
          P = np.array([1500]) #psia
-         C7 = np.array([0,0,0,1,1])
 
          print('\ncasoN:')
 
          obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
-         sp1,sp2 = obj.run(z,Mw)
-         if sp1>1 or sp2>1:
-             obj.molar_properties(z)
-
+         obj.run(z,Mw)
+         '''
+         obj.x = x
+         obj.y = x
+         obj.L = L #fração molar de liquido
+         obj.V = V #fração molar de vapor
+         obj.fl = fl #fugacidade dos componentes na fase liquida
+         obj.fv = fv #fugacidade dos componentes na fase vapor
+         '''
          print('x: ',obj.x,'y: ',obj.y)
          print('K: ',obj.K)
-         print('L: ',obj.L[1],'V: ',obj.V[1])
+         # print('L: ',obj.L[1],'V: ',obj.V[1])
          print('fl: ',obj.fl,'fv: ',obj.fv)
+         import pdb; pdb.set_trace()
 
 class testes_caso_Firoozabadi(unittest.TestCase):
-    #@unittest.skip("ok")
+    @unittest.skip("ok")
     def test1(self):
         R = 8.3144598
         z = np.array([1., 0., 0.])[:,np.newaxis]#*np.ones([10]) #exemplo aleatório
@@ -348,10 +353,30 @@ class testes_caso_Firoozabadi(unittest.TestCase):
         import pdb; pdb.set_trace()
 
     @unittest.skip("ok")
+    def test_moyner(self):
+        # CO2 C1 C10
+        R = 8.3144598
+        z = np.array([1, 0., 0.])[:,np.newaxis]
+        Tc = np.array([304.21, 190.58, 617.65])
+        Pc = np.array([7382235.525, 4603093.425, 2107154.7])
+        vc = np.array([10.55286406e-5, 10.60259781e-05, 62e-5])
+        Mw = np.array([44.429e-3, 16.043e-3, 142.9e-3])
+        w = np.array([0.225, 0.008, 0.49])
+        Bin = np.array([[0., 0., 0.], [0., 0., 0.0], [0., 0.0, .0]])
+        P = np.array([125e5])
+        T = np.array([423])
+        print('\ncaso1:')
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
+        obj.run(z,Mw)
+        import pdb; pdb.set_trace()
+
+    @unittest.skip("ok")
     def test_MY10(self):
         R = 8.3144598
         # C1, C2, C3, n-C4, n-C5, n-C6, n-C7, n-C8, n-C10, n-C14
+        Nt = 100
         z = np.array([0.35, 0.03, 0.04, 0.06, 0.04, 0.03, 0.05, 0.05, 0.3, 0.05])[:,np.newaxis]
+        Nk = z * Nt
         Tc = np.array([190.6, 305.4, 369.8, 425.2, 469.6, 507.5, 540.3, 568.8, 617.9, 691.9]) # Kelvin
         Pc = np.array([45.4, 48.2, 41.9, 37.5, 33.3, 30.1, 27.4, 24.9, 21.0, 15.2])*100000 # pascal
         Mw = np.array([16.04, 30.07, 44.1, 58.12, 72.15, 86.178, 100.205, 114.232, 142.29, 198.39])*1e-3
@@ -378,7 +403,31 @@ class testes_caso_Firoozabadi(unittest.TestCase):
 
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
         obj.run(z,Mw)
+        x_or = obj.x
+        y_or = obj.y
+        L_or = obj.L
+        V_or = obj.V
+        Csi_l_or = obj.ksi_L
+        Csi_v_or = obj.ksi_V
+        K_or = obj.K
         import pdb; pdb.set_trace()
+        delta = 0.001
+        Nk_plus = np.copy(Nk)
+        Nk_minus = np.copy(Nk)
+        for i in range(len(z)):
+            Nk_plus[i,0] = Nk[i,0] + delta/2
+            Nk_minus[i,0] = Nk[i,0] - delta/2
+            z_plus = Nk_plus/sum(Nk_plus)
+            z_minus = Nk_minus/sum(Nk_minus)
+            obj.run(z_plus,Mw)
+            x_plus = obj.x
+            y_plus = obj.y
+            L_plus = obj.L
+            V_plus = obj.V
+            Csi_l_plus = obj.ksi_L
+            Csi_v_plus = obj.ksi_V
+            K_plus = obj.K
+            import pdb; pdb.set_trace()
     #
     # def test_Abbot(self):
     #     #units: SI

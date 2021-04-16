@@ -164,14 +164,15 @@ class PengRobinson:
         daalphadt = 0.5*(l_reshape * l[np.newaxis,:,:].T * ((1 - kprop.Bin[:,:,np.newaxis]) / (aalpha_i_reshape[:,:,np.newaxis] * \
                     self.aalpha_i[:,np.newaxis]) * (aalpha_i_reshape[:,:,np.newaxis] * daalpha_idt[:,np.newaxis] + \
                     self.aalpha_i[:,np.newaxis] * daalpha_idt_reshape[:,:,np.newaxis]))).sum(axis=0).sum(axis=0)
-
+        """
         daalphadt_2 = 0
         for i in range(len(l)):
             for k in range(len(l)):
                 daalphadt_2 += l[i] * l[k] * ((1 - kprop.Bin[i][k]) / (self.aalpha_i[i] * self.aalpha_i[k])) * \
                                 (self.aalpha_i[i] * daalpha_idt[k] + self.aalpha_i[k] * daalpha_idt[i])
         daalphadt_2 = daalphadt_2 * 0.5
-        import pdb; pdb.set_trace()
+        """
+
         return daalphadt
 
     def daalpha_idt(self, kprop):

@@ -556,14 +556,18 @@ class Testes_IGOR(unittest.TestCase):
         import pdb; pdb.set_trace()
 
 
-    @unittest.skip("ok")
+    #@unittest.skip("ok")
     def test_Connolly332(self):
         R = 8.3144598
                     # H20,   C8,     C13,    C24,    C61+
-        z = np.array([0.5, 0.2227, 0.1402, 0.1016, 0.0355])[:,np.newaxis]
+        #z = np.array([0.5, 0.2227, 0.1402, 0.1016, 0.0355])[:,np.newaxis]
+        z = np.array([0.5, 0.2227, 0.1402, 0.1016, 0.0355])[:,np.newaxis]*np.ones([5,2])
         Tc = np.array([647.37, 575.78, 698, 821.3, 1010.056]) # Kelvin
         Pc = np.array([221.2, 34.82, 23.37, 12.07, 7.79])*101325 # pascal
-        P = np.array([4.5])*101325
+
+        #P = np.array([4.5])*101325
+        P = np.array([4.5*101325])*np.ones([2,]) # Pascal
+
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
         T = np.array([415])
         Mw = np.array([18.015, 116, 183, 337, 858])*1e-3
@@ -578,8 +582,13 @@ class Testes_IGOR(unittest.TestCase):
         CP3 = np.array([1.055E-05, -2.52e-04, -4.14e-04, -7.64e-04, -1.95e-03])
         CP4 = np.array([-3.596e-09, 0.0, 0.0, 0.0, 0.0])
 
+        CP1 = np.zeros_like(Tc)
+        CP2 = np.zeros_like(Tc)
+        CP3 = np.zeros_like(Tc)
+        CP4 = np.zeros_like(Tc)
+
         Pb_guess = 8e6
-        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess, CP1, CP2, CP3, CP4)
         obj.run(z,Mw)
 
         import pdb; pdb.set_trace()
@@ -781,10 +790,11 @@ class Testes_IGOR(unittest.TestCase):
         R = 8.3144598
                     # H2O, C1, C6, C10, C15
         #z = np.array([0.2, 0.1, 0.1, 0.2, 0.4])[:,np.newaxis]
-        z = np.array([0.2, 0.1, 0.1, 0.2, 0.4])[:,np.newaxis]*np.ones([5,2])
+        z = np.array([0.2, 0.1, 0.1, 0.2, 0.4])[:,np.newaxis]*np.ones([5,3])
 
         T = np.array([366.483]) # Kelvin
-        P = np.array([200*6895.0])*np.ones([2,]) # Pascal
+        P = np.array([200*6895.0])*np.ones([3,]) # Pascal
+        #P = np.array([200*6895.0])
 
         Tc = np.array([647.3, 190.6, 507.4, 594.906, 676.266]) # Kelvin
         Pc = np.array([22089.00, 4600, 2969.00, 2439.00, 1824.00])*1000 # Pascal
@@ -798,9 +808,13 @@ class Testes_IGOR(unittest.TestCase):
         w = np.array([0.344, 0.008, 0.296, 0.5764, 0.7678])
         Mw = np.array([18, 16.04, 86.2, 142.3, 206])*1e-3
 
-        Pb_guess = 8e6
+        CP1 = np.zeros_like(Tc)
+        CP2 = np.zeros_like(Tc)
+        CP3 = np.zeros_like(Tc)
+        CP4 = np.zeros_like(Tc)
 
-        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess, CP1, CP2, CP3, CP4)
         obj.run(z,Mw)
         import pdb; pdb.set_trace()
 
@@ -826,8 +840,13 @@ class Testes_IGOR(unittest.TestCase):
                         [0.2, 0.103, 0.125, 0.11, 0, 0.096], \
                         [0.275, 0.031, 0.095, 0.1, 0.096, 0]])
 
+        CP1 = np.zeros_like(Tc)
+        CP2 = np.zeros_like(Tc)
+        CP3 = np.zeros_like(Tc)
+        CP4 = np.zeros_like(Tc)
+
         Pb_guess = 8e6
-        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess, CP1, CP2, CP3, CP4)
         obj.run(z,Mw)
 
         import pdb; pdb.set_trace()
@@ -952,9 +971,13 @@ class Testes_IGOR(unittest.TestCase):
                         [0.5, 0.1, 0.12, 0.085, 0.05, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
                         [0.5, 0.1, 0.12, 0.07, 0.04, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
 
+        CP1 = np.zeros_like(Tc)
+        CP2 = np.zeros_like(Tc)
+        CP3 = np.zeros_like(Tc)
+        CP4 = np.zeros_like(Tc)
 
         Pb_guess = 8e6
-        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess)
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess, CP1, CP2, CP3, CP4)
         obj.run(z,Mw)
 
         import pdb; pdb.set_trace()
@@ -1033,7 +1056,7 @@ class Testes_IGOR(unittest.TestCase):
         import pdb; pdb.set_trace()
 
 
-    #@unittest.skip("ok - diagrama de fase")
+    @unittest.skip("ok - diagrama de fase")
     def test_heidari_4_8_1_3(self):
         R = 8.3144598
                       # H20 / CO2 / C2 / nC5 / C8 / C12

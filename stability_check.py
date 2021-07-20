@@ -174,8 +174,8 @@ class StabilityCheck:
                 self.get_other_properties_3phases(PR, Mw)
         """
 
-        enthalpy_oil = PR.enthalpy_calculation(self, self.x, self.P, self.ph_L) # Teste de calculo da entalpia
-        enthalpy_vapour = PR.enthalpy_calculation(self, self.y, self.P, self.ph_V) # Teste de calculo da entalpia
+        #enthalpy_oil = PR.enthalpy_calculation(self, self.x, self.P, self.ph_L) # Teste de calculo da entalpia
+        #enthalpy_vapour = PR.enthalpy_calculation(self, self.y, self.P, self.ph_V) # Teste de calculo da entalpia
 
         import pdb; pdb.set_trace()
         #PR.get_all_derivatives(self, self.x, self.y, self.L, self.V, self.P)

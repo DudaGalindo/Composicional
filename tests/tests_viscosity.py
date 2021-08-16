@@ -3,8 +3,8 @@ from viscosity import LorenzBrayClark
 from stability_check import StabilityCheck
 #import unittest
 
-class Tests_Viscosity:
-    def test1_methane_propane(self):
+class tests_Viscosity():
+    def test_methane_propane(self):
         R = 8.3144598
         z = np.array([0.2, 0.8])
         T = 25 + 273

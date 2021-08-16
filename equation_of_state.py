@@ -96,12 +96,15 @@ class PengRobinson:
         Z = CubicRoots().run(coef)
         root = np.isreal(Z)
         n_reais = np.sum(root*1, axis = 1)
+        #if any(Z[root]<0): import pdb; pdb.set_trace()
+
+        #import pdb; pdb.set_trace()
 
         'if n_reais == 2'
         aux_reais = (n_reais==2)
         Z_reais_n2 = np.reshape(Z[aux_reais][root[aux_reais]],(len(aux_reais[aux_reais]),2))
         Z_aux_reais = Z[aux_reais]
-        Z_aux_reais[~root[aux_reais]] = np.max(Z_reais_n2,axis=1, initial=0)
+        Z_aux_reais[~root[aux_reais]] = np.max(Z_reais_n2,axis=1, initial=-10)
         Z[aux_reais] = Z_aux_reais
 
         'if n_reais==1'
@@ -109,18 +112,19 @@ class PengRobinson:
 
         'if any Z<0'
         aux_neg = np.zeros(Z.shape,dtype=bool)
-        aux_neg[Z<0] = True
+        aux_neg[Z<B[:,np.newaxis]] = True
         lines_Zneg1 = (aux_neg.sum(axis=1)==1).astype(bool)
         lines_Zneg2 = (aux_neg.sum(axis=1)==2).astype(bool)
         Zneg1 = Z[lines_Zneg1]
-        Zneg1[Zneg1<0] = np.max(Z[lines_Zneg1],axis=1, initial=0)
+        Zneg1[Zneg1<B[lines_Zneg1,np.newaxis]] = np.max(Z[lines_Zneg1],axis=1, initial=0)
         Z[lines_Zneg1] = Zneg1
         Zneg2 = Z[lines_Zneg2]
-        Zneg2[Zneg2<0] = np.repeat(np.max(Z[lines_Zneg2],axis=1, initial=0),2)
+        Zneg2[Zneg2<B[lines_Zneg2,np.newaxis]] = np.repeat(np.max(Z[lines_Zneg2],axis=1, initial=0),2)
         Z[lines_Zneg2] = Zneg2
 
         Zz = np.min(Z, axis = 1) * ph + np.max(Z, axis = 1) * (1 - ph)
         Z_ = np.real(Zz)
+        #import pdb; pdb.set_trace()
         return Z_
 
     def lnphi(self, kprop, l, P, ph):
@@ -129,12 +133,13 @@ class PengRobinson:
         #Zfunc = np.vectorize(PengRobinson.Z)
         Z = self.Z_vectorized(A, B, ph)
         lnphi = self.lnphi_calculation(A, B, Z)
+        #import pdb; pdb.set_trace()
         return lnphi
 
     def lnphi_calculation(self, A, B, Z):
         #if Z==B: Z +=1e-20
         #Z = PengRobinson.Z_all(B, A, ph) #Not working here, but in the original code its working fine
-        lnphi = self.b[:,np.newaxis] / self.bm * (Z[np.newaxis,:] - 1) - np.log(abs(Z[np.newaxis,:] - B[np.newaxis,:])) - A[np.newaxis,:] / (2 * (2 ** (1/2))
+        lnphi = self.b[:,np.newaxis] / self.bm * (Z[np.newaxis,:] - 1) - np.log((Z[np.newaxis,:] - B[np.newaxis,:])) - A[np.newaxis,:] / (2 * (2 ** (1/2))
                 * B[np.newaxis,:]) * (2 * self.psi / self.aalpha[np.newaxis,:] - self.b[:,np.newaxis] / self.bm) * np.log((Z[np.newaxis,:] + (1 +
                 2 ** (1/2)) * B[np.newaxis,:]) / (Z[np.newaxis,:] + (1 - 2 ** (1/2)) * B[np.newaxis,:]))
 
@@ -167,7 +172,7 @@ class PengRobinson:
         dZldP, dZvdP, dZldNk, dZvdNk = self.dZ_dP_dNk(dZldP_parcial, dZvdP_parcial,
                 dZldnij_parcial, dZvdnij_parcial, dnildP, dnivdP, dnildNk, dnivdNk)
         dVtdP, dVtdNk = self.dVt_dP_dNk(kprop, dnldP, dnvdP, dnldNk, dnvdNk, dZldP, dZvdP, dZldNk, dZvdNk, P, Zl, Zv, Nl, Nv)
-        import pdb; pdb.set_trace()
+
         ''' resolução para dVtdNk e dVtdP'''
         #dVt_dNk = self.get_dVt_dNk_analytically(P, Vt, So, l, Nk)
         #No = fprop.phase_mole_numbers[0,0,:]

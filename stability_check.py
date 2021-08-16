@@ -31,16 +31,14 @@ class StabilityCheck:
 
     def run(self, z, Mw):
         PR = PengRobinson(self)
-        #self.vapor_pressure_pure_substancies(PR)
-
+        
         self.equilibrium_ratio_Wilson()
-
         self.L = np.empty(len(self.P))
         self.V = np.empty(len(self.P))
         self.x = np.empty(z.shape)
         self.y = np.empty(z.shape)
-        #z[z==0] = 1e-50
         ponteiro_flash = np.zeros(len(self.P), dtype = bool)
+        z[z==0] = 1e-50
         dir_flash = np.argwhere(z <= 0)
         ponteiro_flash[dir_flash[:,1]] = True
 
@@ -50,6 +48,7 @@ class StabilityCheck:
             ponteiro_aux = ponteiro_flash[~ponteiro_flash]
             ponteiro_aux[(np.round(sp1,14) > 1) + (np.round(sp2,14) > 1)] = True #os que devem passar para o calculo de flash
             ponteiro_flash[~ponteiro_flash] = ponteiro_aux
+
 
         self.molar_properties(PR, z, np.ones_like(ponteiro_flash, dtype=bool))
         #import pdb; pdb.set_trace()
@@ -86,7 +85,6 @@ class StabilityCheck:
     def equilibrium_ratio_Wilson(self):
         self.K = np.exp(5.37 * (1 + self.w) * (1 - 1 / (self.T / self.Tc)), dtype=np.double)[:,np.newaxis] / \
                 (self.P / self.Pc[:,np.newaxis])
-
 
     """------------- Below starts stability test calculation ----------------"""
 
@@ -180,8 +178,10 @@ class StabilityCheck:
         lnphi = np.empty([2, len(self.w), len(ph)])
         lnphi[0,:] = PR.lnphi(self, l, P, 1 - ph)
         lnphi[1,:] = PR.lnphi(self, l, P, ph)
+        #lnphi[np.isnan(lnphi)] = 2 * lnphi[~np.isnan(lnphi)]
         deltaG_molar = np.sum(l * (lnphi[1 - ph,:, np.arange(len(ph))] - lnphi[1*ph,:, np.arange(len(ph))]).T, axis = 0)
         ph[deltaG_molar<0] = 1 - ph[deltaG_molar<0]
+
         """
         This part above means that:
         if deltaGx_molar>=0: lnphil = lnphix[1]
@@ -192,7 +192,6 @@ class StabilityCheck:
         The same analysis is made for the y phase composition.
         """
         return ph
-
 
     def lnphi_based_on_deltaG(self, PR, l, P, ph):
         ph = self.deltaG_molar_vectorized(PR, l, P, ph)
@@ -247,7 +246,7 @@ class StabilityCheck:
         ft1 = (K1 - KNc) / (KNc - 1)
         ft2 = ((Ki - KNc[np.newaxis,:]) /
             (KNc[np.newaxis,:] - 1)) * zi * \
-            (K1[ponteiro][np.newaxis,:] - 1)
+            (K1[np.newaxis,:] - 1)
         ft3_1 = (Ki - 1) * z1[np.newaxis,:]
         ft3_2 = (K1[np.newaxis,:] - Ki)
         while any(ponteiro):
@@ -270,9 +269,10 @@ class StabilityCheck:
             x1_min = x1_min[ponteiro_aux]
             x1_max[f[ponteiro_aux] * df[ponteiro_aux] > 0] = x1[ponteiro][f[ponteiro_aux] * df[ponteiro_aux] > 0]
             x1_min[f[ponteiro_aux] * df[ponteiro_aux] < 0] = x1[ponteiro][f[ponteiro_aux] * df[ponteiro_aux] < 0]
-            if i > 300: import pdb; pdb.set_trace()
+            if i > 1000: import pdb; pdb.set_trace()
 
         x1 = x1_new.copy()
+
         xi = (K1[np.newaxis,:] - 1) * zi * x1[np.newaxis,:] / (ft3_1 +
             ft3_2 * x1[np.newaxis,:])
 
@@ -284,7 +284,6 @@ class StabilityCheck:
         aux_xi[K == KNc[np.newaxis,:]] = False
         x_not_z1_zero[aux_xi] = xi.ravel()
         return x_not_z1_zero
-
 
     def Yinghui_method(self, z, ponteiro, x1, i):
 
@@ -328,7 +327,6 @@ class StabilityCheck:
         self.x[:,ponteiro] = x
         self.y[:,ponteiro] = self.K[:,ponteiro] * self.x[:,ponteiro]
 
-
     def molar_properties_Yinghui(self, PR, z, ponteiro):
         #razao = fl/fv -> an arbitrary vector to enter in the iterative mode
 
@@ -338,6 +336,7 @@ class StabilityCheck:
 
         i=0
         x1 = np.zeros_like(z[0])
+
         while any(ponteiro):
             i+=1
             self.Yinghui_method(z[:,ponteiro], ponteiro, x1[ponteiro], i)
@@ -353,6 +352,7 @@ class StabilityCheck:
             ponteiro_aux = ponteiro[ponteiro]
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
+            if i>600: import pdb; pdb.set_trace()
 
         print('Yinghui it:', i)
 
@@ -393,31 +393,32 @@ class StabilityCheck:
                         (1 - self.L[ponteiro_save][np.newaxis,:]) * self.K[:,ponteiro_save])
         self.y[:,ponteiro_save] = self.K[:,ponteiro_save] * self.x[:,ponteiro_save]
 
-
     def solve_objective_function_Whitson_for_V(self, z, V, Vmax, Vmin, ponteiro):
 
         ponteiro_save = np.copy(ponteiro)
-
+        i=0
         while any(ponteiro):
+            i+=1
             Vold = V[ponteiro]
             f = np.sum((self.K[:,ponteiro] - 1) * z[:,ponteiro] / (1 + V[ponteiro][np.newaxis,:] * (self.K[:,ponteiro] - 1)), axis = 0)
             df = - np.sum((self.K[:,ponteiro] - 1) ** 2 * z[:,ponteiro] / (1 + V[ponteiro][np.newaxis,:] * (self.K[:,ponteiro] - 1)) ** 2, axis = 0)
             self.V[ponteiro] = self.V[ponteiro] - f / df #Newton-Raphson iterative method
             V_aux = self.V[ponteiro]
             V_aux[V_aux > Vmax[ponteiro]] = 0.5 * (Vmax[ponteiro] + Vold)[V_aux > Vmax[ponteiro]] #(Vmax + Vold)/2
-            V_aux[V_aux < Vmin[ponteiro]] = 0.5 * (Vmin[ponteiro] + Vold)[V_aux < Vmin[ponteiro]]#(Vmin + Vold)/2
+            V_aux[V_aux < Vmin[ponteiro]] = 0.5 * (Vmin[ponteiro] + Vold)[V_aux < Vmin[ponteiro]] #(Vmin + Vold)/2
             self.V[ponteiro] = V_aux
             stop_criteria = abs(V[ponteiro] / Vold - 1)
             ponteiro_aux = ponteiro[ponteiro]
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
-
+            if any(np.isnan(self.V)): self.V[np.isnan(self.V)] = 0
+            if i>50:
+                ponteiro[ponteiro] = True
 
         #self.V[ponteiro_save] = V[ponteiro_save] + 1e-15 #manipulação
         self.x[:,ponteiro_save] = z[:,ponteiro_save] / (1 + self.V[ponteiro_save][np.newaxis,:] * (self.K[:,ponteiro_save] - 1))
         self.y[:,ponteiro_save] = self.K[:,ponteiro_save] * self.x[:,ponteiro_save]
         self.L = 1 - self.V
-
 
     def molar_properties_Whitson(self, PR, z, ponteiro):
         Lmax = np.max(self.K, axis = 0)/(np.max(self.K, axis = 0) - 1)
@@ -426,6 +427,8 @@ class StabilityCheck:
         Vmin = 1. - Lmax
         #Vmin = ((K1-KNc)*z[self.K==K1]-(1-KNc))/((1-KNc)*(K1-1))
         #proposed by Li et al for Whitson method
+        #import pdb; pdb.set_trace()
+        Vmin[Vmin>Vmax] = -Vmax[Vmin>Vmax]
         self.V[ponteiro] = (Vmin[ponteiro] + Vmax[ponteiro]) * 0.5
         self.L = 1 - self.V
 
@@ -433,10 +436,12 @@ class StabilityCheck:
         ponteiro_save = np.copy(ponteiro)
         t0 = time.time()
         i=0
-        
+
         while any(ponteiro):
             i+=1
             self.solve_objective_function_Whitson_for_V(z, self.V, Vmax, Vmin, np.copy(ponteiro))
+            #lnphil = PR.lnphi(PR, self.x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
+            #lnphiv = PR.lnphi(PR, self.y[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
             lnphil = self.lnphi_based_on_deltaG(PR, self.x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
             lnphiv = self.lnphi_based_on_deltaG(PR, self.y[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
             self.fv = np.exp(lnphiv) * (self.y[:,ponteiro] * self.P[ponteiro][np.newaxis,:])
@@ -461,6 +466,7 @@ class StabilityCheck:
 
         A, B = PR.coefficients_cubic_EOS_all(self, l, self.P)
         ph = self.deltaG_molar_vectorized(PR, l, self.P, ph)
+        #import pdb; pdb.set_trace()
         Z = PR.Z_vectorized(A, B, ph)
         ksi_phase = self.P / (Z * self.R * self.T)
         Mw_phase = np.sum(l * Mw[:,np.newaxis], axis=0)

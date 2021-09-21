@@ -1370,7 +1370,6 @@ class StabilityCheck:
             Objetive_function_V_dash = np.sum((self.K_V[1:] - Kw_ast) * z[1:,ponteiro] / (Kwz + \
                                         V_dash * (self.K_V[1:] - Kw_ast)), axis = 0)
 
-            # Duvida se o calculo de cima esta certo mesmo
 
             ' determine position of V with respect V_dash '
             V_bigger_then_Vdash = np.ones(len(V), dtype = bool)

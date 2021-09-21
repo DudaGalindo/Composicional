@@ -556,7 +556,7 @@ class Testes_IGOR(unittest.TestCase):
         import pdb; pdb.set_trace()
 
 
-    #@unittest.skip("ok")
+    @unittest.skip("ok")
     def test_Connolly332(self):
         R = 8.3144598
                     # H20,   C8,     C13,    C24,    C61+
@@ -785,7 +785,7 @@ class Testes_IGOR(unittest.TestCase):
 
     # 3 phases
 
-    @unittest.skip("ok para a instabilidade em y - erro bizarro no vetorizado")
+    @unittest.skip("ok para a instabilidade em y")
     def test_Varavei_3_1_triphase(self):
         R = 8.3144598
                     # H2O, C1, C6, C10, C15

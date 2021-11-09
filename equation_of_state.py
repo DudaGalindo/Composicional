@@ -108,7 +108,10 @@ class PengRobinson:
         Z[aux_reais] = Z_aux_reais
 
         'if n_reais==1'
-        Z[~root[n_reais==1]] = np.repeat(Z[root[n_reais == 1]], 2)
+        aux_reais = (n_reais==1)
+        Z_aux_reais = Z[aux_reais]
+        Z_aux_reais[~root[aux_reais]] = np.repeat(Z[aux_reais][root[aux_reais]], 2)
+        Z[aux_reais] = Z_aux_reais
 
         'if any Z<0'
         aux_neg = np.zeros(Z.shape,dtype=bool)

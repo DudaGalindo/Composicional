@@ -2,10 +2,12 @@ import numpy as np
 from stability_check import StabilityCheck
 import unittest
 import matplotlib.pyplot as plt
+from thermo import ChemicalConstantsPackage, CEOSGas, CEOSLiquid, PRMIX, FlashVL
+from thermo.interaction_parameters import IPDB
+import time
 
 
 class Li_et_al_table4:
-    @unittest.skip("ok")
     def __init__(self):
         self.R = 10.73159
         self.Tc = np.array([-116.59, 305.69, 453.65, 652.01])
@@ -43,7 +45,7 @@ class testes_Li_et_al_table4(unittest.TestCase):
                 self.assertAlmostEqual(obj.x[i,j],x.T[i,j],4,'ValueError:Failed')
                 self.assertAlmostEqual(obj.y[i,j],y.T[i,j],4,'ValueError:Failed')
 
-class testes_casos_Schmall(unittest.TestCase):
+class testes_casos(unittest.TestCase):
     @unittest.skip("ok")
     def teste_caso_Igor(self):
         R = 8.3144598
@@ -116,7 +118,7 @@ class testes_casos_Schmall(unittest.TestCase):
     def test_Firoozabadi(self):
         #methane, n-butane and n-decane
         R = 8.3144598
-        z = np.array([0.7, 0.235, 0.065])[:,np.newaxis] * np.ones((3,100))
+        z = np.array([0.9, 0.1, 0.065])[:,np.newaxis] * np.ones((3,100))
         Tc = np.array([190.55, 425.5, 619.28])
         Pc = np.array([4599200, 3.8e6, 2109795.64])
         P = np.linspace(1000,6000,100) * 6894.757
@@ -134,7 +136,7 @@ class testes_casos_Schmall(unittest.TestCase):
     def teste_res_fluid_brb(self):
         R = 8.3144598
         #z = np.array([0.63840871, 0.09640664, 0.265184659])[:,np.newaxis]#*np.ones([3,100])
-        z = np.array([0.01, 0.19, 0.8])[:,np.newaxis]*np.ones([3,100])
+        z = np.array([0.95, 0.05, 0.0])[:,np.newaxis]*np.ones([3,100])
         Tc = np.array([304.21, 190.6, 734.68])
         Pc = np.array([7.39e6, 4.6e6, 1.74e6])
         P = np.linspace(20650000, 24700000, 100)
@@ -146,8 +148,72 @@ class testes_casos_Schmall(unittest.TestCase):
         Pv = np.array([0, 341.4e3, 0])
         Pb_guess = 9.65e6
         print('\nExemplo BRB:')
-        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pv)
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P,Pv)
         obj.run(z,Mw)
+
+        ''' Using Thermo '''
+        constants, properties = ChemicalConstantsPackage.from_IDs(['methane', 'propane', 'hexane',\
+        'decane', 'pentadecane', 'icosane'])
+        constants.MWs = Mw.tolist()
+        constants.Tcs = Tc.tolist()
+        constants.Pcs = Pc.tolist()
+        constants.Vcs = vc.tolist()
+        constants.omegas = w.tolist()
+        kijs = IPDB.get_ip_asymmetric_matrix('ChemSep PR', constants.CASs, 'kij')
+        kijs = Bin.tolist()
+
+        eos_kwargs = {'Pcs': constants.Pcs, 'Tcs': constants.Tcs, 'omegas': constants.omegas, 'kijs': kijs}
+        gas = CEOSGas(PRMIX, eos_kwargs=eos_kwargs, HeatCapacityGases=properties.HeatCapacityGases)
+        liquid = CEOSLiquid(PRMIX, eos_kwargs=eos_kwargs, HeatCapacityGases=properties.HeatCapacityGases)
+        flasher = FlashVLN(constants, properties, liquid=liquid, gas=gas)
+        zs = [0.95, 0.05, 0.0] #z.T.tolist()#[0.965, 0.018, 0.017]
+        t0_thermo = time.time()
+        PT = flasher.flash(T=T[0], P=P[0], zs=zs)
+        t1_thermo = time.time()
+        dt = t1_thermo-t0_thermo
+        print('Time for thermo: ' +str(dt)+' s')
+
+        t0_thermo = time.time()
+        PT_vec = flasher.grid_flash(Ts=T, Ps=P, zs=z.T)
+        t1_thermo = time.time()
+        dt = t1_thermo-t0_thermo
+        print('Time for thermo vectorized: ' +str(dt)+' s')
+        import pdb; pdb.set_trace()
+
+    def teste_inj_fluid_ex1_firoo(self):
+        R = 8.3144598
+        z = np.array([1.0,0])[:,np.newaxis]
+        Tc = np.array([190.56, 369.83])
+        Pc = np.array([4599000, 4248000])
+        vc = np.array([9.85988846e-05, 2.00001177e-04])
+        #T = np.array([273.15])
+        P = np.array([1e5])
+        T = np.array([293])
+        Mw = np.array([16.043e-3, 44.096e-3])
+        w = np.array([0.0115, 0.1523])
+        Bin = np.array([[0.0,0.],[0.,0.0]])
+        print('\nExemplo firooz 2k:')
+
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
+        obj.run(z,Mw)
+        import pdb; pdb.set_trace()
+
+        constants, properties = ChemicalConstantsPackage.from_IDs(['methane', 'propane'])
+        constants.MWs = Mw.tolist()
+        constants.Tcs = Tc.tolist()
+        constants.Pcs = Pc.tolist()
+        constants.Vcs = vc.tolist()
+        constants.omegas = w.tolist()
+        kijs = IPDB.get_ip_asymmetric_matrix('ChemSep PR', constants.CASs, 'kij')
+        kijs = Bin.tolist()
+
+        eos_kwargs = {'Pcs': constants.Pcs, 'Tcs': constants.Tcs, 'omegas': constants.omegas, 'kijs': kijs}
+        gas = CEOSGas(PRMIX, eos_kwargs=eos_kwargs, HeatCapacityGases=properties.HeatCapacityGases)
+        liquid = CEOSLiquid(PRMIX, eos_kwargs=eos_kwargs, HeatCapacityGases=properties.HeatCapacityGases)
+        flasher = FlashVL(constants, properties, liquid=liquid, gas=gas)
+        zs = [1,0] #z.T.tolist()#[0.965, 0.018, 0.017]
+        t0_thermo = time.time()
+        PT = flasher.flash(T=T[0], P=P[0], zs=zs)
         import pdb; pdb.set_trace()
 
     @unittest.skip('ok')
@@ -191,12 +257,11 @@ class testes_casos_Schmall(unittest.TestCase):
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pv)
         obj.run(z,Mw)
 
-    @unittest.skip('ok')
+    @unittest.skip("ok")
     def test_water_inj_schmall3d(self):
+        #  C1 C3 C6 C10 C15 C20
         R = 8.3144598
-        z = np.array([0.48698482134894444, 0.030388235464960597, 0.07175076506021578,
-        0.20541577514350268, 0.154094677972006,
-        0.051365725010370636])[:,np.newaxis]#* np.ones((6,1))
+        z = np.array([0.5, 0.03, 0.07, 0.2, 0.15, 0.05])[:,np.newaxis]#* np.ones((6,100))
         Tc = np.array([190.6, 369.8, 507.4, 617.6, 708, 768])
         Pc = np.array([4600155, 4245517.5, 2968822.5, 2107560.0, 1.47e6, 1.17e6])
         vc = np.array([0.000099, 0.000203, 0.00037, 0.000603, 0.000895, 0.00169])
@@ -206,11 +271,39 @@ class testes_casos_Schmall(unittest.TestCase):
                         [0.,0.,.0,0.,0.,0.], [0.,0.,.0,0.,0.,0.]])
         Pv = np.array([8e6, 0., 0., 0., 0., 0.])
         #P = np.linspace(8.46e6, 62e6, 100)
-        P = np.array([78353663.387267])
-        T = np.array([344.25])
+        P = np.array([10.34e6])#*np.ones(100)
+        T = np.array([344.25])#*np.ones(100)
 
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
         obj.run(z,Mw)
+
+        ''' Using Thermo '''
+        constants, properties = ChemicalConstantsPackage.from_IDs(['methane', 'propane', 'hexane',\
+        'decane', 'pentadecane', 'icosane'])
+        constants.MWs = Mw.tolist()
+        constants.Tcs = Tc.tolist()
+        constants.Pcs = Pc.tolist()
+        constants.Vcs = vc.tolist()
+        constants.omegas = w.tolist()
+        kijs = IPDB.get_ip_asymmetric_matrix('ChemSep PR', constants.CASs, 'kij')
+        kijs = Bin.tolist()
+
+        eos_kwargs = {'Pcs': constants.Pcs, 'Tcs': constants.Tcs, 'omegas': constants.omegas, 'kijs': kijs}
+        gas = CEOSGas(PRMIX, eos_kwargs=eos_kwargs, HeatCapacityGases=properties.HeatCapacityGases)
+        liquid = CEOSLiquid(PRMIX, eos_kwargs=eos_kwargs, HeatCapacityGases=properties.HeatCapacityGases)
+        flasher = FlashVL(constants, properties, liquid=liquid, gas=gas)
+        zs = [0.5, 0.03, 0.07, 0.2, 0.15, 0.05] #z.T.tolist()#[0.965, 0.018, 0.017]
+        t0_thermo = time.time()
+        PT = flasher.flash(T=T[0], P=P[0], zs=zs)
+        t1_thermo = time.time()
+        dt = t1_thermo-t0_thermo
+        print('Time for thermo: ' +str(dt)+' s')
+
+        t0_thermo = time.time()
+        PT_vec = flasher.grid_flash(Ts=T, Ps=P, zs=z.T)
+        t1_thermo = time.time()
+        dt = t1_thermo-t0_thermo
+        print('Time for thermo vectorized: ' +str(dt)+' s')
         import pdb; pdb.set_trace()
 
     @unittest.skip("?")
@@ -267,7 +360,6 @@ class testes_casos_Schmall(unittest.TestCase):
         z = np.array([0.5, 0.5]) [:,np.newaxis]*np.ones([2,1])
         T = np.array([9/5*396])
         P = np.array([14.7*(3.86e6/101325)]) #* np.ones(10)
-
 
         print('\ncaso2:')
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
@@ -334,38 +426,93 @@ class testes_casos_Schmall(unittest.TestCase):
          print('fl: ',obj.fl,'fv: ',obj.fv)
          import pdb; pdb.set_trace()
 
-class testes_caso_Firoozabadi(unittest.TestCase):
-
     @unittest.skip('ok')
-    def test1(self):
+    def test_case2_Moshiri(self):
         R = 8.3144598
-        z = np.array([[0.9, 0.1, 0.0]]).T
-        P = np.array([7e6])
+        z = np.array([[0.9, 0.1, 0.0]]).T#[:,np.newaxis]#*np.ones([10]) #exemplo aleatório
+        P = np.array([6.9e6])
         T = np.array([311])
         Tc = np.array([190.56, 305.32, 369.83])
         Pc = np.array([4599000, 4873000, 4248000])
         Mw = np.array([16.043e-3, 30.070e-3, 44.096e-3])
         w = np.array([0.0115, 0.0995, 0.1523])
         Bin = np.array([[0.,0.,.0], [0.,0.,0.], [0.,0.,.0]])
+        print('\ncaso2 MM:')
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
+        obj.run(z,Mw)
+        import pdb; pdb.set_trace()
+
+    @unittest.skip('ok')
+    def test1_Moshiri(self):
+        R = 8.3144598
+        n = 10000
+        z = np.array([[0.61048048, 0., 0.14185506, 0.13189786, 0.11576659]]).T# * np.ones((1,n))#[n_bXn_k]
+        #P = np.linspace(100e6, 10000e6, n)
+        P = np.array([20000e6]) #* np.ones(5)
+        T = np.array([20+273])
+        Tc = np.array([304.13, 190.56, 425.2, 618.1, 723])
+        Pc = np.array([7380000, 4599000, 38e5, 21e5, 1.41e6])
+        vc = np.array([0.0939e-3, 9.85988846e-05, 25.5e-5, 0.624e-3, 0.943e-3])
+        Mw = np.array([44.01e-3,16.043e-3, 58.12e-3, 142.28e-3, 226.44e-3])
+        w = np.array([0.225, 0.0115, 0.199, 0.484, 0.721])
+        Bin = np.array([[0,0.,0.,.0, 0.],[0.,0.,0.,0.,0.],[0.,0.,.0,0.,0.], [0.,0.,0.,0.,0.], [0.,0.,0.,0.,0.]])
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
         obj.run(z,Mw)
 
+        import pdb; pdb.set_trace()
+        #[34121.18701394, 33506.58479809, 13289.01156059, 5171.6375957 , 2987.51943215])
+        #[34433.22826536, 33892.84905336, 13342.42587675,  5180.17927084, 2990.4853912 ]
+        #[34908.17670552, 34466.83197379, 13422.02659636,  5192.77066779, 2994.82879636]
+        #[36032.03403002, 35757.3989117 , 13601.37719889,  5220.48095586, 3004.26222542]
     @unittest.skip('ok')
     def test_case1_BRB(self):
         R = 8.3144598
-        z = np.array([0.95, 0.05, 0.0])[:,np.newaxis]#*np.ones([10]) #exemplo aleatório
-        P = np.array([20.65e6])
-        #P = np.array([101325])
+        z = np.array([0.95, 0.05])[:,np.newaxis]#*np.ones() #exemplo aleatório
+        #P = np.array([4059356915.252799])
+        P = np.array([25.65e6])
+        #P = np.linspace(7.4e6, 30e6, 10)
         #T = np.array([25+273.15])
         T = np.array([299.82])
-        Tc = np.array([304.21, 190.6, 734.68])
-        Pc = np.array([7.39e6, 4.6e6, 1.74e6])
-        Mw = np.array([44.01e-3, 16.04e-3, 222e-3])
-        w = np.array([0.225, 0.022, 0.684])
-        Bin = np.array([[0., 0.12, 0.12], [0.12, 0., 0.0], [0.12, 0.0, .0]])
+        Tc = np.array([304.21, 190.6])
+        Pc = np.array([7.39e6, 4.6e6])
+        Mw = np.array([44.01e-3, 16.04e-3])
+        w = np.array([0.225, 0.022])
+        Bin = np.array([[0., 0.12], [0.12, 0.]])
+        vc = np.array([9.4e-5, 9.99e-05])
+
         print('\ncaso1 BRB:')
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P)
         obj.run(z,Mw)
+
+        ''' Using Thermo '''
+        constants, properties = ChemicalConstantsPackage.from_IDs(['CO2', 'methane'])
+        constants.MWs = Mw.tolist()
+        constants.Tcs = Tc.tolist()
+        constants.Pcs = Pc.tolist()
+        constants.Vcs = vc.tolist()
+        constants.omegas = w.tolist()
+        kijs = IPDB.get_ip_asymmetric_matrix('ChemSep PR', constants.CASs, 'kij')
+        kijs = Bin.tolist()
+
+        eos_kwargs = {'Pcs': constants.Pcs, 'Tcs': constants.Tcs, 'omegas': constants.omegas, 'kijs': kijs}
+        gas = CEOSGas(PRMIX, eos_kwargs=eos_kwargs, HeatCapacityGases=properties.HeatCapacityGases)
+        liquid = CEOSLiquid(PRMIX, eos_kwargs=eos_kwargs, HeatCapacityGases=properties.HeatCapacityGases)
+        flasher = FlashVL(constants, properties, liquid=liquid, gas=gas)
+        zs = [0.95, 0.05] #z.T.tolist()#[0.965, 0.018, 0.017]
+        t0_thermo = time.time()
+
+        PT = flasher.flash(T=T[0], P=P[0], zs=zs)
+        t1_thermo = time.time()
+        dt = t1_thermo-t0_thermo
+        print('Time for thermo: ' +str(dt)+' s')
+
+        t0_thermo = time.time()
+        PT_vec = flasher.grid_flash(Ts=T, Ps=P, zs=z.T)
+        t1_thermo = time.time()
+        dt = t1_thermo-t0_thermo
+        print('Time for thermo vectorized: ' +str(dt)+' s')
+        import pdb; pdb.set_trace()
+
         import pdb; pdb.set_trace()
 
     @unittest.skip("ok")
@@ -444,6 +591,8 @@ class testes_caso_Firoozabadi(unittest.TestCase):
             Csi_v_plus = obj.ksi_V
             K_plus = obj.K
             import pdb; pdb.set_trace()
+
+
     #
     # def test_Abbot(self):
     #     #units: SI

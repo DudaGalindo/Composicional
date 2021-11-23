@@ -85,8 +85,8 @@ class StabilityCheck:
         self.molar_properties(PR, z, np.ones_like(ponteiro_flash, dtype=bool)) # cálculo do flash bifásico
         #import pdb; pdb.set_trace()
 
-        self.y[:,(self.L>1) + (self.V>1)] = z[:,(self.L>1) + (self.V>1)]
-        self.x[:,(self.L>1) + (self.V>1)] = z[:,(self.L>1) + (self.V>1)]
+        self.y[:,(self.V<0) + (self.V>1)] = z[:,(self.L>1) + (self.V>1)]
+        self.x[:,(self.V<0) + (self.V>1)] = z[:,(self.L>1) + (self.V>1)]
         self.L[self.L>1] = 1
         self.L[self.L<0] = 0
         self.V = 1 - self.L
@@ -101,7 +101,7 @@ class StabilityCheck:
         #self.L = 1
         #self.V = 0
         self.get_other_properties(PR, Mw)
-
+        #import pdb; pdb.set_trace()
 
         ponteiro_flash_3phase = np.zeros(len(self.P), dtype = bool)
         ponteiro_flash_3phase[(self.L != 1) & (self.V != 1)] = True
@@ -151,7 +151,7 @@ class StabilityCheck:
 
         self.molar_properties_3phase(PR, z, ponteiro_flash_3phase)
         self.get_other_properties_3phases(PR, Mw)
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
 
         """
         if self.L != 1 and self.V != 1:
@@ -174,7 +174,7 @@ class StabilityCheck:
                 self.get_other_properties_3phases(PR, Mw)
         """
 
-        #enthalpy_oil = PR.enthalpy_calculation(self, self.x, self.P, self.ph_L) # Teste de calculo da entalpia
+        enthalpy_oil = PR.enthalpy_calculation(self, self.x, self.P, self.ph_L) # Teste de calculo da entalpia
         #enthalpy_vapour = PR.enthalpy_calculation(self, self.y, self.P, self.ph_V) # Teste de calculo da entalpia
 
         import pdb; pdb.set_trace()

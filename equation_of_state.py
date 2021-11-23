@@ -152,23 +152,25 @@ class PengRobinson:
         h = ((kprop.T * daalphadt - self.aalpha) / self.bm) * np.log((Z + (np.sqrt(2) + 1)*B) / (Z + (np.sqrt(2) - 1)*B)) + \
             kprop.R * kprop.T * (Z - 1) + h_ref
 
-        #import pdb; pdb.set_trace()
+        import pdb; pdb.set_trace()
         return h
 
     def daalphadt(self, l, kprop):
         daalpha_idt = self.daalpha_idt(kprop)
+
         daalpha_idt_reshape = np.ones((kprop.Nc,kprop.Nc)) * daalpha_idt[:,np.newaxis]
         l_reshape = np.ones((kprop.Bin).shape)[:,:,np.newaxis] * l[:,:,np.newaxis]
         aalpha_i_reshape = np.ones((kprop.Nc,kprop.Nc)) * self.aalpha_i[:,np.newaxis]
 
-        daalphadt = 0.5*(l_reshape * l[np.newaxis,:,:].T * ((1 - kprop.Bin[:,:,np.newaxis]) / (aalpha_i_reshape[:,:,np.newaxis] * \
-                    self.aalpha_i[:,np.newaxis]) * (aalpha_i_reshape[:,:,np.newaxis] * daalpha_idt[:,np.newaxis] + \
-                    self.aalpha_i[:,np.newaxis] * daalpha_idt_reshape[:,:,np.newaxis]))).sum(axis=0).sum(axis=0)
+        daalphadt = 0.5*(l_reshape * l[np.newaxis,:,:].T * (1 - kprop.Bin[:,:,np.newaxis]) * ((aalpha_i_reshape[:,:,np.newaxis] * \
+                    self.aalpha_i[:,np.newaxis])**-0.5) * (aalpha_i_reshape[:,:,np.newaxis] * daalpha_idt[:,np.newaxis] + \
+                    self.aalpha_i[:,np.newaxis] * daalpha_idt_reshape[:,:,np.newaxis])).sum(axis=0).sum(axis=0)
+
         """
         daalphadt_2 = 0
         for i in range(len(l)):
             for k in range(len(l)):
-                daalphadt_2 += l[i] * l[k] * ((1 - kprop.Bin[i][k]) / (self.aalpha_i[i] * self.aalpha_i[k])) * \
+                daalphadt_2 += l[i] * l[k] * (1 - kprop.Bin[i][k]) * ((self.aalpha_i[i] * self.aalpha_i[k])**-0.5) * \
                                 (self.aalpha_i[i] * daalpha_idt[k] + self.aalpha_i[k] * daalpha_idt[i])
         daalphadt_2 = daalphadt_2 * 0.5
         """
@@ -177,16 +179,33 @@ class PengRobinson:
 
     def daalpha_idt(self, kprop):
         fw = 0.48 + 1.574*kprop.w - 0.176*(kprop.w**2)
-        daalpha_idt = - (0.42748*(kprop.R * kprop.Tc)**2 * (fw/(kprop.Tc**1.5))*(1 - (kprop.T / kprop.Tc) ** (1 / 2))) / kprop.Pc
+        daalpha_idt = - (0.42748*(kprop.R * kprop.Tc)**2 * (fw/(kprop.Tc**1.5))*(1 - ((kprop.T / kprop.Tc) ** (1 / 2)))) / kprop.Pc
         return daalpha_idt
 
     def h_reference(self, l, kprop):
-        T_ref = 273.15 # DUVIDA SOBRE O REAL VALOR
+        T_ref = 298.15 # DUVIDA SOBRE O REAL VALOR
+        #T_ref = kprop.Tc
+        #T_ref = 273.15 # problemas do Heidari
 
         hi = kprop.CP1*(kprop.T - T_ref) + 0.5*kprop.CP2*(kprop.T**2 - T_ref**2) + \
             (1/3)*kprop.CP3*(kprop.T**3 - T_ref**3) + 0.25*kprop.CP4*(kprop.T**4 - T_ref**4)
 
-        hj = np.sum(l*hi)
+        """ Pensar numa forma para vetorizar com vários blocos
+        hj = np.sum(l*hi) # ERRADO
+        """
+        hj = 0
+        for i in range(len(hi)):
+            hj += l[i][0] * hi[i]
+
+        """
+        h_teste = kprop.CP1*((kprop.T-273.15) - (T_ref-273.15)) + 0.5*kprop.CP2*((kprop.T-273.15)**2 - \
+                    (T_ref-273.15)**2) + (1/3)*kprop.CP3*((kprop.T-273.15)**3 - (T_ref-273.15)**3) + \
+                    0.25*kprop.CP4*((kprop.T-273.15)**4 - (T_ref-273.15)**4) # Celsius
+        hj_teste = 0
+        for i in range(len(hi)):
+            hj_teste += l[i][0] * h_teste[i]
+        """
+
         return hj
 
     def energy_calculation(h, P, v):

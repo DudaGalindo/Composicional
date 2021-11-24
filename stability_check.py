@@ -143,13 +143,23 @@ class StabilityCheck:
         #ponteiro_flash_3phase[ponteiro_flash_3phase] = ponteiro_flash_3phase2
         ponteiro_flash_3phase[ponteiro_flash_3phase2] = ponteiro_flash_3phase2
         '''
-
+        #import pdb; pdb.set_trace()
         self.A[~ponteiro_flash_3phase] = 0.0
         self.a[:, ~ponteiro_flash_3phase] = 0.0
         self.K_A = self.K[:, ponteiro_flash_3phase]
         self.K_V = self.Kwilson[:, ponteiro_flash_3phase]
 
         self.molar_properties_3phase(PR, z, ponteiro_flash_3phase)
+
+        self.y[:,(self.V<0) + (self.V>1)] = z[:,(self.L>1) + (self.V>1)]
+        self.x[:,(self.V<0) + (self.V>1)] = z[:,(self.L>1) + (self.V>1)]
+        self.a[:,(self.A<0) + (self.A>1)] = z[:,(self.A>1) + (self.A>1)]
+        self.L[self.L>1] = 1
+        self.L[self.L<0] = 0
+        self.A[self.A>1] = 1
+        self.A[self.A<0] = 0
+        self.V = 1 - self.L - self.A
+
         self.get_other_properties_3phases(PR, Mw)
         #import pdb; pdb.set_trace()
 
@@ -174,10 +184,10 @@ class StabilityCheck:
                 self.get_other_properties_3phases(PR, Mw)
         """
 
-        enthalpy_oil = PR.enthalpy_calculation(self, self.x, self.P, self.ph_L) # Teste de calculo da entalpia
+        #enthalpy_oil = PR.enthalpy_calculation(self, self.x, self.P, self.ph_L) # Teste de calculo da entalpia
         #enthalpy_vapour = PR.enthalpy_calculation(self, self.y, self.P, self.ph_V) # Teste de calculo da entalpia
 
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         #PR.get_all_derivatives(self, self.x, self.y, self.L, self.V, self.P)
 
 
@@ -1181,23 +1191,11 @@ class StabilityCheck:
 
     ' Try of triphasic flash '
     def molar_properties_Whitson_3phase(self, PR, z, ponteiro):
-        Amax = 1 / (1 - np.min(self.K_A, axis = 0))
-        Amin = 1 / (1 - np.max(self.K_A, axis = 0))
-        Vmax = 1 / (1 - np.min(self.K_V, axis = 0))
-        Vmin = 1 / (1 - np.max(self.K_V, axis = 0))
 
-        Amax = np.max(self.K_A, axis = 0)/(np.max(self.K_A, axis = 0) - 1)
-        Amin = np.min(self.K_A, axis = 0)/(np.min(self.K_A, axis = 0) - 1)
+        self.V[ponteiro] = 0.5
+        self.A[ponteiro] = 0.5
 
-        #Amax = 1. - Vmin
-        #Amin = 1. - Vmax
-
-        #Amin = np.array([0.0])
-        #Vmax = np.array([1.0])
-        #Vmin = np.array([0.0])
-
-        self.V[ponteiro] = (Vmin[ponteiro] + Vmax[ponteiro]) * 0.5
-        self.A[ponteiro] = (Amin[ponteiro] + Amax[ponteiro]) * 0.5
+        self.K_A = self.Kw
 
         t0 = time.time()
 
@@ -1205,7 +1203,7 @@ class StabilityCheck:
         razao_al = np.ones(z.shape)/2
         ponteiro_save = np.copy(ponteiro)
         while any(ponteiro):
-            self.solve_objective_function_Whitson_for_V_and_A(z, self.V, self.A, Vmax, Vmin, Amax, Amin, np.copy(ponteiro))
+            self.solve_objective_function_Whitson_for_V_and_A(z, self.V, self.A, np.copy(ponteiro))
 
             lnphil = self.lnphi_based_on_deltaG(PR, self.x[:,ponteiro], self.P[ponteiro], self.ph_L[ponteiro])
             lnphiv = self.lnphi_based_on_deltaG(PR, self.y[:,ponteiro], self.P[ponteiro], self.ph_V[ponteiro])
@@ -1237,11 +1235,13 @@ class StabilityCheck:
 
         return ponteiro_save
 
-    def solve_objective_function_Whitson_for_V_and_A(self, z, V, A, Vmax, Vmin, Amax, Amin, ponteiro):
+    def solve_objective_function_Whitson_for_V_and_A(self, z, V, A, ponteiro):
 
         ponteiro_save = np.copy(ponteiro)
         i = 0
         V_and_A = np.array([V, A])
+        #import pdb; pdb.set_trace()
+        #self.K_A = self.Kw
         while any(ponteiro):
             Vold = V[ponteiro].copy()
             Aold = A[ponteiro].copy()
@@ -1285,23 +1285,31 @@ class StabilityCheck:
             except: import pdb; pdb.set_trace()
 
             V_and_A = V_and_A - np.reshape(f.dot(Jacobian_inv), (2,1))  #Newton-Raphson iterative method
+            print(V_and_A)
             V = V_and_A[0].copy()
             A = V_and_A[1].copy()
 
             V_aux = V[ponteiro]
-            V_aux[V_aux > Vmax[ponteiro]] = 0.5 * (Vmax[ponteiro] + Vold)[V_aux > Vmax[ponteiro]] #(Vmax + Vold)/2
-            V_aux[V_aux < Vmin[ponteiro]] = 0.5 * (Vmin[ponteiro] + Vold)[V_aux < Vmin[ponteiro]]#(Vmin + Vold)/2
+            V_aux[V_aux > 1.0] = 1.0
+            V_aux[V_aux < 0.0] = 0.0
+            #V_aux[V_aux > 1.0] = 0.5 * (1.0 + Vold[V_aux > 1.0])
+            #V_aux[V_aux < 0.0] = 0.5 * (0.0 + Vold[V_aux < 0.0])
             V[ponteiro] = V_aux
 
             A_aux = A[ponteiro]
-            A_aux[A_aux > Amax[ponteiro]] = 0.5 * (Amax[ponteiro] + Aold)[A_aux > Amax[ponteiro]] #(Amax + Aold)/2
-            A_aux[A_aux < Amin[ponteiro]] = 0.5 * (Amin[ponteiro] + Aold)[A_aux < Amin[ponteiro]]#(Amin + Aold)/2
+            A_aux[A_aux > 1.0] = 1.0
+            A_aux[A_aux < 0.0] = 0.0
+            #A_aux[A_aux > 1.0] = 0.5 * (1.0 + Aold[A_aux > 1.0])
+            #A_aux[A_aux < 0.0] = 0.5 * (0.0 + Aold[A_aux < 0.0])
             A[ponteiro] = A_aux
 
-            stop_criteria = max(abs((V[ponteiro] / Vold) - 1), abs((A[ponteiro] / Aold) - 1))
+            stop_criteria = max(abs(V[ponteiro] - Vold), abs(A[ponteiro] - Aold))
+
+
             ponteiro_aux = ponteiro[ponteiro]
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
+            print(ponteiro)
             i+=1
             if i>=3000:
                 print('maxit in triphasic flash')
@@ -1316,6 +1324,14 @@ class StabilityCheck:
         self.y[:,ponteiro_save] = self.K_V[:,ponteiro_save] * self.x[:,ponteiro_save]
         self.a[:,ponteiro_save] = self.K_A[:,ponteiro_save] * self.x[:,ponteiro_save]
 
+        """
+        if self.V[ponteiro_save] == 0:
+            self.y[:,ponteiro_save] = 0.0
+        if self.L[ponteiro_save] == 0:
+            self.x[:,ponteiro_save] = 0.0
+        if self.A[ponteiro_save] == 0:
+            self.a[:,ponteiro_save] = 0.0
+        """
         return True
 
 
@@ -1375,7 +1391,9 @@ class StabilityCheck:
             V_bigger_then_Vdash = np.ones(len(V), dtype = bool)
             ponteiro_aux = np.ones(len(V), dtype = bool)
 
-            ponteiro_aux[ponteiro_aux] = (V_dash > Vmin) & (V_dash < Vmax)
+            try:
+                ponteiro_aux[ponteiro_aux] = (V_dash > Vmin) & (V_dash < Vmax)
+            except: import pdb; pdb.set_trace()
             V_bigger_then_Vdash[ponteiro_aux] = Objetive_function_V_dash[ponteiro_aux] > 0
             '''
             if (V_dash > Vmin and V_dash < Vmax):

@@ -1804,3 +1804,65 @@ class Testes_IGOR(unittest.TestCase):
         print('Time for thermo: ' +str(dt)+' s')
 
         import pdb; pdb.set_trace()
+
+    @unittest.skip("teste de estabilidade em self.x deu problema, mas o flash deu certo - Thermo deu pau")
+    def test_Michelsen1994_case1(self):
+        R = 8.3144598
+                    # H2O, C2,  C3,  C4
+        z = np.array([0.1, 0.2, 0.5, 0.2])[:,np.newaxis]*np.ones([4,1])
+        #z = z**np.ones([8,1]) # Número de componentes x número de bloco do pressão
+
+        Tc = np.array([647.3, 305.3, 369.8, 425.0]) # Kelvin
+        Pc = np.array([220.48, 49, 42.5, 38.0])*101325 # pascal
+        P = np.array([506625])*np.ones([1,])
+
+        Pv = np.array([0.0, 0.0, 0.0, 0.0])
+        T = np.array([280])*np.ones([1,])
+
+        Mw = np.array([18.00, 30.07, 44.1, 58.12])*1e-3
+        w = np.array([0.344, 0.0995, 0.1523, 0.177])
+
+        Bin = np.array([[0.0, 0.0, 0.0, 0.0], \
+                        [0.0, 0.0, 0.0, 0.0], \
+                        [0.0, 0.0, 0.0, 0.0], \
+                        [0.0, 0.0, 0.0, 0.0]])
+
+        CP1 = np.zeros_like(Tc)
+        CP2 = np.zeros_like(Tc)
+        CP3 = np.zeros_like(Tc)
+        CP4 = np.zeros_like(Tc)
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess, CP1, CP2, CP3, CP4)
+        obj.run(z,Mw)
+
+        ''' Using Thermo '''
+        from thermo import ChemicalConstantsPackage, CEOSGas, CEOSLiquid, PRMIX, FlashVLN
+        from thermo.interaction_parameters import IPDB
+        import time
+        # H2O, C2,  C3,  C4
+        constants, properties = ChemicalConstantsPackage.from_IDs(['water', 'C2', 'C3', 'C4'])
+        constants.MWs = Mw.tolist()
+        constants.Tcs = Tc.tolist()
+        constants.Pcs = Pc.tolist()
+        #constants.Vcs = Vc.tolist()
+        constants.omegas = w.tolist()
+        #kijs = IPDB.get_ip_asymmetric_matrix('ChemSep PR', constants.CASs, 'kij')
+        #kijs = Bin.tolist()
+        kijs = Bin
+
+        eos_kwargs = {'Pcs': constants.Pcs, 'Tcs': constants.Tcs, 'omegas': constants.omegas, 'kijs': kijs}
+        gas = CEOSGas(PRMIX, eos_kwargs=eos_kwargs, HeatCapacityGases=properties.HeatCapacityGases)
+        liquid = CEOSLiquid(PRMIX, eos_kwargs=eos_kwargs, HeatCapacityGases=properties.HeatCapacityGases)
+        flasher = FlashVLN(constants, properties, liquids=[liquid, liquid], gas=gas)
+        zs = [0.1, 0.2, 0.5, 0.2] #z.T.tolist()#[0.965, 0.018, 0.017]
+        t0_thermo = time.time()
+        for i in range(1):
+            #print(i)
+            PT = flasher.flash(T=T[i], P=P[i], zs=z.T[i])
+        #PT = flasher.flash(T=T, P=P, zs=z)
+        t1_thermo = time.time()
+        dt = t1_thermo-t0_thermo
+        print('Time for thermo: ' +str(dt)+' s')
+
+        import pdb; pdb.set_trace()

@@ -1317,6 +1317,8 @@ class StabilityCheck:
 
         self.V[ponteiro_save] = V[ponteiro_save]
         self.A[ponteiro_save] = A[ponteiro_save]
+        if any((self.V[ponteiro_save] + self.A[ponteiro_save])> 1.0):
+            import pdb; pdb.set_trace()
         self.L[ponteiro_save] = (1 - self.V[ponteiro_save] - self.A[ponteiro_save])
 
         self.x[:,ponteiro_save] = z[:,ponteiro_save] / (1 + self.V[ponteiro_save][np.newaxis,:] * (self.K_V[:,ponteiro_save] - 1) + \
@@ -1324,14 +1326,6 @@ class StabilityCheck:
         self.y[:,ponteiro_save] = self.K_V[:,ponteiro_save] * self.x[:,ponteiro_save]
         self.a[:,ponteiro_save] = self.K_A[:,ponteiro_save] * self.x[:,ponteiro_save]
 
-        """
-        if self.V[ponteiro_save] == 0:
-            self.y[:,ponteiro_save] = 0.0
-        if self.L[ponteiro_save] == 0:
-            self.x[:,ponteiro_save] = 0.0
-        if self.A[ponteiro_save] == 0:
-            self.a[:,ponteiro_save] = 0.0
-        """
         return True
 
 

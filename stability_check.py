@@ -659,8 +659,8 @@ class StabilityCheck:
         return ponteiro
 
     def molar_properties_3phase(self, PR, z, ponteiro):
-        #ponteiro = self.molar_properties_Whitson_3phase(PR, z, ponteiro)
-        ponteiro = self.molar_properties_Lapene_3phase(PR, z, ponteiro)
+        ponteiro = self.molar_properties_Whitson_3phase(PR, z, ponteiro)
+        #ponteiro = self.molar_properties_Lapene_3phase(PR, z, ponteiro)
         return ponteiro
 
     def deltaG_molar_vectorized(self, PR, l, P, ph):

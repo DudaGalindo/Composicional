@@ -750,7 +750,7 @@ class Testes_IGOR(unittest.TestCase):
         import pdb; pdb.set_trace()
 
 
-    @unittest.skip("ok - Diagrama de fase - DIVERGIU WHITSON!")
+    @unittest.skip("ok no Lapene, divergiu no Full")
     def test_Connolly431(self):
         R = 8.3144598
         # H2O, PC1, PC2, PC3, PC4
@@ -776,6 +776,34 @@ class Testes_IGOR(unittest.TestCase):
         Pb_guess = 8e6
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess, CP1, CP2, CP3, CP4)
         obj.run(z,Mw)
+
+        ''' Using Thermo '''
+        from thermo import ChemicalConstantsPackage, CEOSGas, CEOSLiquid, PRMIX, FlashVLN
+        from thermo.interaction_parameters import IPDB
+        import time
+        # H2O, PC1, PC2, PC3, PC4
+        constants, properties = ChemicalConstantsPackage.from_IDs(['water', 'C1', 'C2', 'C3', 'C4'])
+        constants.MWs = Mw.tolist()
+        constants.Tcs = Tc.tolist()
+        constants.Pcs = Pc.tolist()
+        #import pdb; pdb.set_trace()
+        #constants.Vcs = Vc.tolist()
+        constants.omegas = w.tolist()
+        kijs = IPDB.get_ip_asymmetric_matrix('ChemSep PR', constants.CASs, 'kij')
+        kijs = Bin.tolist()
+
+        eos_kwargs = {'Pcs': constants.Pcs, 'Tcs': constants.Tcs, 'omegas': constants.omegas, 'kijs': kijs}
+        gas = CEOSGas(PRMIX, eos_kwargs=eos_kwargs, HeatCapacityGases=properties.HeatCapacityGases)
+        liquid = CEOSLiquid(PRMIX, eos_kwargs=eos_kwargs, HeatCapacityGases=properties.HeatCapacityGases)
+        flasher = FlashVLN(constants, properties, liquids=[liquid, liquid], gas=gas)
+        zs = [0.5, 0.15, 0.1, 0.1, 0.15] #z.T.tolist()#[0.965, 0.018, 0.017]
+        t0_thermo = time.time()
+        for i in range(1):
+            PT = flasher.flash(T=T[0], P=P[0], zs=zs)
+        #PT = flasher.flash(T=T[0], P=P[0], zs=zs)
+        t1_thermo = time.time()
+        dt = t1_thermo-t0_thermo
+        print('Time for thermo: ' +str(dt)+' s')
 
         import pdb; pdb.set_trace()
 
@@ -1268,7 +1296,7 @@ class Testes_IGOR(unittest.TestCase):
         Tc = np.array([647, 126.2, 622, 782]) # Kelvin
         Pc = np.array([220.5, 34, 25.3, 14.6])*101325 # pascal
         #P = np.array([190])*101325
-        P = np.array([52])*101325
+        P = np.array([70])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0])
         T = np.array([450])
         Mw = np.array([18, 28, 134, 275])*1e-3
@@ -1396,7 +1424,7 @@ class Testes_IGOR(unittest.TestCase):
               0.01033333, 0.00458333, 0.00508333, 0.00725, 0.00958333, 0.00891667, 0.00791667, \
               0.00558333, 0.01375, 0.00941667, 0.00183333] #z.T.tolist()#[0.965, 0.018, 0.017]
         t0_thermo = time.time()
-        for i in range(100):
+        for i in range(1):
             PT = flasher.flash(T=T[0], P=P[0], zs=zs)
         #PT = flasher.flash(T=T[0], P=P[0], zs=zs)
         t1_thermo = time.time()
@@ -1536,9 +1564,9 @@ class Testes_IGOR(unittest.TestCase):
         z = np.array([0.3333, 0.3333, 0.3334])[:,np.newaxis]
         Tc = np.array([647.3, 190.6, 934.3]) # Kelvin
         Pc = np.array([22048.32, 4599.93, 800.43])*1000 # pascal
-        P = np.array([1000])*1000
+        P = np.array([1000000])
         Pv = np.array([0.0, 0.0, 0.0])
-        T = np.array([350])
+        T = np.array([500])
         Mw = np.array([18, 12.0107, 480.4280])*1e-3
         w = np.array([0.344, 0.008, 1.259])
 
@@ -1715,7 +1743,7 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    #@unittest.skip("ok no Full, melhor que o Thermo")
+    @unittest.skip("ok no Full, melhor que o Thermo")
     def test_Aug_water_411(self):
         R = 8.3144598
                     # H2O, CO2, C1, C16

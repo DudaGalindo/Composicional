@@ -94,8 +94,9 @@ class PengRobinson:
         coef[2,:] = (A - 2*B - 3*B**2)
         coef[3,:] = -(A*B - B**2 - B**3)
         Z = CubicRoots().run(coef)
+        #Z = np.around(Z, 15)
         root = np.isreal(Z)
-        n_reais = np.sum(root*1, axis = 1)
+        n_reais = np.sum(root.astype(np.int), axis=1)
 
         'if n_reais == 2'
         aux_reais = (n_reais==2)
@@ -105,8 +106,14 @@ class PengRobinson:
         Z[aux_reais] = Z_aux_reais
 
         'if n_reais==1'
+        aux_reais = (n_reais==1)
+        Z_aux_reais = Z[aux_reais]
+        Z_aux_reais[~root[aux_reais]] = np.repeat(Z[aux_reais][root[aux_reais]], 2)
+        Z[aux_reais] = Z_aux_reais
+        '''
         Z[~root[n_reais==1]] = np.repeat(Z[root[n_reais == 1]], 2)
-
+        '''
+        
         'if any Z<0'
         aux_neg = np.zeros(Z.shape,dtype=bool)
         aux_neg[Z<0] = True

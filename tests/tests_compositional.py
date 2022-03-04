@@ -639,11 +639,11 @@ class Testes_IGOR(unittest.TestCase):
         Tc = np.array([647.37, 575.78, 698, 821.3, 1010.056]) # Kelvin
         Pc = np.array([221.2, 34.82, 23.37, 12.07, 7.79])*101325 # pascal
 
-        #P = np.array([4.5])*101325
-        P = np.array([40*101325])*np.ones([1,]) # Pascal
+        #P = np.array([45])*101325
+        P = np.array([45*101325])*np.ones([1,]) # Pascal
 
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0])
-        T = np.array([350])
+        T = np.array([415])
         Mw = np.array([18.015, 116, 183, 337, 858])*1e-3
         w = np.array([0.344, 0.4, 0.84, 1.07, 1.33])
 
@@ -697,10 +697,11 @@ class Testes_IGOR(unittest.TestCase):
     def test_Connolly333(self):
         R = 8.3144598
                     # H20, C6, C10, C15
-        z = np.array([0.95, 0.005, 0.015, 0.03])[:,np.newaxis]
+        z = np.array([0.95, 0.005, 0.015, 0.03])[:,np.newaxis]*np.ones([4,10])
         Tc = np.array([647.3, 507.5, 622.1, 718.6]) # Kelvin
         Pc = np.array([220.4732, 32.88847, 25.34013, 18.49090])*101325 # pascal
-        P = np.array([20])*101325
+        P = np.array([30])*101325*np.ones([10,])
+        #P = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0])
         T = np.array([500])
         Mw = np.array([18.015, 86.178, 134.00, 206.00])*1e-3
@@ -1063,17 +1064,16 @@ class Testes_IGOR(unittest.TestCase):
 
         import pdb; pdb.set_trace()
 
-    # 3 phases
 
     @unittest.skip("ok para a instabilidade em y")
     def test_Varavei_3_1_triphase(self):
         R = 8.3144598
                     # H2O, C1, C6, C10, C15
         #z = np.array([0.2, 0.1, 0.1, 0.2, 0.4])[:,np.newaxis]
-        z = np.array([0.2, 0.1, 0.1, 0.2, 0.4])[:,np.newaxis]*np.ones([5,1])
+        z = np.array([0.2, 0.1, 0.1, 0.2, 0.4])[:,np.newaxis]*np.ones([5,10])
 
         T = np.array([366.483]) # Kelvin
-        P = np.array([200*6895.0])*np.ones([1,]) # Pascal
+        P = np.array([200*6895.0])*np.ones([10,]) # Pascal
         #P = np.array([200*6895.0])
 
         Tc = np.array([647.3, 190.6, 507.4, 594.906, 676.266]) # Kelvin
@@ -1135,11 +1135,11 @@ class Testes_IGOR(unittest.TestCase):
         R = 8.3144598
                     # H2O/ C1 / nC5 / nC10 / CO2 / H2S
         z = np.array([0.1, 0.3, 0.15, 0.25, 0.1, 0.1])[:,np.newaxis]
-        z = np.array([0.1, 0.3, 0.15, 0.25, 0.1, 0.1])[:,np.newaxis]*np.ones([6,1])
+        z = np.array([0.1, 0.3, 0.15, 0.25, 0.1, 0.1])[:,np.newaxis]*np.ones([6,10])
 
         Tc = np.array([647.3, 190.6, 469.6, 617.9, 304.2, 373.2]) # Kelvin
         Pc = np.array([220.5, 46, 33.3, 21, 73.8, 89.4])*101325 # pascal
-        P = np.array([10e6])*np.ones([1,])
+        P = np.array([10e6])*np.ones([10,])
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         T = np.array([100 + 273.15])
         Mw = np.array([18.01528, 16.04, 60.05, 120.107, 44.01, 34.1])*1e-3
@@ -1197,11 +1197,11 @@ class Testes_IGOR(unittest.TestCase):
         R = 8.3144598
                     # H2O,  CO2,      N2,       C1,      C2,      C3,     C4-C6,    PC1,      PC2,      PC3
         #z = np.array([0.1, 0.01089, 0.01746, 0.59391, 0.07821, 0.05319, 0.08703, 0.042705, 0.013635, 0.00297])[:,np.newaxis]
-        z = np.array([0.1, 0.01089, 0.01746, 0.59391, 0.07821, 0.05319, 0.08703, 0.042705, 0.013635, 0.00297])[:,np.newaxis]*np.ones([10,1])
+        z = np.array([0.1, 0.01089, 0.01746, 0.59391, 0.07821, 0.05319, 0.08703, 0.042705, 0.013635, 0.00297])[:,np.newaxis]*np.ones([10,5])
         Tc = np.array([647.3, 304.7, 126.2, 190.6, 305.43, 369.8, 448.08, 465.62, 587.8, 717.72]) # Kelvin
         Pc = np.array([220.8900, 73.86796, 33.94563, 46.04085, 48.83673, 42.65743, 35.50565, 28.32348, 17.06905, 11.06196])*101325 # pascal
-        #P = np.array([100, 220, 80, 40, 200])*101325
-        P = np.array([100])*101325
+        P = np.array([100, 220, 80, 40, 200])*101325
+        #P = np.array([100])*101325
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
         #T = np.array([400])
         T = np.array([350])
@@ -1266,10 +1266,10 @@ class Testes_IGOR(unittest.TestCase):
     def test_lapene_water_benzene_toluene(self):
         R = 8.3144598
                       # H20 / tolueno / benzeno
-        z = np.array([0.29, 0.01, 0.7])[:,np.newaxis]*np.ones([3,1])
+        z = np.array([0.29, 0.01, 0.7])[:,np.newaxis]*np.ones([3,10])
         Tc = np.array([647, 593, 562]) # Kelvin
         Pc = np.array([220.5, 41, 48.9])*101325 # pascal
-        P = np.array([1*101325])*np.ones([1,])
+        P = np.array([1*101325])*np.ones([10,])
         Pv = np.array([0.0, 0.0, 0.0])
         T = np.array([345])
         Mw = np.array([18.02, 92.13, 78.11])*1e-3
@@ -1352,14 +1352,15 @@ class Testes_IGOR(unittest.TestCase):
         z = np.array([20, 0.26, 3.60, 74.12, 7.94, 3.29, 0.68, 1.24, 0.55, 0.61, \
                     0.87, 1.15, 1.07, 0.95, 0.67, 1.65, 1.13, 0.22])[:,np.newaxis]
         z = z/np.sum(z)
-        #z = z*np.ones([18,8])
+        z = z*np.ones([18,10000])
 
         Tc = np.array([647.37, 126.20, 304.21, 190.60, 305.40, 369.80, 408.10, 425.20, \
                         464.74, 469.60, 515.28, 553.84, 581.28, 609.35, 626.97, 658.15, 778.15, 998.15]) # Kelvin
         Pc = np.array([221.20, 33.94, 73.77, 46.00, 48.84, 42.46, 36.48, 38.00, 34.77, \
                         33.74, 32.57, 31.00, 28.50, 26.50, 24.60, 21.20, 15.70, 13.50])*101325 # pascal
         #P = np.array([100, 100, 200, 200, 300, 300, 500, 500])*101325
-        P = np.array([200])*101325
+        #P = np.array([200])*101325
+        P = np.array([200*101325])*np.ones([10000,])
 
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, \
                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
@@ -1424,7 +1425,7 @@ class Testes_IGOR(unittest.TestCase):
               0.01033333, 0.00458333, 0.00508333, 0.00725, 0.00958333, 0.00891667, 0.00791667, \
               0.00558333, 0.01375, 0.00941667, 0.00183333] #z.T.tolist()#[0.965, 0.018, 0.017]
         t0_thermo = time.time()
-        for i in range(1):
+        for i in range(10000):
             PT = flasher.flash(T=T[0], P=P[0], zs=zs)
         #PT = flasher.flash(T=T[0], P=P[0], zs=zs)
         t1_thermo = time.time()

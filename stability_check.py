@@ -101,7 +101,6 @@ class StabilityCheck:
         #self.L = 1
         #self.V = 0
         self.get_other_properties(PR, Mw)
-        #import pdb; pdb.set_trace()
 
         ponteiro_flash_3phase = np.zeros(len(self.P), dtype = bool)
         ponteiro_flash_3phase[(self.L != 1) & (self.V != 1)] = True
@@ -109,7 +108,6 @@ class StabilityCheck:
 
         sp2, Kvalue2 = self.Stability_3phase(PR, self.x, np.copy(ponteiro_flash_3phase))
         sp2 = np.round(sp2, 8)
-        #import pdb; pdb.set_trace()
         ponteiro_aux = ~ponteiro_flash_3phase[ponteiro_flash_3phase]
         #ponteiro_aux = np.zeros(len(self.P), dtype = bool)
         ponteiro_aux[(sp2>1).sum(axis=0,dtype=bool)] = True
@@ -126,7 +124,7 @@ class StabilityCheck:
 
         sp3, Kvalue3 = self.Stability_3phase(PR, self.y, np.copy(ponteiro_flash_3phase2))
         sp3 = np.round(sp3, 8)
-        #import pdb; pdb.set_trace()
+
         ponteiro_aux2 = ~ponteiro_flash_3phase2[ponteiro_flash_3phase2]
         #ponteiro_aux2 = np.zeros(len(self.P), dtype = bool)
         ponteiro_aux2[(sp3>1).sum(axis=0,dtype=bool)] = True
@@ -143,7 +141,7 @@ class StabilityCheck:
         #ponteiro_flash_3phase[ponteiro_flash_3phase] = ponteiro_flash_3phase2
         ponteiro_flash_3phase[ponteiro_flash_3phase2] = ponteiro_flash_3phase2
         '''
-        #import pdb; pdb.set_trace()
+
         self.A[~ponteiro_flash_3phase] = 0.0
         self.a[:, ~ponteiro_flash_3phase] = 0.0
         self.K_A = self.K[:, ponteiro_flash_3phase]
@@ -161,7 +159,7 @@ class StabilityCheck:
         self.V = 1 - self.L - self.A
 
         self.get_other_properties_3phases(PR, Mw)
-        #import pdb; pdb.set_trace()
+        import pdb; pdb.set_trace()
 
         """
         if self.L != 1 and self.V != 1:
@@ -492,8 +490,9 @@ class StabilityCheck:
         t0 = time.time()
 
         stationary_points = np.empty((5, len(ponteiro_stab_check[ponteiro_stab_check])))
+        print(f'stationary_points: {stationary_points}')
+
         # Trial phase is liquid
-        #import pdb; pdb.set_trace()
         Y = np.empty(x.shape)
         lnphix = np.empty(x.shape)
         ponteiro = np.copy(ponteiro_stab_check)
@@ -659,8 +658,8 @@ class StabilityCheck:
         return ponteiro
 
     def molar_properties_3phase(self, PR, z, ponteiro):
-        ponteiro = self.molar_properties_Whitson_3phase(PR, z, ponteiro)
-        #ponteiro = self.molar_properties_Lapene_3phase(PR, z, ponteiro)
+        #ponteiro = self.molar_properties_Whitson_3phase(PR, z, ponteiro)
+        ponteiro = self.molar_properties_Lapene_3phase(PR, z, ponteiro)
         return ponteiro
 
     def deltaG_molar_vectorized(self, PR, l, P, ph):
@@ -1192,16 +1191,22 @@ class StabilityCheck:
     ' Try of triphasic flash '
     def molar_properties_Whitson_3phase(self, PR, z, ponteiro):
 
+        self.K_A = self.K.copy()
+        self.K_V = self.Kwilson.copy()
+
         self.V[ponteiro] = 0.5
         self.A[ponteiro] = 0.5
 
-        self.K_A = self.Kw
+        #self.K_A = self.Kw[:,ponteiro]
+        self.K_A[:, ponteiro] = self.Kw[:, ponteiro]
 
         t0 = time.time()
 
         razao_vl = np.ones(z.shape)/2
         razao_al = np.ones(z.shape)/2
         ponteiro_save = np.copy(ponteiro)
+        #import pdb; pdb.set_trace()
+
         while any(ponteiro):
             self.solve_objective_function_Whitson_for_V_and_A(z, self.V, self.A, np.copy(ponteiro))
 
@@ -1223,12 +1228,17 @@ class StabilityCheck:
 
             stop_criteria_vl = np.max(abs((self.fv/(self.fl + 1e-15)) - 1), axis = 0)
             stop_criteria_al = np.max(abs((self.fa/(self.fl + 1e-15)) - 1), axis = 0)
-            stop_criteria = max(stop_criteria_vl, stop_criteria_al)
+            stop_criteria = stop_criteria_vl.copy()
+            stop_criteria[stop_criteria_al > stop_criteria_vl] = stop_criteria_al[stop_criteria_al > stop_criteria_vl]
+            #stop_criteria = max(stop_criteria_vl, stop_criteria_al)
 
             ponteiro_aux = ponteiro[ponteiro]
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
+            #print(ponteiro)
+            #import pdb; pdb.set_trace()
             #ponteiro[((self.V)<0) + ((self.V)>1)] = False
+
 
         t1 = time.time()
         print('Whitson-Michelsen time for 3phase flash:', t1-t0)
@@ -1246,13 +1256,12 @@ class StabilityCheck:
             Vold = V[ponteiro].copy()
             Aold = A[ponteiro].copy()
             #V_and_A = np.array([Vold, Aold])
-            #print(V_and_A)
 
-            f = np.zeros(2)
+            f = np.zeros([2, Vold.size])
 
             f[0] = np.sum((self.K_V[:,ponteiro] - 1) * z[:,ponteiro] / (1 + \
-                    V[ponteiro][np.newaxis,:] * (self.K_V[:,ponteiro] - 1) + \
-                    A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)), axis = 0)
+                V[ponteiro][np.newaxis,:] * (self.K_V[:,ponteiro] - 1) + \
+                A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)), axis = 0)
 
             f[1] = np.sum((self.K_A[:,ponteiro] - 1) * z[:,ponteiro] / (1 + \
                     V[ponteiro][np.newaxis,:] * (self.K_V[:,ponteiro] - 1) + \
@@ -1262,32 +1271,44 @@ class StabilityCheck:
                     V[ponteiro][np.newaxis,:] * (self.K_V[:,ponteiro] - 1) + \
                     A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)) ** 2), axis = 0)
 
-            df_VdA = - np.sum((self.K_V[:,ponteiro] - 1) * (self.K_A[:,ponteiro] - 1) * z[:,ponteiro] / ((1 + \
-                    V[ponteiro][np.newaxis,:] * (self.K_V[:,ponteiro] - 1) + \
-                    A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)) ** 2), axis = 0)
+            df_VdA = - np.sum((self.K_V[:,ponteiro] - 1) * (self.K_A[:,ponteiro] - 1) *\
+                                    z[:,ponteiro] / ((1 + V[ponteiro][np.newaxis,:] * \
+                                    (self.K_V[:,ponteiro] - 1) + A[ponteiro][np.newaxis,:] * \
+                                    (self.K_A[:,ponteiro] - 1)) ** 2), axis = 0)
 
-            df_AdV = - np.sum((self.K_V[:,ponteiro] - 1) * (self.K_A[:,ponteiro] - 1) * z[:,ponteiro] / ((1 + \
-                    V[ponteiro][np.newaxis,:] * (self.K_V[:,ponteiro] - 1) + \
-                    A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)) ** 2), axis = 0)
+            df_AdV = - np.sum((self.K_V[:,ponteiro] - 1) * (self.K_A[:,ponteiro] - 1) \
+                                 * z[:,ponteiro] / ((1 + V[ponteiro][np.newaxis,:] * (self.K_V[:,ponteiro] - \
+                                   1) + A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)) ** 2), axis = 0)
 
             df_AdA = - np.sum(((self.K_A[:,ponteiro] - 1) ** 2) * z[:,ponteiro] / ((1 + \
                     V[ponteiro][np.newaxis,:] * (self.K_V[:,ponteiro] - 1) + \
                     A[ponteiro][np.newaxis,:] * (self.K_A[:,ponteiro] - 1)) ** 2), axis = 0)
 
-            Jacobian = np.empty([2,2])
-            Jacobian[0][0] = df_VdV
-            Jacobian[0][1] = df_VdA
-            Jacobian[1][0] = df_AdV
-            Jacobian[1][1] = df_AdA # Jacobian matrix
+
+            Jacobian = np.empty([ponteiro[ponteiro].size, 2, 2])
+            Jacobian[:,0,0] = df_VdV
+            Jacobian[:,0,1] = df_VdA
+            Jacobian[:,1,0] = df_AdV
+            Jacobian[:,1,1] = df_AdA
 
             try:
                 Jacobian_inv = np.linalg.inv(Jacobian)
             except: import pdb; pdb.set_trace()
 
-            V_and_A = V_and_A - np.reshape(f.dot(Jacobian_inv), (2,1))  #Newton-Raphson iterative method
-            print(V_and_A)
-            V = V_and_A[0].copy()
-            A = V_and_A[1].copy()
+            '''
+            solucao = np.zeros_like(f.T)
+            for i in range(ponteiro[ponteiro].size):
+                solucao[i] = f.T[i].dot(Jacobian_inv[i])
+            '''
+            solucao_aux = f.T.dot(Jacobian_inv)
+            solucao = np.diagonal(solucao_aux).T
+
+            V_and_A[:, ponteiro] = V_and_A[:, ponteiro] - solucao.T
+            #import pdb; pdb.set_trace()
+
+            #print(V_and_A)
+            V[ponteiro] = V_and_A[0, ponteiro].copy()
+            A[ponteiro] = V_and_A[1, ponteiro].copy()
 
             V_aux = V[ponteiro]
             V_aux[V_aux > 1.0] = 1.0
@@ -1303,13 +1324,17 @@ class StabilityCheck:
             #A_aux[A_aux < 0.0] = 0.5 * (0.0 + Aold[A_aux < 0.0])
             A[ponteiro] = A_aux
 
-            stop_criteria = max(abs(V[ponteiro] - Vold), abs(A[ponteiro] - Aold))
-
+            #import pdb; pdb.set_trace()
+            stop_criteria_V = abs(V[ponteiro] - Vold)
+            stop_criteria_A = abs(A[ponteiro] - Aold)
+            stop_criteria = stop_criteria_V.copy()
+            stop_criteria[stop_criteria_A > stop_criteria_V] = stop_criteria_A[stop_criteria_A > stop_criteria_V]
+            #stop_criteria = max(abs(V[ponteiro] - Vold), abs(A[ponteiro] - Aold))
 
             ponteiro_aux = ponteiro[ponteiro]
             ponteiro_aux[stop_criteria < 1e-9] = False
             ponteiro[ponteiro] = ponteiro_aux
-            print(ponteiro)
+
             i+=1
             if i>=3000:
                 print('maxit in triphasic flash')

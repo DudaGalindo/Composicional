@@ -1352,7 +1352,7 @@ class Testes_IGOR(unittest.TestCase):
         z = np.array([20, 0.26, 3.60, 74.12, 7.94, 3.29, 0.68, 1.24, 0.55, 0.61, \
                     0.87, 1.15, 1.07, 0.95, 0.67, 1.65, 1.13, 0.22])[:,np.newaxis]
         z = z/np.sum(z)
-        z = z*np.ones([18,10000])
+        z = z*np.ones([18,1])
 
         Tc = np.array([647.37, 126.20, 304.21, 190.60, 305.40, 369.80, 408.10, 425.20, \
                         464.74, 469.60, 515.28, 553.84, 581.28, 609.35, 626.97, 658.15, 778.15, 998.15]) # Kelvin
@@ -1360,7 +1360,7 @@ class Testes_IGOR(unittest.TestCase):
                         33.74, 32.57, 31.00, 28.50, 26.50, 24.60, 21.20, 15.70, 13.50])*101325 # pascal
         #P = np.array([100, 100, 200, 200, 300, 300, 500, 500])*101325
         #P = np.array([200])*101325
-        P = np.array([200*101325])*np.ones([10000,])
+        P = np.array([200*101325])*np.ones([1,])
 
         Pv = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, \
                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
@@ -1747,24 +1747,24 @@ class Testes_IGOR(unittest.TestCase):
     @unittest.skip("ok no Full, melhor que o Thermo")
     def test_Aug_water_411(self):
         R = 8.3144598
-                    # H2O, CO2, C1, C16
+                    # CO2, C1, C16, H2O
         z = np.array([0.3, 0.3, 0.1, 0.3])[:,np.newaxis]*np.ones([4,1])
         #z = z**np.ones([8,1]) # Número de componentes x número de bloco do pressão
 
-        Tc = np.array([647.3, 304.20, 190.60, 717.00]) # Kelvin
-        Pc = np.array([220.48, 73.76, 45.96, 14.19])*101325 # pascal
+        Tc = np.array([304.20, 190.60, 717.00, 647.3]) # Kelvin
+        Pc = np.array([73.76, 45.96, 14.19, 220.48])*101325 # pascal
         P = np.array([100])*101325*np.ones([1,])
 
         Pv = np.array([0.0, 0.0, 0.0, 0.0])
         T = np.array([500])*np.ones([1,])
 
-        Mw = np.array([18.00, 44.01, 16.043, 226.4412])*1e-3
-        w = np.array([0.344, 0.225, 0.008, 0.742])
+        Mw = np.array([44.01, 16.043, 226.4412, 18.00])*1e-3
+        w = np.array([0.225, 0.008, 0.742, 0.344])
 
-        Bin = np.array([[0.0, 0.1896, 0.4850, 0.5000], \
-                        [0.1896, 0.0, 0.1, 0.1250], \
-                        [0.4850, 0.1, 0.0, 0.0780], \
-                        [0.5, 0.1250, 0.0780, 0.0]])
+        Bin = np.array([[0.0, 0.1, 0.125, 0.1896], \
+                        [0.1, 0.0, 0.0780, 0.485], \
+                        [0.125,  0.078, 0.0, 0.5], \
+                        [0.1896, 0.4850, 0.5, 0.0]])
 
         CP1 = np.zeros_like(Tc)
         CP2 = np.zeros_like(Tc)
@@ -1774,6 +1774,7 @@ class Testes_IGOR(unittest.TestCase):
         Pb_guess = 8e6
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess, CP1, CP2, CP3, CP4)
         obj.run(z,Mw)
+        import pdb; pdb.set_trace()
 
         ''' Using Thermo '''
         from thermo import ChemicalConstantsPackage, CEOSGas, CEOSLiquid, PRMIX, FlashVLN
@@ -1809,19 +1810,19 @@ class Testes_IGOR(unittest.TestCase):
     @unittest.skip("teste de estabilidade em self.x deu problema, mas o flash deu certo - Thermo deu pau")
     def test_Michelsen1994_case1(self):
         R = 8.3144598
-                    # H2O, C2,  C3,  C4
-        z = np.array([0.1, 0.2, 0.5, 0.2])[:,np.newaxis]*np.ones([4,1])
+                    # C2,  C3,  C4, H2O
+        z = np.array([0.2, 0.5, 0.2, 0.1])[:,np.newaxis]*np.ones([4,1])
         #z = z**np.ones([8,1]) # Número de componentes x número de bloco do pressão
 
-        Tc = np.array([647.3, 305.3, 369.8, 425.0]) # Kelvin
-        Pc = np.array([220.48, 49, 42.5, 38.0])*101325 # pascal
+        Tc = np.array([305.3, 369.8, 425.0, 647.3]) # Kelvin
+        Pc = np.array([49, 42.5, 38.0, 220.48])*101325 # pascal
         P = np.array([506625])*np.ones([1,])
 
         Pv = np.array([0.0, 0.0, 0.0, 0.0])
         T = np.array([280])*np.ones([1,])
 
-        Mw = np.array([18.00, 30.07, 44.1, 58.12])*1e-3
-        w = np.array([0.344, 0.0995, 0.1523, 0.177])
+        Mw = np.array([30.07, 44.1, 58.12, 18.00])*1e-3
+        w = np.array([0.0995, 0.1523, 0.177, 0.344])
 
         Bin = np.array([[0.0, 0.0, 0.0, 0.0], \
                         [0.0, 0.0, 0.0, 0.0], \
@@ -1836,6 +1837,7 @@ class Testes_IGOR(unittest.TestCase):
         Pb_guess = 8e6
         obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess, CP1, CP2, CP3, CP4)
         obj.run(z,Mw)
+        import pdb; pdb.set_trace()
 
         ''' Using Thermo '''
         from thermo import ChemicalConstantsPackage, CEOSGas, CEOSLiquid, PRMIX, FlashVLN
@@ -1865,5 +1867,90 @@ class Testes_IGOR(unittest.TestCase):
         t1_thermo = time.time()
         dt = t1_thermo-t0_thermo
         print('Time for thermo: ' +str(dt)+' s')
+
+        import pdb; pdb.set_trace()
+
+    #@unittest.skip("teste William")
+    def test_wassonOil(self): #
+
+        R = 8.3144598
+
+        #z = np.array([0.2151, 0.0746, 0.0611, 0.0242, 0.0343, 0.03360, 0.3000, \
+                      #0.1066, 0.0552, 0.0953, 0.0000, 0.2])[:,np.newaxis]
+        z = np.array([0., 0., 0., 0., 0., 0., 0., 0., \
+                      0., 0., 0., 1])[:,np.newaxis]
+        #z = z/np.sum(z)
+        #z = z**np.ones([12,4]) # Número de componentes x número de bloco do pressão
+        #z = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0])[:,np.newaxis]
+
+        Tc = np.array([190.6, 305.4, 369.8, 425.2, 469.6, 507.5, 606.5, 740, \
+                       823.6, 925.9, 304.2, 647.3]) # Kelvin
+        Pc = np.array([4600154.487, 4883864.7863, 4245517.8192, 3799687.6441, \
+                       3374122.5397, 3289009.5189, 2651675.392, 1711379.4236, \
+                       1250350.446, 806547.32918, 7376459.5113, 22048330.66])# pascal
+
+        T = np.array([305.372]) # Kelvin
+
+        #P = np.array([62*101325])*np.ones([4,]) # 6.205e6 Pa
+        #P = np.array([6.205e6])*np.ones([1,])
+        P = np.array([7092750])*np.ones([1,])
+
+        Pv = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
+        Mw = np.array([16.043e-3, 30.07e-3, 44.097e-3, 58.124e-3, 72.151e-3, 86.178e-3, \
+                       125.96e-3, 227.86e-3, 325.56e-3, 484.7e-3, 44.01e-3, 18.015e-3])
+        w = np.array([0.008, 0.098, 0.152, 0.193, 0.251, 0.2637, 0.3912, 0.63, 0.8804, 1.2457, 0.2250, 0.344])
+
+        Bin = np.array([[0.0, 0.003, 0.009, 0.015, 0.021, 0.025, 0.041, 0.073, 0.095, 0.125, 0.103, 0.491],\
+                        [0.003, 0.0, 0.002, 0.005, 0.009, 0.012, 0.023, 0.049, 0.068, 0.095, 0.13, 0.491],\
+                        [0.009, 0.002, 0.0, 0.001, 0.003, 0.005, 0.013, 0.033, 0.05, 0.073, 0.135, 0.547],\
+                        [0.015, 0.005, 0.001, 0.0, 0.001, 0.001, 0.007, 0.024, 0.038, 0.059, 0.13, 0.508],\
+                        [0.021, 0.009, 0.003, 0.001, 0.0, 0.0, 0.004, 0.017, 0.03, 0.049, 0.125, 0.5],\
+                        [0.025, 0.012, 0.005, 0.001, 0.0, 0.0, 0.002, 0.014, 0.025, 0.043, 0.125, 0.45],\
+                        [0.041, 0.023, 0.013, 0.07, 0.004, 0.002, 0.0, 0.005, 0.013, 0.027, 0.13, 0.45],\
+                        [0.073, 0.049, 0.033, 0.024, 0.017, 0.014, 0.005, 0.0, 0.002, 0.009, 0.13, 0.45],\
+                        [0.095, 0.068, 0.05, 0.038, 0.03, 0.025, 0.013, 0.002, 0.0, 0.003, 0.13, 0.45],\
+                        [0.125, 0.095, 0.073, 0.059, 0.049, 0.043, 0.027, 0.009, 0.003, 0.0, 0.13, 0.45],\
+                        [0.103, 0.13, 0.135, 0.13, 0.125, 0.125, 0.13, 0.13, 0.13, 0.13, 0.0, 0.2],\
+                        [0.491, 0.491, 0.547, 0.508, 0.5, 0.45, 0.45, 0.45, 0.45, 0.45, 0.2, 0.0]])
+
+        CP1 = np.zeros_like(Tc)
+        CP2 = np.zeros_like(Tc)
+        CP3 = np.zeros_like(Tc)
+        CP4 = np.zeros_like(Tc)
+
+        Pb_guess = 8e6
+        obj = StabilityCheck(w,Bin,R,Tc,Pc,T,P, Pb_guess, CP1, CP2, CP3, CP4)
+        obj.run(z,Mw)
+        #import pdb; pdb.set_trace()
+
+        ''' Using Thermo '''
+        from thermo import ChemicalConstantsPackage, CEOSGas, CEOSLiquid, PRMIX, FlashVLN
+        from thermo.interaction_parameters import IPDB
+        import time
+        # water, CO2, C1, C2-3, C4-6, C7-15, C16-27, C28
+        constants, properties = ChemicalConstantsPackage.from_IDs(['C1','C2', 'C3', 'C4' ,'C1', 'C1', 'C1', 'C1', 'C3', \
+                                                                   'n-C16','CO2' ,'water'])
+        constants.MWs = Mw.tolist()
+        constants.Tcs = Tc.tolist()
+        constants.Pcs = Pc.tolist()
+        constants.omegas = w.tolist()
+        kijs = IPDB.get_ip_asymmetric_matrix('ChemSep PR', constants.CASs, 'kij')
+        kijs = Bin.tolist()
+
+        eos_kwargs = {'Pcs': constants.Pcs, 'Tcs': constants.Tcs, 'omegas': constants.omegas, 'kijs': kijs}
+        gas = CEOSGas(PRMIX, eos_kwargs=eos_kwargs, HeatCapacityGases=properties.HeatCapacityGases)
+        liquid = CEOSLiquid(PRMIX, eos_kwargs=eos_kwargs, HeatCapacityGases=properties.HeatCapacityGases)
+        flasher = FlashVLN(constants, properties, liquids=[liquid, liquid], gas=gas)
+        #zs = [0.2151/1.2000, 0.0746/1.2000, 0.0611/1.2000, 0.0242/1.2000, 0.0343/1.2000, 0.03360/1.2000, 0.3000/1.2000, \
+                      #0.1066/1.2000, 0.0552/1.2000, 0.0953/1.2000, 0.0000/1.2000, 0.2/1.2000]
+        zs = z.copy()
+        t0_thermo = time.time()
+        #for i in range(100):
+        PT = flasher.flash(T=T[0], P=P[0], zs=zs)
+        t1_thermo = time.time()
+        dt = t1_thermo-t0_thermo
+        print('Time for thermo: ' +str(dt)+' s')
+        #print('Betas', PT.betas)
 
         import pdb; pdb.set_trace()
